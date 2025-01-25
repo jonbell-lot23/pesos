@@ -12,7 +12,14 @@ export default function middleware(req: NextRequest) {
     return NextResponse.redirect("/feed-display");
   }
 
-  return authMiddleware();
+  // Ensure a NextResponse is always returned
+  const response = authMiddleware();
+  if (response instanceof NextResponse) {
+    return response;
+  }
+
+  // Fallback response if authMiddleware does not return a NextResponse
+  return NextResponse.next();
 }
 
 export const config = {
