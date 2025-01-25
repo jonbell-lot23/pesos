@@ -6,8 +6,8 @@ import { ClerkProvider } from "@clerk/nextjs";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Pasos - RSS Feed Aggregator",
-  description: "Simplify your content streams with Pasos",
+  title: "PESOS.site - Save Your Stuff",
+  description: "Save your stuff by backing up your RSS feeds",
 };
 
 export default function RootLayout({
