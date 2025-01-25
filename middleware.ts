@@ -12,10 +12,7 @@ export default function middleware(req: NextRequest) {
     return NextResponse.redirect("/feed-display");
   }
 
-  return authMiddleware(req, {
-    publicRoutes: ["/", "/feed-selection"],
-    ignoredRoutes: ["/api/public"],
-  });
+  return authMiddleware();
 }
 
 export const config = {
