@@ -1,18 +1,27 @@
 import "./globals.css";
+import { Inter } from "next/font/google";
+import { RootLayoutInnerComingSoon } from "../components/root-layout-inner-comingsoon";
+import { ClerkProvider } from "@clerk/nextjs";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Coming Soon - PESOS.site",
-  description: "Stay tuned for something amazing!",
+  title: "PESOS.site - Save Your Stuff",
+  description: "Save your stuff by backing up your RSS feeds",
 };
 
-export default function PageLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div lang="en" style={{ textAlign: "center", marginTop: "20%" }}>
-      {children}
-    </div>
+    <html lang="en">
+      <body className={inter.className}>
+        <RootLayoutInnerComingSoon inter={inter}>
+          {children}
+        </RootLayoutInnerComingSoon>
+      </body>
+    </html>
   );
 }
