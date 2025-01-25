@@ -1,0 +1,62 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Source {
+  id       Int        @id @default(autoincrement())
+  url      String
+  emoji    String
+  userid   Int
+  User     User       @relation(fields: [userid], references: [id])
+  firehose firehose[]
+}
+
+model User {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique
+  createdAt DateTime   @default(now())
+  Source    Source[]
+  firehose  firehose[]
+}
+
+model firehose {
+  id          Int      @id @default(autoincrement())
+  title       String
+  url         String
+  description String?
+  postdate    DateTime
+  source      String?
+  slug        String?  @unique @default("")
+  userid      Int      @default(1)
+  sourceId    Int?
+  Source      Source?  @relation(fields: [sourceId], references: [id])
+  User        User     @relation(fields: [userid], references: [id], onDelete: SetNull)
+}
+
+model pesos_User {
+  id        String   @id // Clerk ID
+  username  String   @unique
+  createdAt DateTime @default(now())
+  sources   pesos_UserSources[]
+}
+
+model pesos_Sources {
+  id      Int      @id @default(autoincrement())
+  url     String   @unique
+  users   pesos_UserSources[]
+}
+
+model pesos_UserSources {
+  userId    String
+  sourceId  Int
+  createdAt DateTime @default(now())
+  user      pesos_User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  source    pesos_Sources  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@id([userId, sourceId])
+}
