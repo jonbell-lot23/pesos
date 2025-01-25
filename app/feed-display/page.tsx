@@ -59,7 +59,7 @@ export default function FeedDisplay() {
   }, [isSignedIn, user?.id]);
 
   useEffect(() => {
-    if (feedSources.length > 0) {
+    if (feedSources.length > 0 && isLoading) {
       fetchFeedData(feedSources);
     }
   }, [feedSources]);

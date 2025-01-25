@@ -39,7 +39,7 @@ async function fetchFeed(url: string) {
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    const contentType = response.headers.get("content-type");
+    const contentType = response.headers.get("content-type") || "";
     if (contentType && contentType.includes("application/json")) {
       return await response.json();
     } else {
@@ -104,69 +104,68 @@ async function parseFeed(url: string, data: any): Promise<ParsedFeed> {
 }
 
 export async function POST(request: Request) {
+  let userId: string | undefined;
   try {
-    const { userId } = auth();
+    const authResult = await auth();
+    console.log("Auth Result:", authResult);
+    userId = authResult.userId;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    const { sources } = await request.json();
-    if (!sources || !Array.isArray(sources)) {
-      return NextResponse.json(
-        { error: "Invalid sources format" },
-        { status: 400 }
-      );
-    }
-
-    const feedPromises = sources.map(async (url: string) => {
-      try {
-        const data = await fetchFeed(url);
-        const feed = await parseFeed(url, data);
-        return {
-          url,
-          title: feed.title,
-          items: feed.items.map((item) => ({
-            ...item,
-            source: feed.title,
-          })),
-        };
-      } catch (error: unknown) {
-        console.error(`Error parsing feed ${url}:`, error);
-        return {
-          url,
-          title: new URL(url).hostname,
-          items: [],
-          error: error instanceof Error ? error.message : String(error),
-        };
-      }
-    });
-
-    const feedsData = await Promise.all(feedPromises);
-    const allItems = feedsData
-      .flatMap((feed) => feed.items)
-      .sort(
-        (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-      );
-
-    const validSources = feedsData.filter((feed) => !feed.error);
-    const errors = feedsData
-      .filter((feed) => feed.error)
-      .map((feed) => ({ url: feed.url, error: feed.error }));
-
-    return NextResponse.json({
-      items: allItems,
-      sources: validSources.map(({ url, title }) => ({ url, title })),
-      errors: errors,
-    });
-  } catch (error) {
-    console.error("Error fetching feeds:", error);
+  } catch (authError) {
+    console.error("Error during authentication:", authError);
     return NextResponse.json(
-      {
-        items: [],
-        sources: [],
-        errors: [{ url: "all", error: String(error) }],
-      },
+      { error: "Authentication failed" },
       { status: 500 }
     );
   }
+
+  const { sources } = await request.json();
+  if (!sources || !Array.isArray(sources)) {
+    return NextResponse.json(
+      { error: "Invalid sources format" },
+      { status: 400 }
+    );
+  }
+
+  const feedPromises = sources.map(async (url: string) => {
+    try {
+      const data = await fetchFeed(url);
+      const feed = await parseFeed(url, data);
+      return {
+        url,
+        title: feed.title,
+        items: feed.items.map((item) => ({
+          ...item,
+          source: feed.title,
+        })),
+      };
+    } catch (error: unknown) {
+      console.error(`Error parsing feed ${url}:`, error);
+      return {
+        url,
+        title: new URL(url).hostname,
+        items: [],
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  });
+
+  const feedsData = await Promise.all(feedPromises);
+  const allItems = feedsData
+    .flatMap((feed) => feed.items)
+    .sort(
+      (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
+    );
+
+  const validSources = feedsData.filter((feed) => !feed.error);
+  const errors = feedsData
+    .filter((feed) => feed.error)
+    .map((feed) => ({ url: feed.url, error: feed.error }));
+
+  return NextResponse.json({
+    items: allItems,
+    sources: validSources.map(({ url, title }) => ({ url, title })),
+    errors: errors,
+  });
 }
