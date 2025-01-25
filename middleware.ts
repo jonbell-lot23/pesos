@@ -8,7 +8,13 @@ export default authMiddleware();
 
 export const config = {
   matcher: [
-    "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
+    "/app/auth/(.*)",
+    "/app/auth-placeholder/(.*)",
+    "/app/confirmation/(.*)",
+    "/app/feed-display/(.*)",
+    "/app/feed-selection/(.*)",
+    "/app/profile/(.*)",
+    "/app/setup-complete/(.*)",
     "/(api|trpc)(.*)",
   ],
 };
