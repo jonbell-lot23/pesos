@@ -48,9 +48,6 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">PESOS*</h1>
           <div className="flex items-center space-x-4">
-            <Link href="/feed-display">
-              <Button>Go to Feed</Button>
-            </Link>
             <SignedOut>
               <SignInButton mode="modal">
                 <Button variant="outline">Sign In</Button>

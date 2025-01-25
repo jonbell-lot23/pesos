@@ -180,11 +180,11 @@ export default function FeedDisplay() {
   return (
     <div className="container mx-auto p-4 w-full">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Your PESOS* Feed</h1>
         <Link href="/profile">
           <Button>Profile</Button>
         </Link>
       </div>
+      <h1 className="text-3xl font-bold mb-6">Go to feed</h1>
       {feedErrors.length > 0 && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />

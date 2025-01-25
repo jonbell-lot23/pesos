@@ -1,12 +1,22 @@
 import { authMiddleware } from "@clerk/nextjs";
 
-export default authMiddleware({
-  // Routes that can be accessed while signed out
-  publicRoutes: ["/", "/feed-selection"],
-  // Routes that can always be accessed, and have
-  // no authentication information
-  ignoredRoutes: ["/api/public"],
-});
+import { NextResponse } from "next/server";
+
+import type { NextRequest } from "next/server";
+
+export default function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+  const isSignedIn = req.cookies.get("clerkSessionId");
+
+  if (pathname === "/" && isSignedIn) {
+    return NextResponse.redirect("/feed-display");
+  }
+
+  return authMiddleware({
+    publicRoutes: ["/", "/feed-selection"],
+    ignoredRoutes: ["/api/public"],
+  })(req);
+}
 
 export const config = {
   matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
