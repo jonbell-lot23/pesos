@@ -65,7 +65,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         {showUsernameModal && <UsernameModal />}
         {children}
         <div className="border-green-700 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <p className="text-sm text-gray-700">
+          <p className="text-sm text-gray-700 hidden">
             PESOS backs up your projects via RSS feeds so you have more control
             over your stuff. This helps when sites go down, turn fascist, or
             whatever the case may be.
