@@ -16,13 +16,6 @@ interface ParsedFeed {
   items: FeedItem[];
 }
 
-interface FeedResponse {
-  url: string;
-  title: string;
-  items: FeedItem[];
-  error?: string;
-}
-
 const parseXml = promisify(parseString);
 
 async function fetchFeed(url: string) {
@@ -62,7 +55,7 @@ async function parseFeed(url: string, data: any): Promise<ParsedFeed> {
       return {
         title: data.title || new URL(url).hostname,
         items: (data.items || []).map(
-          (item: Record<string, any>): FeedItem => ({
+          (item: any): FeedItem => ({
             title: item.title || "No title",
             link: item.url || "#",
             pubDate: item.date_published || new Date().toISOString(),
@@ -86,7 +79,7 @@ async function parseFeed(url: string, data: any): Promise<ParsedFeed> {
           ? channel.item
           : [channel.item] || []
         ).map(
-          (item: Record<string, any>): FeedItem => ({
+          (item: any): FeedItem => ({
             title: item?.title || "No title",
             link: item?.link || "#",
             pubDate: item?.pubDate || new Date().toISOString(),
@@ -107,7 +100,6 @@ export async function POST(request: Request) {
   let userId: string | undefined;
   try {
     const authResult = await auth();
-    console.log("Auth Result:", authResult);
     userId = authResult.userId ?? undefined;
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
