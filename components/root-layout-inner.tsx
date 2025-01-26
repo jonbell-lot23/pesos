@@ -47,7 +47,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">
-            PESOS<sup className="text-sm text-green-700">*</sup>
+            PESOS<sup className="text-md text-black">*</sup>
           </h1>
           <div className="flex items-center space-x-4">
             <SignedOut>
