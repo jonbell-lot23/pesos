@@ -1,7 +1,5 @@
 "use client";
 
-"use client";
-
 import { useEffect, useState } from "react";
 import {
   Table,
@@ -12,6 +10,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import MetricsDisplay from "@/components/ui/MetricsDisplay";
+import { calculateMetrics } from "@/lib/utils";
 
 interface FeedItem {
   title: string;
@@ -66,10 +66,13 @@ export default function ExportPage() {
     downloadAnchorNode.remove();
   };
 
+  const metrics = calculateMetrics(feedItems);
+
   return (
     <div className="w-full flex justify-between items-center">
       <div className="flex min-h-screen w-full flex-col p-8">
-        <div className="flex justify-center items-center mb-4">
+        <MetricsDisplay {...metrics} />
+        <div className="flex justify-center items-center mb-4 mt-8">
           <Button onClick={handleExport} className="text-sm hover:bg-blue-500">
             Export as JSON
           </Button>
