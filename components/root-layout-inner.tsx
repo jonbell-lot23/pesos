@@ -49,7 +49,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           <h1 className="text-2xl font-bold text-gray-900">
             PESOS<sup className="text-md text-black">*</sup>
           </h1>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-4 hidden">
             <SignedOut>
               <SignInButton mode="modal">
                 <Button variant="outline">Sign In</Button>
