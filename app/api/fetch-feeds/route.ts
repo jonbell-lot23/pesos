@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseString } from "xml2js";
 import { promisify } from "util";
-import { auth } from "@clerk/nextjs";
 
 interface FeedItem {
   title: string;
@@ -77,7 +76,7 @@ async function parseFeed(url: string, data: any): Promise<ParsedFeed> {
         title: channel.title || new URL(url).hostname,
         items: (Array.isArray(channel.item)
           ? channel.item
-          : [channel.item] || []
+          : [channel.item]
         ).map(
           (item: any): FeedItem => ({
             title: item?.title || "No title",
@@ -97,21 +96,6 @@ async function parseFeed(url: string, data: any): Promise<ParsedFeed> {
 }
 
 export async function POST(request: Request) {
-  let userId: string | undefined;
-  try {
-    const authResult = await auth();
-    userId = authResult.userId ?? undefined;
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-  } catch (authError) {
-    console.error("Error during authentication:", authError);
-    return NextResponse.json(
-      { error: "Authentication failed" },
-      { status: 500 }
-    );
-  }
-
   const { sources } = await request.json();
   if (!sources || !Array.isArray(sources)) {
     return NextResponse.json(

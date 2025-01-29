@@ -25,17 +25,19 @@ export default function ExportPage() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
 
   useEffect(() => {
-    fetchFeedData();
+    const urlParams = new URLSearchParams(window.location.search);
+    const feedUrls = urlParams.getAll("feedUrls");
+    fetchFeedData(feedUrls);
   }, []);
 
-  const fetchFeedData = async () => {
+  const fetchFeedData = async (feedUrls: string[]) => {
     try {
       const response = await fetch("/api/fetch-feeds", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ sources: [] }), // Add actual sources here
+        body: JSON.stringify({ sources: feedUrls }), // Use feed URLs from previous page
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);

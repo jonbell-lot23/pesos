@@ -108,7 +108,13 @@ export default function Page() {
   };
 
   const handleContinue = () => {
-    window.location.href = "/guest/export";
+    const feedUrls = feeds
+      .map((feed) => feed.url)
+      .filter((url) => url.trim() !== "");
+    const queryString = feedUrls
+      .map((url) => `feedUrls=${encodeURIComponent(url)}`)
+      .join("&");
+    window.location.href = `/guest/export?${queryString}`;
   };
 
   return (
