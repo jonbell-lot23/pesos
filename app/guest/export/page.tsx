@@ -67,33 +67,34 @@ export default function ExportPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col p-8">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-4xl font-bold">Feed Items</h1>
-        <Button onClick={handleExport} className="text-xl">
-          Export
-        </Button>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Source</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {feedItems.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>{item.title}</TableCell>
-              <TableCell>
-                {new Date(item.pubDate).toLocaleDateString()}
-              </TableCell>
-              <TableCell>{item.source}</TableCell>
+    <div className="w-full flex justify-between items-center">
+      <div className="flex min-h-screen w-full flex-col p-8">
+        <div className="flex justify-center items-center mb-4">
+          <Button onClick={handleExport} className="text-sm hover:bg-blue-500">
+            Export as JSON
+          </Button>
+        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Date</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Source</TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {feedItems.map((item, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  {new Date(item.pubDate).toLocaleDateString()}
+                </TableCell>
+                <TableCell>{item.title}</TableCell>
+                <TableCell>{item.source}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }

@@ -120,9 +120,9 @@ export default function Page() {
   return (
     <div className="flex min-h-screen flex-col items-center p-8">
       <header className="w-full max-w-2xl mb-12">
-        <h1 className="font-mono text-2xl font-bold">PESOS*</h1>
+        <h1 className="text-2xl font-bold">About</h1>
         <p className="text-sm text-muted-foreground mt-2">
-          A simple way to back up your RSS feeds so you control your own
+          This is a simple way to back up your RSS feeds so you control your own
           content.
         </p>
       </header>
@@ -137,7 +137,7 @@ export default function Page() {
                 value={feed.url}
                 onChange={(e) => handleInputChange(feed.id, e.target.value)}
                 className={cn(
-                  "font-mono pr-24",
+                  "font-mono pr-24 bg-white",
                   index !== 0 &&
                     !feeds[index - 1].url &&
                     "opacity-50 cursor-not-allowed",
