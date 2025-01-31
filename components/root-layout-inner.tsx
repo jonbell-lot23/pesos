@@ -49,7 +49,15 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           <h1 className="text-2xl font-bold text-gray-900">
             PESOS<sup className="text-md text-black">*</sup>
           </h1>
-          <div className="flex items-center space-x-4 hidden">
+          <div className="flex items-center space-x-4">
+            <div className="mr-4 flex space-x-4">
+              <Link href="/guest/export">
+                <h2>Export</h2>
+              </Link>
+              <Link href="/guest/backup">
+                <h2>Backup</h2>
+              </Link>
+            </div>
             <SignedOut>
               <SignInButton mode="modal">
                 <Button variant="outline">Sign In</Button>
@@ -65,7 +73,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         {showUsernameModal && <UsernameModal />}
         {children}
         <div className="border-green-700 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <p className="text-sm text-gray-700 hidden">
+          <p className="text-sm text-gray-700">
             PESOS backs up your projects via RSS feeds so you have more control
             over your stuff. This helps when sites go down, turn fascist, or
             whatever the case may be.
