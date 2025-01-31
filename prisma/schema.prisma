@@ -38,25 +38,54 @@ model firehose {
   User        User     @relation(fields: [userid], references: [id], onDelete: SetNull)
 }
 
+model pesos_Items {
+  id          Int      @id @default(autoincrement())
+  title       String
+  url         String
+  description String?
+  postdate    DateTime
+  source      String?
+  slug        String   @default("")
+  userId      String? // Now matching pesos_User's id type (String)
+  sourceId    Int?
+
+  // Relation to pesos_User (note the lowercase field name)
+  pesos_User    pesos_User?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  // Relation to pesos_Sources remains unchanged
+  pesos_Sources pesos_Sources? @relation(fields: [sourceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@unique([slug], name: "pesos_Items_slug_key")
+}
+
 model pesos_User {
-  id        String   @id // Clerk ID
-  username  String   @unique
-  createdAt DateTime @default(now())
-  sources   pesos_UserSources[]
+  id          String              @id
+  username    String              @unique
+  createdAt   DateTime            @default(now())
+  // Back relation for pesos_Items
+  pesos_Items pesos_Items[]
+  // Relation for sources
+  sources     pesos_UserSources[]
 }
 
 model pesos_Sources {
-  id      Int      @id @default(autoincrement())
-  url     String   @unique
-  users   pesos_UserSources[]
+  id          Int                 @id @default(autoincrement())
+  url         String              @unique
+  users       pesos_UserSources[]
+  pesos_Items pesos_Items[]
 }
 
 model pesos_UserSources {
   userId    String
   sourceId  Int
-  createdAt DateTime @default(now())
-  user      pesos_User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  source    pesos_Sources  @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  source    pesos_Sources @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+  user      pesos_User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, sourceId])
+}
+
+model Backup {
+  id         Int      @id @default(autoincrement())
+  timestamp  DateTime @default(now())
+  storyCount Int      @default(0)
 }
