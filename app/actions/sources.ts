@@ -3,6 +3,20 @@
 import { prisma } from "@/lib/prisma";
 import { validateRSSFeed } from "@/app/actions";
 
+interface ValidateRSSFeedSuccess {
+  success: true;
+  feedUrl?: string;
+  title: string;
+  postCount: number;
+}
+
+interface ValidateRSSFeedError {
+  success: false;
+  error: string;
+}
+
+type ValidateRSSFeedResult = ValidateRSSFeedSuccess | ValidateRSSFeedError;
+
 export async function getUserSources(userId: string) {
   const user = await prisma.pesos_User.findUnique({
     where: { id: userId },
@@ -44,7 +58,7 @@ export async function addUserSource(
   url: string
 ): Promise<AddSourceResult> {
   // First validate the RSS feed
-  const result = await validateRSSFeed(url);
+  const result = (await validateRSSFeed(url)) as ValidateRSSFeedResult;
   if (!result.success) {
     return { success: false, error: result.error };
   }
