@@ -54,9 +54,15 @@ export default function BackupPage() {
           status: "idle",
         }))
       );
-    } catch (error) {
-      console.error("Error fetching sources:", error);
-      setError("Failed to fetch sources. Please try again.");
+      // Fetch and log posts for the source
+      const postsResponse = await fetch(
+        `/api/fetch-posts?sourceId=${sourceId}`
+      );
+      if (!postsResponse.ok) {
+        throw new Error("Failed to fetch posts");
+      }
+      const posts = await postsResponse.json();
+      posts.forEach((post: any) => console.log("Post:", post));
     } finally {
       setIsLoading(false);
     }
@@ -91,6 +97,7 @@ export default function BackupPage() {
   };
 
   const checkSource = async (sourceId: number) => {
+    console.log("Current feed sources:", feedSources); // Log all items to the console
     setFeedSources((current) =>
       current.map((source) =>
         source.id === sourceId ? { ...source, status: "loading" } : source
