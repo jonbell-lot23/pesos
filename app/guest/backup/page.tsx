@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +36,9 @@ export default function BackupPage() {
   const [newSourceUrl, setNewSourceUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [data, setData] = useState<any>(null);
+
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchSources = useCallback(async () => {
     if (!user?.id) return;
@@ -149,6 +152,36 @@ export default function BackupPage() {
     }
   };
 
+  const handleContinue = async () => {
+    setIsLoading(true);
+    const fetchedData = await fetchDataFromAPI();
+    setData(fetchedData);
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    // If your data fetching happens automatically, you could set loading here.
+    // For now, assume handleContinue is fired by a continue button.
+  }, []);
+
+  const handleFeedChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+
+      // Clear any existing timer
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Set new timer to wait 300ms after the last keystroke
+      debounceTimeoutRef.current = setTimeout(() => {
+        // Call the API or update state with the debounced value
+        updateFeed(value);
+      }, 300);
+    },
+    []
+  );
+
   if (!isSignedIn) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -157,6 +190,12 @@ export default function BackupPage() {
           <Button className="text-sm hover:bg-blue-500">Sign In</Button>
         </SignInButton>
       </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen font-light text-gray-200">Loading...</div>
     );
   }
 
@@ -214,6 +253,36 @@ export default function BackupPage() {
           ))}
         </TableBody>
       </Table>
+
+      {!data ? (
+        <button onClick={handleContinue}>Continue</button>
+      ) : (
+        <div>{/* Render your fetched data here */}</div>
+      )}
+
+      <label htmlFor="feed-edit">Edit Feed:</label>
+      <input
+        id="feed-edit"
+        type="text"
+        onChange={handleFeedChange}
+        defaultValue=""
+      />
     </div>
   );
+}
+
+// Helper function (simulate an async fetch)
+async function fetchDataFromAPI() {
+  // simulate a delay
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ example: "data" });
+    }, 2000);
+  });
+}
+
+// Example update function – replace with your actual update logic.
+function updateFeed(newValue: string) {
+  // Call your API or update state accordingly.
+  console.log("Updating feed with:", newValue);
 }

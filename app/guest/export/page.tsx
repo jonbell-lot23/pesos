@@ -16,6 +16,7 @@ import { calculateMetrics } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Loader2, ArrowDown, Check, X } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface FeedItem {
   title: string;
@@ -37,18 +38,35 @@ export default function ExportPage() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [newFeedUrl, setNewFeedUrl] = useState("");
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const feedUrls = urlParams.getAll("feedUrls");
-    fetchFeedData(feedUrls);
-    setFeeds(
-      feedUrls.map((url, index) => ({
-        id: String(index + 1),
-        url,
-        status: "idle",
-      }))
-    );
+    // Only redirect if no feedUrls parameter was passed in the query string
+    const feedUrls = searchParams.getAll("feedUrls");
+    if (feedUrls.length === 0) {
+      router.replace("/");
+    }
+  }, [router, searchParams]);
+
+  useEffect(() => {
+    async function loadFeedData() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const feedUrls = urlParams.getAll("feedUrls");
+      // Fetch feed data then mark loading as finished
+      await fetchFeedData(feedUrls);
+      setFeeds(
+        feedUrls.map((url, index) => ({
+          id: String(index + 1),
+          url,
+          status: "idle",
+        }))
+      );
+      setIsLoadingData(false);
+    }
+    loadFeedData();
   }, []);
 
   const fetchFeedData = async (feedUrls: string[]) => {
@@ -167,6 +185,15 @@ export default function ExportPage() {
 
   const metrics = calculateMetrics(feedItems);
 
+  // Display a loading screen until feed data is fetched
+  if (isLoadingData) {
+    return (
+      <div className="min-h-screen flex justify-center items-center">
+        <div className="text-xl font-bold">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full flex justify-between items-center">
       <div className="flex min-h-screen w-full flex-col p-8">
@@ -278,20 +305,29 @@ export default function ExportPage() {
                 <Input
                   type="url"
                   placeholder="Enter RSS feed URL"
-                  value=""
-                  onChange={(e) =>
+                  value={newFeedUrl}
+                  onChange={(e) => setNewFeedUrl(e.target.value)}
+                  className="font-mono pr-24 bg-white"
+                />
+              </div>
+              <Button
+                onClick={() => {
+                  if (newFeedUrl.trim()) {
                     setFeeds((current) => [
                       ...current,
                       {
                         id: String(current.length + 1),
-                        url: e.target.value,
+                        url: newFeedUrl,
                         status: "idle",
                       },
-                    ])
+                    ]);
+                    setNewFeedUrl("");
                   }
-                  className="font-mono pr-24 bg-white"
-                />
-              </div>
+                }}
+                className="text-sm hover:bg-blue-500"
+              >
+                Add Feed
+              </Button>
             </div>
             <div className="flex justify-end mt-4">
               <Button
