@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { getUserSources, addUserSource } from "@/app/actions/sources";
 import { prisma } from "@/lib/prisma"; // Importing the Prisma client
-import { fetchFeed, parseFeed } from "@/app/api/check-sources/route";
 import { Loader2, Check, X } from "lucide-react";
 import {
   Table,
@@ -37,12 +36,6 @@ export default function BackupPage() {
   const [newSourceUrl, setNewSourceUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (isSignedIn && user?.id) {
-      fetchSources();
-    }
-  }, [isSignedIn, user?.id, fetchSources]);
 
   const fetchSources = useCallback(async () => {
     if (!user?.id) return;
@@ -81,6 +74,12 @@ export default function BackupPage() {
       setIsLoading(false);
     }
   }, [user?.id]); // ✅ Ensures useCallback only updates when user.id changes
+
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      fetchSources();
+    }
+  }, [isSignedIn, user?.id, fetchSources]);
 
   useEffect(() => {
     if (isSignedIn && user?.id) {
