@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 
 const parseXml = promisify(parseString);
 
-async function fetchFeed(url: string) {
+export async function fetchFeed(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);
 
@@ -37,7 +37,7 @@ async function fetchFeed(url: string) {
   }
 }
 
-async function parseFeed(data: string) {
+export async function parseFeed(data: string) {
   try {
     const result = await parseXml(data, {
       explicitArray: false,

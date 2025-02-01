@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { getUserSources, addUserSource } from "@/app/actions/sources";
+import { prisma } from "@/lib/prisma"; // Importing the Prisma client
+import { fetchFeed, parseFeed } from "@/app/api/check-sources/route";
 import { Loader2, Check, X } from "lucide-react";
 import {
   Table,
@@ -116,6 +118,26 @@ export default function BackupPage() {
       }
 
       const data = await response.json();
+      const feedItems = await fetchFeed(data.url); // Fetch the feed items
+      const parsedItems = await parseFeed(feedItems); // Parse the feed items
+
+      // Insert each item into the pesos_items table
+      for (const item of parsedItems) {
+        if (user) {
+          // Check if user is defined
+          await prisma.pesos_items.create({
+            data: {
+              title: item.title,
+              url: item.link, // Assuming the link is in the item
+              description: item.description,
+              postdate: new Date(item.pubDate), // Assuming pubDate is in the item
+              sourceId: data.sourceId, // Link to the source
+              userId: user.id, // Assuming you want to link to the current user
+            },
+          });
+        }
+      }
+
       setFeedSources((current) =>
         current.map((source) =>
           source.id === sourceId
