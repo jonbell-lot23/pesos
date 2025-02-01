@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useEffect, useState } from "react";
 import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,11 +43,12 @@ export default function BackupPage() {
     if (isSignedIn && user?.id) {
       fetchSources();
     }
-  }, [isSignedIn, user?.id]);
+  }, [isSignedIn, user?.id, fetchSources]);
 
-  const fetchSources = async () => {
+  const fetchSources = useCallback(async () => {
     if (!user?.id) return;
     setIsLoading(true);
+
     try {
       const sources = await getUserSources(user.id);
       setFeedSources(
@@ -59,23 +61,33 @@ export default function BackupPage() {
 
       // Fetch posts for each source
       for (const source of sources) {
-        const postsResponse = await fetch(
-          `/api/fetch-posts?sourceId=${source.id}`
-        );
+        try {
+          const postsResponse = await fetch(
+            `/api/fetch-posts?sourceId=${source.id}`
+          );
 
-        if (!postsResponse.ok) {
-          throw new Error(`Failed to fetch posts for sourceId ${source.id}`);
+          if (!postsResponse.ok) {
+            throw new Error(`Failed to fetch posts for sourceId ${source.id}`);
+          }
+
+          const posts = await postsResponse.json();
+          console.log(`Posts for source ${source.id}:`, posts);
+        } catch (err) {
+          console.error(`Error fetching posts for source ${source.id}:`, err);
         }
-
-        const posts = await postsResponse.json();
-        console.log(`Posts for source ${source.id}:`, posts);
       }
     } catch (error) {
       console.error("Error fetching sources:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.id]); // ✅ Ensures useCallback only updates when user.id changes
+
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      fetchSources();
+    }
+  }, [isSignedIn, user?.id, fetchSources]); // ✅ No infinite loop
 
   const handleAddSource = async () => {
     if (user?.id && newSourceUrl) {
