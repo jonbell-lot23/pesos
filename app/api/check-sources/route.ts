@@ -1,113 +1,94 @@
-import { NextResponse } from "next/server";
-import { parseString } from "xml2js";
-import { promisify } from "util";
-import { prisma } from "@/lib/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { PrismaClient } from "@prisma/client";
+import RssParser from "rss-parser";
 
-const parseXml = promisify(parseString);
+const prisma = new PrismaClient();
+const parser = new RssParser();
 
-export async function fetchFeed(url: string) {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 20000);
+const generateSlug = () => {
+  return (
+    Math.random().toString(36).substr(2, 2) +
+    "-" +
+    Math.random().toString(36).substr(2, 6)
+  );
+};
 
+export async function POST(req: NextRequest) {
   try {
-    const validUrl = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const { sourceId } = await req.json();
 
-    const response = await fetch(validUrl.toString(), {
-      headers: {
-        "User-Agent": "PESOS RSS Aggregator/1.0",
-      },
-      signal: controller.signal,
-    });
+    console.log(`Received sourceId:`, sourceId); // Log received sourceId
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.text();
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === "AbortError") {
-        throw new Error("Request timed out after 20 seconds");
-      }
-      throw error;
-    }
-    throw new Error("An unknown error occurred");
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export async function parseFeed(data: string) {
-  try {
-    const result = await parseXml(data, {
-      explicitArray: false,
-      mergeAttrs: true,
-    });
-
-    if (result.rss && result.rss.channel) {
-      const channel = result.rss.channel;
-      return Array.isArray(channel.item) ? channel.item : [channel.item];
-    }
-
-    if (result.feed) {
-      return Array.isArray(result.feed.entry)
-        ? result.feed.entry
-        : [result.feed.entry];
-    }
-
-    throw new Error("Unsupported feed format");
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Failed to parse feed: ${error.message}`);
-    }
-    throw new Error("Failed to parse feed: Unknown error");
-  }
-}
-
-export async function POST(request: Request) {
-  try {
-    const data = await request.json();
-
-    if (!data || typeof data.sourceId !== "number") {
-      console.error("Invalid request payload:", data);
+    if (!sourceId) {
+      console.error("No sourceId provided");
       return NextResponse.json(
-        { error: "Invalid request payload. 'sourceId' must be a number." },
+        { error: "sourceId is required" },
         { status: 400 }
       );
     }
 
-    const { sourceId } = data;
+    console.log("Testing Prisma:", prisma);
+    console.log(
+      "Testing Prisma sources:",
+      await prisma.pesos_Sources.findMany()
+    );
 
+    // Fetch source from database
     const source = await prisma.pesos_Sources.findUnique({
       where: { id: sourceId },
+      select: { url: true, users: true },
     });
 
     if (!source) {
+      console.error(`Source not found for id: ${sourceId}`);
       return NextResponse.json({ error: "Source not found" }, { status: 404 });
     }
 
-    const feedContent = await fetchFeed(source.url);
-    const feedItems = await parseFeed(feedContent);
+    console.log(`Fetching RSS feed from: ${source.url}`);
 
-    const totalCount = feedItems.length;
+    const rssString = await fetch(source.url).then((res) => res.text());
 
-    console.log("Prisma.pesos_items:", prisma.pesos_items);
+    console.log("Fetched RSS successfully. Parsing...");
 
-    const storedCount = await prisma.pesos_items.count({
-      where: {
-        sourceId: sourceId,
-      },
+    const parsedFeed = await parser.parseString(rssString);
+
+    console.log(`Parsed ${parsedFeed.items.length} items from feed.`);
+
+    const existingItems = await prisma.pesos_items.findMany({
+      where: { userid: source.userid },
+      select: { url: true },
     });
 
-    return NextResponse.json({ stored: storedCount, total: totalCount });
-  } catch (error) {
-    console.error(
-      "Error checking source:",
-      error instanceof Error ? error.message : error
-    );
+    const existingUrls = new Set(existingItems.map((item) => item.url));
+
+    const newItems = parsedFeed.items
+      .slice(0, 15)
+      .filter((item) => item.link && !existingUrls.has(item.link))
+      .map((item) => ({
+        title: item.title || `${source.emoji} •`,
+        url: item.link,
+        description: item["content:encoded"] || item.content || "",
+        postdate: new Date(item.pubDate || item.date),
+        slug: `${Math.random().toString(36).substr(2, 2)}-${Math.random()
+          .toString(36)
+          .substr(2, 5)}`,
+        userid: source.userid,
+        sourceId,
+      }));
+
+    console.log(`Found ${newItems.length} new items for source ${sourceId}`);
+
+    for (let item of newItems) {
+      console.log(`Saving item: ${item.title}`);
+      await prisma.pesos_items.create({ data: item });
+    }
+
     return NextResponse.json(
-      { error: "Failed to check source" },
-      { status: 500 }
+      { message: "Check complete", newItems },
+      { status: 200 }
     );
+  } catch (err) {
+    console.error("Error in check-sources API:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }

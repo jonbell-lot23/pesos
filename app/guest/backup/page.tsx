@@ -56,15 +56,22 @@ export default function BackupPage() {
           status: "idle",
         }))
       );
-      // Fetch and log posts for the source
-      const postsResponse = await fetch(
-        `/api/fetch-posts?sourceId=${sourceId}`
-      );
-      if (!postsResponse.ok) {
-        throw new Error("Failed to fetch posts");
+
+      // Fetch posts for each source
+      for (const source of sources) {
+        const postsResponse = await fetch(
+          `/api/fetch-posts?sourceId=${source.id}`
+        );
+
+        if (!postsResponse.ok) {
+          throw new Error(`Failed to fetch posts for sourceId ${source.id}`);
+        }
+
+        const posts = await postsResponse.json();
+        console.log(`Posts for source ${source.id}:`, posts);
       }
-      const posts = await postsResponse.json();
-      posts.forEach((post: any) => console.log("Post:", post));
+    } catch (error) {
+      console.error("Error fetching sources:", error);
     } finally {
       setIsLoading(false);
     }
@@ -99,64 +106,34 @@ export default function BackupPage() {
   };
 
   const checkSource = async (sourceId: number) => {
-    console.log("Current feed sources:", feedSources); // Log all items to the console
-    setFeedSources((current) =>
-      current.map((source) =>
-        source.id === sourceId ? { ...source, status: "loading" } : source
-      )
+    setFeedSources((prev) =>
+      prev.map((s) => (s.id === sourceId ? { ...s, status: "loading" } : s))
     );
 
     try {
-      const response = await fetch("/api/check-sources", {
+      const res = await fetch("/api/check-sources", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ sourceId }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to check source");
-      }
+      if (!res.ok) throw new Error("Failed to check source");
 
-      const data = await response.json();
-      const feedItems = await fetchFeed(data.url); // Fetch the feed items
-      const parsedItems = await parseFeed(feedItems); // Parse the feed items
+      const { newItems } = await res.json();
 
-      // Insert each item into the pesos_items table
-      for (const item of parsedItems) {
-        if (user) {
-          // Check if user is defined
-          await prisma.pesos_items.create({
-            data: {
-              title: item.title,
-              url: item.link, // Assuming the link is in the item
-              description: item.description,
-              postdate: new Date(item.pubDate), // Assuming pubDate is in the item
-              sourceId: data.sourceId, // Link to the source
-              userId: user.id, // Assuming you want to link to the current user
-            },
-          });
-        }
-      }
-
-      setFeedSources((current) =>
-        current.map((source) =>
-          source.id === sourceId
-            ? {
-                ...source,
-                status: "success",
-                storedCount: data.stored,
-                totalCount: data.total,
-              }
-            : source
+      setFeedSources((prev) =>
+        prev.map((s) =>
+          s.id === sourceId
+            ? { ...s, status: "success", storedCount: newItems.length }
+            : s
         )
       );
     } catch (error) {
-      console.error("Error checking source:", error);
-      setFeedSources((current) =>
-        current.map((source) =>
-          source.id === sourceId
-            ? { ...source, status: "error", error: "Failed to check source" }
-            : source
+      setFeedSources((prev) =>
+        prev.map((s) =>
+          s.id === sourceId
+            ? { ...s, status: "error", error: error.message }
+            : s
         )
       );
     }
