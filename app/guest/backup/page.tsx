@@ -142,7 +142,7 @@ export default function BackupPage() {
       setFeedSources((prev) =>
         prev.map((s) =>
           s.id === sourceId
-            ? { ...s, status: "error", error: error.message }
+            ? { ...s, status: "error", error: (error as Error).message }
             : s
         )
       );

@@ -66,11 +66,11 @@ export async function POST(req: NextRequest) {
       .filter((item) => item.link && !existingUrls.has(item.link))
       .map((item) => ({
         title: item.title || "•",
-        url: item.link,
+        url: item.link ?? "",
         description: item["content:encoded"] || item.content || "",
         postdate: new Date(item.pubDate || item.date),
         slug: generateSlug(),
-        userId, // ✅ Corrected to `userId`
+        userId,
         sourceId,
       }));
 
@@ -87,7 +87,15 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
-    console.error("Error in check-sources API:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    if (err instanceof Error) {
+      console.error("Error in check-sources API:", err);
+      return NextResponse.json({ error: err.message }, { status: 500 });
+    } else {
+      console.error("Unknown error in check-sources API:", err);
+      return NextResponse.json(
+        { error: "An unknown error occurred" },
+        { status: 500 }
+      );
+    }
   }
 }
