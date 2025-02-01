@@ -5,7 +5,6 @@ import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
 import { getUserSources, addUserSource } from "@/app/actions/sources";
 import { prisma } from "@/lib/prisma"; // Importing the Prisma client
 import { fetchFeed, parseFeed } from "@/app/api/check-sources/route";
