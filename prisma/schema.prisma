@@ -38,7 +38,7 @@ model firehose {
   User        User     @relation(fields: [userid], references: [id], onDelete: SetNull)
 }
 
-model pesos_Items {
+model pesos_items {
   id          Int      @id @default(autoincrement())
   title       String
   url         String
@@ -54,15 +54,15 @@ model pesos_Items {
   // Relation to pesos_Sources remains unchanged
   pesos_Sources pesos_Sources? @relation(fields: [sourceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
-  @@unique([slug], name: "pesos_Items_slug_key")
+  @@unique([slug], name: "pesos_items_slug_key")
 }
 
 model pesos_User {
   id          String              @id
   username    String              @unique
   createdAt   DateTime            @default(now())
-  // Back relation for pesos_Items
-  pesos_Items pesos_Items[]
+  // Back relation for pesos_items
+  pesos_items pesos_items[]
   // Relation for sources
   sources     pesos_UserSources[]
 }
@@ -71,7 +71,7 @@ model pesos_Sources {
   id          Int                 @id @default(autoincrement())
   url         String              @unique
   users       pesos_UserSources[]
-  pesos_Items pesos_Items[]
+  pesos_items pesos_items[]
 }
 
 model pesos_UserSources {
