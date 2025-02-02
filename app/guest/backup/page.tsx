@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
 
 interface FeedSource {
   id: number;
@@ -37,8 +38,15 @@ export default function BackupPage() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [username, setUsername] = useState("");
+  const [localUser, setLocalUser] = useState<any | undefined>(undefined);
+  const [isFeedEditorOpen, setIsFeedEditorOpen] = useState(false);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // NEW: Log user object whenever it changes
+  useEffect(() => {
+    console.log("User object:", user);
+  }, [user]);
 
   const fetchSources = useCallback(async () => {
     if (!user?.id) return;
@@ -46,6 +54,8 @@ export default function BackupPage() {
 
     try {
       const sources = await getUserSources(user.id);
+      // NEW: Log sources fetched from DB
+      console.log("Fetched user sources from DB:", sources);
       setFeedSources(
         sources.map((source: any) => ({
           id: source.id,
@@ -76,7 +86,7 @@ export default function BackupPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]); // ✅ Ensures useCallback only updates when user.id changes
+  }, [user?.id]);
 
   useEffect(() => {
     if (isSignedIn && user?.id) {
@@ -183,26 +193,83 @@ export default function BackupPage() {
       setError("Username cannot be empty");
       return;
     }
+    if (!user?.id) {
+      setError("User not loaded. Please try again or refresh the page.");
+      return;
+    }
     try {
       const res = await fetch("/api/createUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username: username.trim() }),
+        body: JSON.stringify({ username: username.trim(), clerkId: user.id }),
       });
       if (!res.ok) {
         const errorData = await res.json();
-        console.error(errorData);
+        console.error("Error response from createUser:", errorData);
         throw new Error("Failed to create user");
       }
-      // On successful creation, refresh to update the user object
-      router.refresh();
+      // On successful creation, refresh the local user record
+      await fetchLocalUser();
     } catch (err) {
       setError("Failed to create user. Please try again.");
       console.error(err);
     }
   };
+
+  const fetchLocalUser = async () => {
+    if (user?.id) {
+      try {
+        const res = await fetch("/api/getLocalUser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clerkId: user.id }),
+        });
+        const data = await res.json();
+        console.log("Response received in fetchLocalUser:", data);
+        console.log("Fetched local user:", data);
+        setLocalUser(data.localUser || null);
+      } catch (error) {
+        console.error("Error fetching local user:", error);
+        setLocalUser(null);
+      }
+    }
+  };
+
+  // Fetch local user only when signed in and user is available.
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      fetchLocalUser();
+    }
+  }, [isSignedIn, user]);
+
+  // NEW: Callback for FeedEditor onContinue in the backup page.
+  const handleFeedEditorContinue = async (newFeeds: FeedEntry[]) => {
+    console.log("New feeds from FeedEditor:", newFeeds);
+    // Call the API to add feeds to the database
+    try {
+      const response = await fetch("/api/add-pesos-source", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ feeds: newFeeds, userId: localUser.id }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        console.error("Failed to add feeds:", data.error);
+      }
+    } catch (error) {
+      console.error("Error calling add-pesos-source API", error);
+    }
+    setIsFeedEditorOpen(false);
+    // Refresh the feed sources so that the new items appear immediately
+    await fetchSources();
+  };
+
+  // Instead of returning early, we set a flag to conditionally render the username form
+  const renderUsernameForm = !localUser || !localUser.username;
 
   if (!isLoaded) {
     return (
@@ -222,27 +289,10 @@ export default function BackupPage() {
     );
   }
 
-  if (!user?.username) {
-    // User is signed in but has not chosen a username yet.
+  if (localUser === undefined) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <h1 className="text-2xl font-bold mb-4">Choose a Username</h1>
-        <form onSubmit={handleSubmit} className="w-full max-w-md px-4">
-          <input
-            type="text"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded mb-2"
-          />
-          <button
-            type="submit"
-            className="w-full p-2 bg-blue-500 text-white rounded"
-          >
-            Submit
-          </button>
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </form>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div>Loading user info...</div>
       </div>
     );
   }
@@ -267,6 +317,33 @@ export default function BackupPage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+
+      {/* Show the username selection form if needed */}
+      {renderUsernameForm && (
+        <div className="mb-4 p-4 bg-gray-100 rounded">
+          <h1 className="text-2xl font-bold mb-4">Choose a Username</h1>
+          <form onSubmit={handleSubmit} className="w-full max-w-md px-4">
+            <input
+              type="text"
+              placeholder="Enter username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded mb-2"
+            />
+            <button
+              type="submit"
+              className="w-full p-2 bg-blue-500 text-white rounded"
+            >
+              Submit
+            </button>
+            {error && <p className="text-red-500 mt-2">{error}</p>}
+          </form>
+        </div>
+      )}
+
+      <Button onClick={() => setIsFeedEditorOpen(true)} className="mb-4">
+        Edit feeds
+      </Button>
 
       <Table>
         <TableHeader>
@@ -316,13 +393,25 @@ export default function BackupPage() {
         <div>{/* Render your fetched data here */}</div>
       )}
 
-      <label htmlFor="feed-edit">Edit Feed:</label>
-      <input
-        id="feed-edit"
-        type="text"
-        onChange={handleFeedChange}
-        defaultValue=""
-      />
+      {/* Modal for editing feeds */}
+      {isFeedEditorOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded shadow-lg w-full max-w-md">
+            <div className="flex justify-end">
+              <button
+                className="p-2 text-sm"
+                onClick={() => setIsFeedEditorOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <FeedEditor
+              // No initial feeds provided (or you could map existing URLs if desired)
+              onContinue={handleFeedEditorContinue}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

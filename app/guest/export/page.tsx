@@ -13,11 +13,10 @@ import {
 import { Button } from "@/components/ui/button";
 import MetricsDisplay from "@/components/ui/MetricsDisplay";
 import { calculateMetrics } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { Loader2, ArrowDown, Check, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
+import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
 
 interface FeedItem {
   title: string;
@@ -27,24 +26,12 @@ interface FeedItem {
   content?: string;
 }
 
-interface FeedEntry {
-  id: string;
-  url: string;
-  status: "idle" | "loading" | "success" | "error";
-  errorMessage?: string;
-  postCount?: number;
-}
-
 export default function ExportPage() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [newFeedUrl, setNewFeedUrl] = useState("");
-  const [username, setUsername] = useState("");
-  const [error, setError] = useState("");
   const { isLoaded, isSignedIn, user } = useUser();
 
   useEffect(() => {
@@ -61,13 +48,6 @@ export default function ExportPage() {
       const feedUrls = urlParams.getAll("feedUrls");
       // Fetch feed data then mark loading as finished
       await fetchFeedData(feedUrls);
-      setFeeds(
-        feedUrls.map((url, index) => ({
-          id: String(index + 1),
-          url,
-          status: "idle",
-        }))
-      );
       setIsLoadingData(false);
     }
     loadFeedData();
@@ -80,7 +60,7 @@ export default function ExportPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ sources: feedUrls }), // Use feed URLs from previous page
+        body: JSON.stringify({ sources: feedUrls }),
       });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -97,125 +77,17 @@ export default function ExportPage() {
     }
   };
 
-  const handleExport = () => {
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(feedItems));
-    const downloadAnchorNode = document.createElement("a");
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "feeds_export.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
-  };
-
-  const handleInputChange = (id: string, value: string) => {
-    setFeeds((current) =>
-      current.map((feed) =>
-        feed.id === id
-          ? {
-              ...feed,
-              url: value,
-              status: "idle" as const,
-              errorMessage: undefined,
-              postCount: undefined,
-            }
-          : feed
-      )
-    );
-
-    if (value.trim()) {
-      validateFeed(id, value);
-    }
-  };
-
-  const validateFeed = async (id: string, value: string) => {
-    setFeeds((current) =>
-      current.map((feed) =>
-        feed.id === id ? { ...feed, status: "loading" as const } : feed
-      )
-    );
-
-    try {
-      const result = await validateRSSFeed(value);
-      if (result.success) {
-        setFeeds((current) => {
-          const updatedFeed: FeedEntry = {
-            ...current.find((f) => f.id === id)!,
-            status: "success" as const,
-            url: result.feedUrl || value,
-            postCount: result.postCount,
-          };
-
-          return current.map((feed) => (feed.id === id ? updatedFeed : feed));
-        });
-
-        // Update the URL in the browser
-        const newFeedUrls = feeds.map((feed) => feed.url).filter(Boolean);
-        const queryString = newFeedUrls
-          .map((url) => `feedUrls=${encodeURIComponent(url)}`)
-          .join("&");
-        window.history.replaceState(null, "", `?${queryString}`);
-
-        // Fetch new feed data
-        fetchFeedData(newFeedUrls);
-      } else {
-        setFeeds((current) =>
-          current.map((feed) =>
-            feed.id === id
-              ? {
-                  ...feed,
-                  status: "error" as const,
-                  errorMessage: result.error,
-                }
-              : feed
-          )
-        );
-      }
-    } catch (error) {
-      setFeeds((current) =>
-        current.map((feed) =>
-          feed.id === id
-            ? {
-                ...feed,
-                status: "error" as const,
-                errorMessage: "Failed to validate feed",
-              }
-            : feed
-        )
-      );
-    }
+  const handleFeedEditorContinue = (newFeeds: FeedEntry[]) => {
+    const newFeedUrls = newFeeds.map((feed) => feed.url);
+    const queryString = newFeedUrls
+      .map((url) => `feedUrls=${encodeURIComponent(url)}`)
+      .join("&");
+    window.history.replaceState(null, "", `?${queryString}`);
+    fetchFeedData(newFeedUrls);
+    setIsModalOpen(false);
   };
 
   const metrics = calculateMetrics(feedItems);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setError("");
-    if (!username.trim()) {
-      setError("Username cannot be empty");
-      return;
-    }
-    try {
-      const res = await fetch("/api/createUser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ username: username.trim() }),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        console.error(errorData);
-        throw new Error("Failed to create user");
-      }
-      // Refresh the page so that the updated user data (with username) is loaded.
-      router.refresh();
-    } catch (err) {
-      setError("Failed to create user. Please try again.");
-      console.error(err);
-    }
-  };
 
   if (!isLoaded) {
     return (
@@ -226,7 +98,6 @@ export default function ExportPage() {
   }
 
   if (!isSignedIn) {
-    // If the user is not signed in, show a sign-in prompt.
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <p className="mb-4">You must be signed in to continue.</p>
@@ -235,32 +106,6 @@ export default function ExportPage() {
     );
   }
 
-  if (!user?.username) {
-    // User is signed in but has not chosen a username yet.
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <h1 className="text-2xl font-bold mb-4">Choose a Username</h1>
-        <form onSubmit={handleSubmit} className="w-full max-w-md px-4">
-          <input
-            type="text"
-            placeholder="Enter username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="w-full p-2 border border-gray-300 rounded mb-2"
-          />
-          <button
-            type="submit"
-            className="w-full p-2 bg-blue-500 text-white rounded"
-          >
-            Submit
-          </button>
-          {error && <p className="text-red-500 mt-2">{error}</p>}
-        </form>
-      </div>
-    );
-  }
-
-  // Display a loading screen until feed data is fetched
   if (isLoadingData) {
     return (
       <div className="min-h-screen flex justify-center items-center">
@@ -269,7 +114,13 @@ export default function ExportPage() {
     );
   }
 
-  // Main UI (when user is signed in and has chosen a username)
+  const feedUrls = searchParams.getAll("feedUrls");
+  const initialFeeds: FeedEntry[] = feedUrls.map((url, index) => ({
+    id: String(index + 1),
+    url,
+    status: "idle",
+  }));
+
   return (
     <div className="min-h-screen bg-white">
       <div className="p-8">
@@ -281,7 +132,20 @@ export default function ExportPage() {
           >
             Edit feeds
           </Button>
-          <Button onClick={handleExport} className="text-sm hover:bg-blue-500">
+          <Button
+            onClick={() => {
+              const dataStr =
+                "data:text/json;charset=utf-8," +
+                encodeURIComponent(JSON.stringify(feedItems));
+              const downloadAnchorNode = document.createElement("a");
+              downloadAnchorNode.setAttribute("href", dataStr);
+              downloadAnchorNode.setAttribute("download", "feeds_export.json");
+              document.body.appendChild(downloadAnchorNode);
+              downloadAnchorNode.click();
+              downloadAnchorNode.remove();
+            }}
+            className="text-sm hover:bg-blue-500"
+          >
             Export as JSON
           </Button>
         </div>
@@ -306,6 +170,25 @@ export default function ExportPage() {
           </TableBody>
         </Table>
       </div>
+
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-4 rounded shadow-lg w-full max-w-md">
+            <div className="flex justify-end">
+              <button
+                className="p-2 text-sm"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            <FeedEditor
+              initialFeeds={initialFeeds}
+              onContinue={handleFeedEditorContinue}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

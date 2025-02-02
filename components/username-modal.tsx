@@ -38,7 +38,9 @@ export default function UsernameModal() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">Choose a Username</h2>
+        <h2 className="text-xl font-semibold mb-4">
+          Choose a Username (modal)
+        </h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"

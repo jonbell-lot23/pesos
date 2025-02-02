@@ -2,57 +2,45 @@
 // Import your database client or user-creation module.
 // For example, if you're using Prisma:
 import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+// Modify the regex to accept both "clrk_" and "user_" prefixes.
+const createUserSchema = z.object({
+  username: z.string().min(1, "Username cannot be empty"),
+  clerkId: z
+    .string()
+    .regex(/^(clrk_|user_)[0-9a-zA-Z]+$/, "Invalid clerkId format"),
+});
 
 export async function POST(req: Request) {
+  const { username, clerkId } = await req.json();
+
   try {
-    // Ensure we have a valid JSON payload
-    const data = await req.json();
-
-    if (!data || typeof data !== "object") {
-      return new Response(
-        JSON.stringify({ error: "Invalid request payload" }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
-      );
-    }
-
-    const { username } = data;
-
-    if (!username || typeof username !== "string" || !username.trim()) {
-      return new Response(JSON.stringify({ error: "Username is required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
-
-    // Check if a user with the same username already exists
-    const existingUser = await prisma.pesos_User.findFirst({
-      where: { username },
+    // Check if a local user record already exists
+    const existingUser = await prisma.pesos_User.findUnique({
+      where: { id: clerkId },
     });
+
     if (existingUser) {
-      return new Response(
-        JSON.stringify({ error: "Username already exists" }),
-        { status: 409, headers: { "Content-Type": "application/json" } }
-      );
+      return NextResponse.json({ success: true, localUser: existingUser });
     }
 
-    // Create the user
-    const user = await prisma.pesos_User.create({
+    // Create a new local user record using clerkId as id
+    const newUser = await prisma.pesos_User.create({
       data: {
-        id: crypto.randomUUID(),
-        username: username.trim(),
+        id: clerkId,
+        username,
       },
     });
 
-    return new Response(JSON.stringify({ user }), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
-  } catch (err) {
-    console.error("Error creating user:", err);
-    return new Response(JSON.stringify({ error: "Failed to create user" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ success: true, localUser: newUser });
+  } catch (error: any) {
+    console.error("Error creating local user:", error);
+    return NextResponse.json(
+      { success: false, error: error.message },
+      { status: 500 }
+    );
   }
 }
 
