@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Loader2, ArrowDown, Check, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SignInButton, useUser } from "@clerk/nextjs";
 
 interface FeedItem {
   title: string;
@@ -42,6 +43,9 @@ export default function ExportPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [newFeedUrl, setNewFeedUrl] = useState("");
+  const [username, setUsername] = useState("");
+  const [error, setError] = useState("");
+  const { isLoaded, isSignedIn, user } = useUser();
 
   useEffect(() => {
     // Only redirect if no feedUrls parameter was passed in the query string
@@ -185,6 +189,77 @@ export default function ExportPage() {
 
   const metrics = calculateMetrics(feedItems);
 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    if (!username.trim()) {
+      setError("Username cannot be empty");
+      return;
+    }
+    try {
+      const res = await fetch("/api/createUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: username.trim() }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error(errorData);
+        throw new Error("Failed to create user");
+      }
+      // Refresh the page so that the updated user data (with username) is loaded.
+      router.refresh();
+    } catch (err) {
+      setError("Failed to create user. Please try again.");
+      console.error(err);
+    }
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    // If the user is not signed in, show a sign-in prompt.
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <p className="mb-4">You must be signed in to continue.</p>
+        <SignInButton />
+      </div>
+    );
+  }
+
+  if (!user?.username) {
+    // User is signed in but has not chosen a username yet.
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <h1 className="text-2xl font-bold mb-4">Choose a Username</h1>
+        <form onSubmit={handleSubmit} className="w-full max-w-md px-4">
+          <input
+            type="text"
+            placeholder="Enter username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded mb-2"
+          />
+          <button
+            type="submit"
+            className="w-full p-2 bg-blue-500 text-white rounded"
+          >
+            Submit
+          </button>
+          {error && <p className="text-red-500 mt-2">{error}</p>}
+        </form>
+      </div>
+    );
+  }
+
   // Display a loading screen until feed data is fetched
   if (isLoadingData) {
     return (
@@ -194,9 +269,10 @@ export default function ExportPage() {
     );
   }
 
+  // Main UI (when user is signed in and has chosen a username)
   return (
-    <div className="w-full flex justify-between items-center">
-      <div className="flex min-h-screen w-full flex-col p-8">
+    <div className="min-h-screen bg-white">
+      <div className="p-8">
         <MetricsDisplay {...metrics} />
         <div className="flex justify-center items-center my-8">
           <Button
@@ -230,116 +306,6 @@ export default function ExportPage() {
           </TableBody>
         </Table>
       </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-6 rounded shadow-lg w-1/2">
-            <h2 className="text-xl font-bold mb-4">Edit Feeds</h2>
-            {feeds.map((feed, index) => (
-              <div
-                key={feed.id}
-                className="relative flex items-center gap-4 mb-2"
-              >
-                <div className="relative flex-grow">
-                  <Input
-                    type="url"
-                    placeholder="Enter RSS feed URL"
-                    value={feed.url}
-                    onChange={(e) => handleInputChange(feed.id, e.target.value)}
-                    className={cn(
-                      "font-mono pr-24 bg-white",
-                      index !== 0 &&
-                        !feeds[index - 1].url &&
-                        "opacity-50 cursor-not-allowed",
-                      feed.status === "error" &&
-                        "border-red-500 focus-visible:ring-red-500 text-red-500"
-                    )}
-                    disabled={index !== 0 && !feeds[index - 1].url}
-                    aria-invalid={feed.status === "error"}
-                    aria-errormessage={
-                      feed.status === "error" ? `error-${feed.id}` : undefined
-                    }
-                  />
-                  {feed.status === "success" &&
-                    feed.postCount !== undefined && (
-                      <div className="absolute inset-y-0 right-3 flex items-center">
-                        <div className="bg-gray-200/90 backdrop-blur-sm text-black dark:bg-gray-700/90 dark:text-white text-[11px] font-sans font-medium px-2 h-[20px] flex items-center rounded-[8px] whitespace-nowrap">
-                          {feed.postCount}
-                        </div>
-                      </div>
-                    )}
-                  {feed.status === "error" && (
-                    <div
-                      id={`error-${feed.id}`}
-                      className="absolute inset-y-0 right-3 flex items-center text-sm text-red-500"
-                      role="alert"
-                    >
-                      {feed.errorMessage}
-                    </div>
-                  )}
-                </div>
-                {feed.url && (
-                  <div
-                    className={cn(
-                      "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                      feed.status === "error"
-                        ? "bg-red-500"
-                        : "bg-black dark:bg-white"
-                    )}
-                  >
-                    {feed.status === "loading" ? (
-                      <Loader2 className="w-4 h-4 text-white dark:text-black animate-spin" />
-                    ) : feed.status === "success" ? (
-                      <Check className="w-4 h-4 text-white dark:text-black" />
-                    ) : feed.status === "error" ? (
-                      <X className="w-4 h-4 text-white" />
-                    ) : (
-                      <ArrowDown className="w-4 h-4 text-white dark:text-black" />
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-            <div className="relative flex items-center gap-4 mb-2">
-              <div className="relative flex-grow">
-                <Input
-                  type="url"
-                  placeholder="Enter RSS feed URL"
-                  value={newFeedUrl}
-                  onChange={(e) => setNewFeedUrl(e.target.value)}
-                  className="font-mono pr-24 bg-white"
-                />
-              </div>
-              <Button
-                onClick={() => {
-                  if (newFeedUrl.trim()) {
-                    setFeeds((current) => [
-                      ...current,
-                      {
-                        id: String(current.length + 1),
-                        url: newFeedUrl,
-                        status: "idle",
-                      },
-                    ]);
-                    setNewFeedUrl("");
-                  }
-                }}
-                className="text-sm hover:bg-blue-500"
-              >
-                Add Feed
-              </Button>
-            </div>
-            <div className="flex justify-end mt-4">
-              <Button
-                onClick={() => setIsModalOpen(false)}
-                className="text-sm hover:bg-blue-500"
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

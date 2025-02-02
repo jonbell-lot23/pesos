@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState, useRef } from "react";
-import { SignInButton, useAuth, useUser } from "@clerk/nextjs";
+import { SignInButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
@@ -29,14 +29,14 @@ interface FeedSource {
 }
 
 export default function BackupPage() {
-  const { isSignedIn } = useAuth();
-  const { user } = useUser();
+  const { isLoaded, isSignedIn, user } = useUser();
   const router = useRouter();
   const [feedSources, setFeedSources] = useState<FeedSource[]>([]);
   const [newSourceUrl, setNewSourceUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
+  const [username, setUsername] = useState("");
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -83,12 +83,6 @@ export default function BackupPage() {
       fetchSources();
     }
   }, [isSignedIn, user?.id, fetchSources]);
-
-  useEffect(() => {
-    if (isSignedIn && user?.id) {
-      fetchSources();
-    }
-  }, [isSignedIn, user?.id, fetchSources]); // ✅ No infinite loop
 
   const handleAddSource = async () => {
     if (user?.id && newSourceUrl) {
@@ -182,25 +176,87 @@ export default function BackupPage() {
     []
   );
 
-  if (!isSignedIn) {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError("");
+    if (!username.trim()) {
+      setError("Username cannot be empty");
+      return;
+    }
+    try {
+      const res = await fetch("/api/createUser", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: username.trim() }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error(errorData);
+        throw new Error("Failed to create user");
+      }
+      // On successful creation, refresh to update the user object
+      router.refresh();
+    } catch (err) {
+      setError("Failed to create user. Please try again.");
+      console.error(err);
+    }
+  };
+
+  if (!isLoaded) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
-        <h1 className="text-black text-2xl mb-4">Hello, please sign in!</h1>
-        <SignInButton mode="modal">
-          <Button className="text-sm hover:bg-blue-500">Sign In</Button>
-        </SignInButton>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    // User is not signed in, so prompt sign in.
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <p className="mb-4">You must be signed in to continue.</p>
+        <SignInButton />
+      </div>
+    );
+  }
+
+  if (!user?.username) {
+    // User is signed in but has not chosen a username yet.
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <h1 className="text-2xl font-bold mb-4">Choose a Username</h1>
+        <form onSubmit={handleSubmit} className="w-full max-w-md px-4">
+          <input
+            type="text"
+            placeholder="Enter username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="w-full p-2 border border-gray-300 rounded mb-2"
+          />
+          <button
+            type="submit"
+            className="w-full p-2 bg-blue-500 text-white rounded"
+          >
+            Submit
+          </button>
+          {error && <p className="text-red-500 mt-2">{error}</p>}
+        </form>
       </div>
     );
   }
 
   if (isLoading) {
     return (
-      <div className="loading-screen font-light text-gray-200">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div>Loading...</div>
+      </div>
     );
   }
 
   return (
-    <div className="w-full flex flex-col p-8">
+    <div className="w-full flex flex-col p-8 bg-white min-h-screen">
       <h1 className="text-black text-2xl mb-8">
         Welcome {user?.primaryEmailAddress?.emailAddress || user?.username}!
       </h1>
