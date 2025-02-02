@@ -37,7 +37,10 @@ export async function POST(req: Request) {
 
     // Create the user
     const user = await prisma.pesos_User.create({
-      data: { username: username.trim() },
+      data: {
+        id: crypto.randomUUID(),
+        username: username.trim(),
+      },
     });
 
     return new Response(JSON.stringify({ user }), {
