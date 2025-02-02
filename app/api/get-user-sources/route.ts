@@ -9,6 +9,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true, sources });
   } catch (error) {
     console.error("API Error in get-user-sources:", error);
-    return NextResponse.json({ success: false, error: error.message });
+    let errorMessage = "An unknown error occurred";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    return NextResponse.json({ success: false, error: errorMessage });
   }
 }
