@@ -308,7 +308,7 @@ export default function BackupPage() {
   return (
     <div className="w-full flex flex-col p-8 bg-white min-h-screen">
       <h1 className="text-black text-2xl mb-8">
-        Welcome {user?.primaryEmailAddress?.emailAddress || user?.username}!
+        Welcome, {user?.username || user?.firstName}!
       </h1>
       {error && (
         <Alert variant="destructive" className="mb-4">
@@ -341,7 +341,10 @@ export default function BackupPage() {
         </div>
       )}
 
-      <Button onClick={() => setIsFeedEditorOpen(true)} className="mb-4">
+      <Button
+        onClick={() => setIsFeedEditorOpen(true)}
+        className="mb-4 w-fit ml-auto mr-12"
+      >
         Edit feeds
       </Button>
 
