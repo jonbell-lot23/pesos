@@ -387,13 +387,6 @@ export default function BackupPage() {
         </TableBody>
       </Table>
 
-      {!data ? (
-        <button onClick={handleContinue}>Continue</button>
-      ) : (
-        <div>{/* Render your fetched data here */}</div>
-      )}
-
-      {/* Modal for editing feeds */}
       {isFeedEditorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div className="bg-white p-4 rounded shadow-lg w-full max-w-md">

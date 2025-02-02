@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { validateRSSFeed } from "@/app/actions";
+import { getUserSources } from "@/app/actions/sources";
 import {
   Table,
   TableBody,
@@ -34,24 +35,49 @@ export default function ExportPage() {
   const searchParams = useSearchParams();
   const { isLoaded, isSignedIn, user } = useUser();
 
+  // NEW: Delay rendering until component is mounted to prevent flashing of the sign-in screen.
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
-    // Only redirect if no feedUrls parameter was passed in the query string
-    const feedUrls = searchParams.getAll("feedUrls");
-    if (feedUrls.length === 0) {
-      router.replace("/");
-    }
-  }, [router, searchParams]);
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
-    async function loadFeedData() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const feedUrls = urlParams.getAll("feedUrls");
-      // Fetch feed data then mark loading as finished
-      await fetchFeedData(feedUrls);
-      setIsLoadingData(false);
+    if (!mounted) return;
+    async function loadFeeds() {
+      const qs = searchParams.getAll("feedUrls");
+      if (qs.length === 0) {
+        if (!isSignedIn) {
+          router.replace("/");
+          return;
+        } else if (user?.id) {
+          // Fetch saved sources from the DB for logged in users
+          try {
+            const sources = await getUserSources(user.id);
+            console.log("Fetched user sources:", sources);
+            if (sources && sources.length > 0) {
+              const urls = sources.map((source: any) => source.url);
+              const queryString = urls
+                .map((url: string) => `feedUrls=${encodeURIComponent(url)}`)
+                .join("&");
+              // Update the URL with the DB-sourced feed URLs
+              window.history.replaceState(null, "", `?${queryString}`);
+              await fetchFeedData(urls);
+            }
+          } catch (err) {
+            console.error("Error fetching user sources:", err);
+          } finally {
+            setIsLoadingData(false);
+          }
+        }
+      } else {
+        await fetchFeedData(qs);
+        setIsLoadingData(false);
+      }
     }
-    loadFeedData();
-  }, []);
+    loadFeeds();
+  }, [mounted, searchParams, isSignedIn, user?.id, router]);
+
+  if (!mounted) return null;
 
   const fetchFeedData = async (feedUrls: string[]) => {
     try {

@@ -37,11 +37,12 @@ export function calculateMetrics(items: FeedItem[]) {
       : (sortedDiffs[mid - 1] + sortedDiffs[mid]) / 2;
   })();
 
-  const averageLengthOfPosts =
-    items.reduce(
-      (sum, item) => sum + (item.content?.split(/\s+/).length || 0),
-      0
-    ) / totalPosts;
+  // const averageLengthOfPosts =
+  //   items.reduce(
+  //     (sum, item) => sum + (item.content?.split(/\s+/).length || 0),
+  //     0
+  //   ) / totalPosts;
+  const averageLengthOfPosts = 5;
 
   return {
     totalPosts,
