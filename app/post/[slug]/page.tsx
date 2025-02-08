@@ -9,6 +9,7 @@ interface PostPageProps {
   params: {
     slug: string;
   };
+  searchParams?: { [key: string]: string | string[] | undefined };
 }
 
 // Generate metadata for the page
@@ -25,10 +26,10 @@ export async function generateMetadata({
 
   return {
     title: `${post.title} | PESOS`,
-    description: post.description,
+    description: post.description ?? undefined,
     openGraph: {
       title: post.title,
-      description: post.description,
+      description: post.description ?? undefined,
       type: "article",
     },
   };
@@ -48,7 +49,10 @@ async function getPost(slug: string) {
   }
 }
 
-export default async function PostPage({ params }: PostPageProps) {
+export default async function PostPage({
+  params,
+  searchParams,
+}: PostPageProps) {
   const post = await getPost(params.slug);
 
   if (!post) {
