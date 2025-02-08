@@ -233,7 +233,8 @@ export default function BackupPage() {
     }
   };
 
-  const fetchLocalUser = async () => {
+  // Move fetchLocalUser inside useCallback to avoid dependency issues
+  const fetchLocalUser = useCallback(async () => {
     if (user?.id) {
       try {
         const res = await fetch("/api/getLocalUser", {
@@ -252,14 +253,14 @@ export default function BackupPage() {
         console.error("Error fetching local user:", error);
       }
     }
-  };
+  }, [user?.id]); // Add user?.id as dependency
 
-  // Fetch local user only when signed in and user is available.
+  // Update useEffect to include fetchLocalUser in dependencies
   useEffect(() => {
     if (isSignedIn && user?.id) {
       fetchLocalUser();
     }
-  }, [isSignedIn, user]);
+  }, [isSignedIn, user, fetchLocalUser]); // Add fetchLocalUser to dependencies
 
   // NEW: Callback for FeedEditor onContinue in the backup page.
   const handleFeedEditorContinue = async (newFeeds: FeedEntry[]) => {

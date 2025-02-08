@@ -9,11 +9,14 @@ interface PageParams {
   slug: string;
 }
 
+interface PageProps {
+  params: PageParams;
+  searchParams?: { [key: string]: string | string[] | undefined };
+}
+
 export async function generateMetadata({
   params,
-}: {
-  params: PageParams;
-}): Promise<Metadata> {
+}: PageProps): Promise<Metadata> {
   const post = await getPost(params.slug);
 
   if (!post) {
@@ -45,7 +48,7 @@ async function getPost(slug: string) {
   }
 }
 
-export default async function PostPage({ params }: { params: PageParams }) {
+export default async function PostPage({ params }: PageProps) {
   const post = await getPost(params.slug);
 
   if (!post) {
