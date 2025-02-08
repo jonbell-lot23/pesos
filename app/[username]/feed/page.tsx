@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
 
@@ -13,41 +14,86 @@ interface Post {
 }
 
 export default function FeedPage() {
+  const params = useParams();
+  const { username } = params;
+  const routeUsername = Array.isArray(username) ? username[0] : username;
   const { isLoaded, isSignedIn, user } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchPosts = useCallback(async () => {
-    if (!user?.id) return;
-
+    console.log("[FeedPage] fetchPosts: Called with user:", user);
+    if (!user?.id) {
+      console.error("[FeedPage] fetchPosts: No user id, aborting fetch");
+      return;
+    }
     try {
+      const payload = {
+        clerkId: user.id,
+        username: user.username ? user.username : routeUsername,
+      };
+      console.log("[FeedPage] fetchPosts: Sending payload:", payload);
       const res = await fetch("/api/get-posts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerkId: user.id }),
+        body: JSON.stringify(payload),
       });
-
+      console.log(
+        "[FeedPage] fetchPosts: Received response status:",
+        res.status
+      );
       const data = await res.json();
+      console.log("[FeedPage] fetchPosts: API response data:", data);
       if (data.posts) {
-        // Sort posts by date in reverse chronological order
         const sortedPosts = data.posts.sort(
           (a: Post, b: Post) =>
             new Date(b.postdate).getTime() - new Date(a.postdate).getTime()
         );
         setPosts(sortedPosts);
+      } else {
+        console.warn("[FeedPage] fetchPosts: No posts property in response");
       }
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("[FeedPage] fetchPosts: Error fetching posts:", error);
     } finally {
       setIsLoading(false);
+      console.log("[FeedPage] fetchPosts: Completed, isLoading set to false");
     }
-  }, [user?.id]);
+  }, [user?.id, user?.username, routeUsername]);
 
   useEffect(() => {
-    if (isSignedIn && user?.id) {
+    console.log(
+      "[FeedPage] useEffect: isSignedIn:",
+      isSignedIn,
+      "user:",
+      user,
+      "routeUsername:",
+      routeUsername
+    );
+    // Allow fetch if user is signed in, has an id, and either username is not set or it matches the routeUsername
+    if (
+      isSignedIn &&
+      user?.id &&
+      (!user.username ||
+        user.username.toLowerCase() === routeUsername.toLowerCase())
+    ) {
+      if (!user.username) {
+        console.warn(
+          "[FeedPage] useEffect: user.username is null, proceeding without username match check"
+        );
+      } else {
+        console.log(
+          "[FeedPage] useEffect: user.username matches routeUsername"
+        );
+      }
       fetchPosts();
+    } else {
+      console.warn(
+        "[FeedPage] useEffect: User not signed in or username mismatch, not calling fetchPosts"
+      );
+      setIsLoading(false);
     }
-  }, [isSignedIn, user?.id, fetchPosts]);
+  }, [isSignedIn, user?.id, user?.username, routeUsername, fetchPosts]);
 
   if (!isLoaded) {
     return (
@@ -62,6 +108,17 @@ export default function FeedPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
         <p className="mb-4">You must be signed in to continue.</p>
         <SignInButton />
+      </div>
+    );
+  }
+
+  if (
+    user?.username &&
+    user.username.toLowerCase() !== routeUsername.toLowerCase()
+  ) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+        <p className="mb-4">Not allowed</p>
       </div>
     );
   }

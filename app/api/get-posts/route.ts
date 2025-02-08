@@ -5,21 +5,37 @@ const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
-    const { clerkId } = await req.json();
+    // Destructure clerkId and username from the request body
+    const { clerkId, username } = await req.json();
 
-    // First get the user from pesos_User table
+    // Find the user in the pesos_User table by clerkId
     const user = await prisma.pesos_User.findUnique({
-      where: { id: clerkId }, // clerkId maps to id in pesos_User
+      where: { id: clerkId },
     });
 
+    console.log("[get-posts] Found user:", user);
+
+    // Check if user exists and if the mapped username matches the provided username
     if (!user) {
-      return NextResponse.json({ posts: [] }, { status: 200 });
+      console.warn("[get-posts] No user found for clerkId", clerkId);
+      return NextResponse.json({ allowed: false, posts: [] }, { status: 200 });
+    }
+
+    if (user.username.toLowerCase() !== username.toLowerCase()) {
+      console.warn(
+        "[get-posts] Username mismatch: mapped username (",
+        user.username,
+        ") vs provided (",
+        username,
+        ")"
+      );
+      return NextResponse.json({ allowed: false, posts: [] }, { status: 200 });
     }
 
     // Get all posts for this user from pesos_items
     const posts = await prisma.pesos_items.findMany({
       where: {
-        userId: user.id, // This matches the pesos_User id
+        userId: user.id,
       },
       select: {
         id: true,
@@ -37,12 +53,14 @@ export async function POST(req: NextRequest) {
       orderBy: {
         postdate: "desc",
       },
-      // Limit to recent posts first
       take: 50,
     });
 
+    console.log("[get-posts] Number of posts found:", posts.length);
+
     return NextResponse.json(
       {
+        allowed: true,
         posts: posts.map((post) => ({
           ...post,
           sourceUrl: post.pesos_Sources?.url,
@@ -52,6 +70,6 @@ export async function POST(req: NextRequest) {
     );
   } catch (error) {
     console.error("Error in get-posts API:", error);
-    return NextResponse.json({ posts: [] }, { status: 200 });
+    return NextResponse.json({ allowed: false, posts: [] }, { status: 200 });
   }
 }

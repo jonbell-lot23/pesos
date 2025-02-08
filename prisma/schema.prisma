@@ -46,11 +46,11 @@ model pesos_items {
   postdate    DateTime
   source      String?
   slug        String   @unique(map: "pesos_items_slug_field_key")
-  userId      String? // Now matching pesos_User's id type (String)
+  userId      String // Now matching pesos_User's id type (String)
   sourceId    Int?
 
   // Relation to pesos_User (note the lowercase field name)
-  pesos_User    pesos_User?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  pesos_User    pesos_User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   // Relation to pesos_Sources remains unchanged
   pesos_Sources pesos_Sources? @relation(fields: [sourceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
