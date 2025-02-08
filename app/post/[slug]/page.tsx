@@ -5,17 +5,14 @@ import { PostContent } from "@/components/post-content";
 
 const prisma = new PrismaClient();
 
-// Update the interface to extend Next.js PageProps
-type Props = {
-  params: {
-    slug: string;
-  };
-  searchParams: { [key: string]: string | string[] | undefined };
+type PageProps = {
+  params: { slug: string };
+  searchParams: Record<string, string | string[] | undefined>;
 };
 
 // Generate metadata for the page
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = await getPost(params.slug);
+export async function generateMetadata(props: PageProps): Promise<Metadata> {
+  const post = await getPost(props.params.slug);
 
   if (!post) {
     return {
@@ -48,9 +45,8 @@ async function getPost(slug: string) {
   }
 }
 
-// Update the component props type
-export default async function PostPage({ params, searchParams }: Props) {
-  const post = await getPost(params.slug);
+export default async function PostPage(props: PageProps) {
+  const post = await getPost(props.params.slug);
 
   if (!post) {
     notFound();
