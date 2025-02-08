@@ -5,14 +5,15 @@ import { PostContent } from "@/components/post-content";
 
 const prisma = new PrismaClient();
 
-// Use Next.js's built-in types
-export interface GenerateMetadataProps {
-  params: { slug: string };
+interface PageParams {
+  slug: string;
 }
 
 export async function generateMetadata({
   params,
-}: GenerateMetadataProps): Promise<Metadata> {
+}: {
+  params: PageParams;
+}): Promise<Metadata> {
   const post = await getPost(params.slug);
 
   if (!post) {
@@ -35,9 +36,7 @@ export async function generateMetadata({
 async function getPost(slug: string) {
   try {
     const post = await prisma.pesos_items.findFirst({
-      where: {
-        slug: slug,
-      },
+      where: { slug },
     });
     return post;
   } catch (error) {
@@ -46,12 +45,7 @@ async function getPost(slug: string) {
   }
 }
 
-// For the page component
-export default async function PostPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
+export default async function PostPage({ params }: { params: PageParams }) {
   const post = await getPost(params.slug);
 
   if (!post) {
