@@ -31,7 +31,7 @@ model firehose {
   description String?
   postdate    DateTime
   source      String?
-  slug        String?  @unique @default("")
+  slug        String?  @unique(map: "firehose_slug_key") @default("")
   userid      Int      @default(1)
   sourceId    Int?
   Source      Source?  @relation(fields: [sourceId], references: [id])
@@ -45,7 +45,7 @@ model pesos_items {
   description String?
   postdate    DateTime
   source      String?
-  slug        String   @unique
+  slug        String   @unique(map: "pesos_items_slug_field_key")
   userId      String? // Now matching pesos_User's id type (String)
   sourceId    Int?
 
@@ -54,7 +54,7 @@ model pesos_items {
   // Relation to pesos_Sources remains unchanged
   pesos_Sources pesos_Sources? @relation(fields: [sourceId], references: [id], onDelete: SetNull, onUpdate: Cascade)
 
-  @@unique([slug], name: "pesos_items_slug_key")
+  @@unique([slug], name: "pesos_items_slug_table_key")
 }
 
 model pesos_User {
