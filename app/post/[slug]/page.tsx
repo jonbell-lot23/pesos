@@ -6,11 +6,17 @@ import { ResolvingMetadata } from "next";
 
 const prisma = new PrismaClient();
 
+type Props = {
+  params: Promise<{ slug: string }>;
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
 export async function generateMetadata(
-  { params }: { params: { slug: string } },
+  { params }: Props,
   parent: ResolvingMetadata
 ): Promise<Metadata> {
-  const post = await getPost(params.slug);
+  const resolvedParams = await params;
+  const post = await getPost(resolvedParams.slug);
 
   if (!post) {
     return {
@@ -41,13 +47,9 @@ async function getPost(slug: string) {
   }
 }
 
-// Remove type annotations and let Next.js infer the types
-export default async function PostPage({
-  params,
-}: {
-  params: { slug: string };
-}) {
-  const post = await getPost(params.slug);
+export default async function PostPage({ params }: Props) {
+  const resolvedParams = await params;
+  const post = await getPost(resolvedParams.slug);
 
   if (!post) {
     notFound();
