@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prismadb";
 
 export async function POST(req: NextRequest) {
   try {
@@ -41,6 +39,7 @@ export async function POST(req: NextRequest) {
         id: true,
         title: true,
         url: true,
+        slug: true,
         postdate: true,
         sourceId: true,
         // Optionally include source info

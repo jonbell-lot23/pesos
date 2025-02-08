@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { parseString } from "xml2js";
 import { promisify } from "util";
+import prisma from "@/lib/prismadb";
 
 const parseXml = promisify(parseString);
 

@@ -1,13 +1,13 @@
 import "./globals.css";
 import { Inter } from "next/font/google";
-import { RootLayoutInner } from "../components/root-layout-inner";
+import { RootLayoutInner } from "@/components/root-layout-inner";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "PESOS.site - Save Your Stuff",
-  description: "Save your stuff by backing up your RSS feeds",
+  title: "PESOS",
+  description: "PESOS site",
 };
 
 export default function RootLayout({
@@ -18,7 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <ClerkProvider frontendApi={process.env.CLERK_FRONTEND_API}>
+        <ClerkProvider>
           <RootLayoutInner inter={inter}>{children}</RootLayoutInner>
         </ClerkProvider>
       </body>

@@ -2,9 +2,7 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PostContent } from "@/components/post-content";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prismadb";
 
 async function getPost(slug: string) {
   return prisma.pesos_items.findFirst({

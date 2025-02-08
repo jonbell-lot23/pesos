@@ -11,6 +11,7 @@ interface Post {
   url: string;
   postdate: string;
   sourceId: number;
+  slug: string;
 }
 
 export default function FeedPage() {
@@ -118,7 +119,7 @@ export default function FeedPage() {
   ) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <p className="mb-4">Not allowed</p>
+        <p className="mb-4">Not authorized.</p>
       </div>
     );
   }
@@ -137,9 +138,7 @@ export default function FeedPage() {
             <article key={post.id} className="border-b border-gray-200 pb-4">
               <div className="flex justify-between items-start">
                 <a
-                  href={post.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={`/post/${post.slug}`}
                   className="text-lg font-medium text-blue-600 hover:text-blue-800"
                 >
                   {post.title}

@@ -19,6 +19,25 @@ interface RootLayoutInnerProps {
 
 export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const { user } = useUser();
+  let computedUsername = "";
+  if (user) {
+    if (
+      user.publicMetadata &&
+      typeof user.publicMetadata.username === "string" &&
+      user.publicMetadata.username.trim() !== ""
+    ) {
+      computedUsername = user.publicMetadata.username;
+    } else if (user.firstName) {
+      computedUsername = user.firstName;
+    } else if (user.fullName) {
+      computedUsername = user.fullName.split(" ")[0];
+    } else if (user.username && !user.username.startsWith("user_")) {
+      computedUsername = user.username;
+    } else {
+      computedUsername = user.id || "";
+    }
+  }
+  const username = computedUsername.toLowerCase();
 
   return (
     <div
@@ -27,32 +46,39 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">
-            PESOS<sup className="text-md text-black">*</sup>
+            PESOS<sup className="text-md text-blue-500">*</sup>
           </h1>
-          <div className="flex items-center space-x-4">
-            <div className="mr-4 flex space-x-4">
-              <Link href="/guest/export">
-                <h2>Export</h2>
-              </Link>
-              <Link href="/guest/backup">
-                <h2>Backup</h2>
-              </Link>
-              <Link href="/guest/feed">
-                <h2>Feed</h2>
-              </Link>
-              <Link href="/post">
-                <h2>Posts</h2>
-              </Link>
+          {user ? (
+            <div className="flex items-center space-x-4">
+              <div className="mr-4 flex space-x-4">
+                <Link href={`/guest/export`}>
+                  <h2>Export</h2>
+                </Link>
+                <Link href="/guest/backup">
+                  <h2>Backup</h2>
+                </Link>
+                <Link href={`/${username}/feed`}>
+                  <h2>Feed</h2>
+                </Link>
+              </div>
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button variant="outline">Sign In</Button>
+                </SignInButton>
+              </SignedOut>
             </div>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <Button variant="outline">Sign In</Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
-          </div>
+          ) : (
+            <div className="flex items-center space-x-4">
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button variant="outline">Sign In</Button>
+                </SignInButton>
+              </SignedOut>
+            </div>
+          )}
         </div>
       </header>
       <main className="flex-grow relative">
