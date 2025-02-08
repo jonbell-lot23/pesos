@@ -61,7 +61,7 @@ export default function BackupPage() {
       const initialSources = sources.map((source: any) => ({
         id: source.id,
         url: source.url,
-        status: "idle",
+        status: "idle" as const,
       }));
 
       setFeedSources(initialSources);
@@ -384,11 +384,12 @@ export default function BackupPage() {
                     {source.status === "success" && (
                       <div className="flex items-center gap-2">
                         <Check className="w-4 h-4 text-green-500" />
-                        {source.pendingCount > 0 && (
-                          <span className="text-xs text-gray-600">
-                            {source.pendingCount} items stored
-                          </span>
-                        )}
+                        {typeof source.pendingCount === "number" &&
+                          source.pendingCount > 0 && (
+                            <span className="text-xs text-gray-600">
+                              {source.pendingCount} items stored
+                            </span>
+                          )}
                       </div>
                     )}
                     {source.status === "error" && (

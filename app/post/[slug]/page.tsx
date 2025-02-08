@@ -19,7 +19,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const post = await getPost(params.slug);
   if (!post) {
-    return { title: "Post Not Found" };
+    notFound();
   }
   return {
     title: post.title + " | PESOS",
