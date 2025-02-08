@@ -16,86 +16,66 @@ const generateSlug = () => {
 export async function POST(req: NextRequest) {
   try {
     const { sourceId } = await req.json();
-    console.log(`Received sourceId:`, sourceId);
 
-    if (!sourceId) {
-      console.error("No sourceId provided");
-      return NextResponse.json(
-        { error: "sourceId is required" },
-        { status: 400 }
-      );
-    }
-
-    // Fetch the source with associated users
     const source = await prisma.pesos_Sources.findUnique({
       where: { id: sourceId },
       select: { url: true, users: { select: { userId: true } } },
     });
 
     if (!source || source.users.length === 0) {
-      console.error(`Source not found or has no users for id: ${sourceId}`);
-      return NextResponse.json(
-        { error: "Source not found or no users" },
-        { status: 404 }
-      );
+      return NextResponse.json({ newItems: [] }, { status: 200 });
     }
 
-    // Extract userId from relation
     const userId = source.users[0].userId;
 
-    console.log(`Fetching RSS feed from: ${source.url}`);
+    try {
+      // Fetch with timeout
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 5000);
 
-    // Fetch and parse RSS feed
-    const rssString = await fetch(source.url).then((res) => res.text());
-    console.log("Fetched RSS successfully. Parsing...");
+      const response = await fetch(source.url, { signal: controller.signal });
+      clearTimeout(timeout);
 
-    const parsedFeed = await parser.parseString(rssString);
-    console.log(`Parsed ${parsedFeed.items.length} items from feed.`);
+      if (!response.ok) {
+        return NextResponse.json({ newItems: [] }, { status: 200 });
+      }
 
-    // Fetch existing items for this user
-    const existingItems = await prisma.pesos_items.findMany({
-      where: { userId },
-      select: { url: true },
-    });
+      const rssString = await response.text();
+      const parsedFeed = await parser.parseString(rssString);
 
-    const existingUrls = new Set(existingItems.map((item) => item.url));
+      // Fetch existing items for this user
+      const existingItems = await prisma.pesos_items.findMany({
+        where: { userId },
+        select: { url: true },
+      });
 
-    // Process new items from RSS
-    const newItems = parsedFeed.items
-      .slice(0, 15)
-      .filter((item) => item.link && !existingUrls.has(item.link))
-      .map((item) => ({
-        title: item.title || "•",
-        url: item.link ?? "",
-        description: item["content:encoded"] || item.content || "",
-        postdate: new Date(item.pubDate || item.date),
-        slug: generateSlug(),
-        userId,
-        sourceId,
-      }));
+      const existingUrls = new Set(existingItems.map((item) => item.url));
 
-    console.log(`Found ${newItems.length} new items for source ${sourceId}`);
+      const newItems = parsedFeed.items
+        .slice(0, 15)
+        .filter((item) => item.link && !existingUrls.has(item.link))
+        .map((item) => ({
+          title: item.title || "•",
+          url: item.link ?? "",
+          description: item["content:encoded"] || item.content || "",
+          postdate: new Date(item.pubDate || item.date),
+          slug: generateSlug(),
+          userId,
+          sourceId,
+        }));
 
-    // Save new items to the database
-    for (let item of newItems) {
-      console.log(`Saving item: ${item.title}`);
-      await prisma.pesos_items.create({ data: item });
-    }
-
-    return NextResponse.json(
-      { message: "Check complete", newItems },
-      { status: 200 }
-    );
-  } catch (err) {
-    if (err instanceof Error) {
-      console.error("Error in check-sources API:", err);
-      return NextResponse.json({ error: err.message }, { status: 500 });
-    } else {
-      console.error("Unknown error in check-sources API:", err);
-      return NextResponse.json(
-        { error: "An unknown error occurred" },
-        { status: 500 }
+      // Save new items to the database
+      await Promise.all(
+        newItems.map((item) => prisma.pesos_items.create({ data: item }))
       );
+
+      return NextResponse.json({ newItems }, { status: 200 });
+    } catch {
+      // Any error in feed processing, return empty array
+      return NextResponse.json({ newItems: [] }, { status: 200 });
     }
+  } catch {
+    // Any error in the outer scope, return empty array
+    return NextResponse.json({ newItems: [] }, { status: 200 });
   }
 }

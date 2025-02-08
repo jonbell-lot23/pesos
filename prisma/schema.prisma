@@ -45,7 +45,7 @@ model pesos_items {
   description String?
   postdate    DateTime
   source      String?
-  slug        String   @default("")
+  slug        String   @unique
   userId      String? // Now matching pesos_User's id type (String)
   sourceId    Int?
 

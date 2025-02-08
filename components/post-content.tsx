@@ -1,0 +1,87 @@
+"use client";
+
+import { useState } from "react";
+import { pesos_items } from "@prisma/client";
+
+interface PostContentProps {
+  post: pesos_items;
+}
+
+export function PostContent({ post }: PostContentProps) {
+  const [showAbout, setShowAbout] = useState(false);
+
+  return (
+    <div className="min-h-screen">
+      <div className="max-w-2xl mx-auto relative pt-16 px-4">
+        {/* About Button */}
+        <button
+          onClick={() => setShowAbout(!showAbout)}
+          className="text-xs absolute top-4 left-1/2 transform -translate-x-1/2 bg-gray-200 text-gray-900 py-2 px-4 rounded-full flex items-center gap-2 hover:bg-gray-900 hover:text-white transition-all"
+        >
+          What is PESOS?
+        </button>
+
+        {/* About Screen */}
+        {showAbout && (
+          <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 animate-slide-down">
+            <p className="text-gray-800 text-center max-w-md">
+              PESOS (Publish Elsewhere, Syndicate on Own Site) is a way to own
+              your content while still participating in other platforms.
+            </p>
+            <button
+              onClick={() => setShowAbout(false)}
+              className="mt-4 text-white bg-black rounded-full text-sm px-3 py-1"
+            >
+              Got it!
+            </button>
+          </div>
+        )}
+
+        <article>
+          <div className="py-4">
+            <div className="flex p-4 mb-2">
+              <div>
+                <header className="flex flex-col">
+                  <time
+                    dateTime={post.postdate.toString()}
+                    className="flex items-center font-light order-first text-base text-gray-500"
+                  >
+                    {new Date(post.postdate).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    })}
+                  </time>
+                  <h1 className="mt-2 text-3xl font-medium tracking-tight text-gray-900">
+                    {post.title}
+                  </h1>
+                </header>
+                <div className="mt-4">
+                  <div
+                    className="prose text-gray-900 text-lg max-w-none"
+                    dangerouslySetInnerHTML={{ __html: post.description || "" }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+
+        .animate-slide-down {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
+    </div>
+  );
+}

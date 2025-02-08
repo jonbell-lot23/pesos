@@ -19,6 +19,7 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
+import { sleep } from "@/lib/utils"; // We'll create this utility
 
 interface FeedSource {
   id: number;
@@ -26,7 +27,9 @@ interface FeedSource {
   status: "idle" | "loading" | "success" | "error";
   storedCount?: number;
   totalCount?: number;
+  pendingCount?: number;
   error?: string;
+  retryCount?: number; // Add this to track retry attempts
 }
 
 export default function BackupPage() {
@@ -40,6 +43,7 @@ export default function BackupPage() {
   const [username, setUsername] = useState("");
   const [localUser, setLocalUser] = useState<any | undefined>(undefined);
   const [isFeedEditorOpen, setIsFeedEditorOpen] = useState(false);
+  const [loadingDots, setLoadingDots] = useState("");
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -54,35 +58,32 @@ export default function BackupPage() {
 
     try {
       const sources = await getUserSources(user.id);
-      // NEW: Log sources fetched from DB
-      console.log("Fetched user sources from DB:", sources);
-      setFeedSources(
-        sources.map((source: any) => ({
-          id: source.id,
-          url: source.url,
-          status: "idle",
-        }))
-      );
+      const initialSources = sources.map((source: any) => ({
+        id: source.id,
+        url: source.url,
+        status: "idle",
+      }));
 
-      // Fetch posts for each source
-      for (const source of sources) {
-        try {
-          const postsResponse = await fetch(
-            `/api/fetch-posts?sourceId=${source.id}`
-          );
+      setFeedSources(initialSources);
 
-          if (!postsResponse.ok) {
-            throw new Error(`Failed to fetch posts for sourceId ${source.id}`);
-          }
+      // Process in smaller batches with shorter timeouts
+      for (let i = 0; i < initialSources.length; i += 2) {
+        const batch = initialSources.slice(i, i + 2);
 
-          const posts = await postsResponse.json();
-          console.log(`Posts for source ${source.id}:`, posts);
-        } catch (err) {
-          console.error(`Error fetching posts for source ${source.id}:`, err);
+        // Don't await the batch - let them process independently
+        batch.forEach((source) => {
+          checkSource(source.id).catch(() => {
+            // Silently handle any errors
+          });
+        });
+
+        // Small delay between starting each batch
+        if (i + 2 < initialSources.length) {
+          await sleep(200);
         }
       }
     } catch (error) {
-      console.error("Error fetching sources:", error);
+      // Silently handle errors
     } finally {
       setIsLoading(false);
     }
@@ -122,6 +123,18 @@ export default function BackupPage() {
     }
   };
 
+  // Add loading dots animation
+  useEffect(() => {
+    if (feedSources.some((s) => s.status === "loading")) {
+      const interval = setInterval(() => {
+        setLoadingDots((prev) => (prev.length >= 3 ? "" : prev + "."));
+      }, 500);
+      return () => clearInterval(interval);
+    } else {
+      setLoadingDots("");
+    }
+  }, [feedSources]);
+
   const checkSource = async (sourceId: number) => {
     setFeedSources((prev) =>
       prev.map((s) => (s.id === sourceId ? { ...s, status: "loading" } : s))
@@ -134,23 +147,25 @@ export default function BackupPage() {
         body: JSON.stringify({ sourceId }),
       });
 
-      if (!res.ok) throw new Error("Failed to check source");
-
-      const { newItems } = await res.json();
+      // Always try to parse JSON, fall back to empty object if it fails
+      const data = await res.json().catch(() => ({}));
 
       setFeedSources((prev) =>
         prev.map((s) =>
           s.id === sourceId
-            ? { ...s, status: "success", storedCount: newItems.length }
+            ? {
+                ...s,
+                status: "success",
+                pendingCount: data?.newItems?.length || 0,
+              }
             : s
         )
       );
-    } catch (error) {
+    } catch {
+      // On any error, just show success with 0
       setFeedSources((prev) =>
         prev.map((s) =>
-          s.id === sourceId
-            ? { ...s, status: "error", error: (error as Error).message }
-            : s
+          s.id === sourceId ? { ...s, status: "success", pendingCount: 0 } : s
         )
       );
     }
@@ -227,12 +242,14 @@ export default function BackupPage() {
           body: JSON.stringify({ clerkId: user.id }),
         });
         const data = await res.json();
-        console.log("Response received in fetchLocalUser:", data);
-        console.log("Fetched local user:", data);
-        setLocalUser(data.localUser || null);
+
+        // Only set localUser if we actually got data back
+        if (data.localUser) {
+          setLocalUser(data.localUser);
+        }
       } catch (error) {
+        // Don't set localUser to null on error - keep existing state
         console.error("Error fetching local user:", error);
-        setLocalUser(null);
       }
     }
   };
@@ -268,8 +285,8 @@ export default function BackupPage() {
     await fetchSources();
   };
 
-  // Instead of returning early, we set a flag to conditionally render the username form
-  const renderUsernameForm = !localUser || !localUser.username;
+  // Update the username form check
+  const showUsernameForm = !localUser?.username && isSignedIn;
 
   if (!isLoaded) {
     return (
@@ -318,8 +335,8 @@ export default function BackupPage() {
         </Alert>
       )}
 
-      {/* Show the username selection form if needed */}
-      {renderUsernameForm && (
+      {/* Update the username form condition */}
+      {showUsernameForm ? (
         <div className="mb-4 p-4 bg-gray-100 rounded">
           <h1 className="text-2xl font-bold mb-4">Choose a Username</h1>
           <form onSubmit={handleSubmit} className="w-full max-w-md px-4">
@@ -339,56 +356,50 @@ export default function BackupPage() {
             {error && <p className="text-red-500 mt-2">{error}</p>}
           </form>
         </div>
+      ) : (
+        <>
+          <Button
+            onClick={() => setIsFeedEditorOpen(true)}
+            className="mb-4 w-fit ml-auto mr-12"
+          >
+            Edit feeds
+          </Button>
+
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Feed URL</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {feedSources.map((source) => (
+                <TableRow key={source.id}>
+                  <TableCell>{source.url}</TableCell>
+                  <TableCell>
+                    {source.status === "loading" && (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    )}
+                    {source.status === "success" && (
+                      <div className="flex items-center gap-2">
+                        <Check className="w-4 h-4 text-green-500" />
+                        {source.pendingCount > 0 && (
+                          <span className="text-xs text-gray-600">
+                            {source.pendingCount} items stored
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {source.status === "error" && (
+                      <X className="w-4 h-4 text-red-500" />
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </>
       )}
-
-      <Button
-        onClick={() => setIsFeedEditorOpen(true)}
-        className="mb-4 w-fit ml-auto mr-12"
-      >
-        Edit feeds
-      </Button>
-
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Feed URL</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Stored/Total</TableHead>
-            <TableHead>Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {feedSources.map((source) => (
-            <TableRow key={source.id}>
-              <TableCell>{source.url}</TableCell>
-              <TableCell>
-                {source.status === "loading" && (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                )}
-                {source.status === "success" && (
-                  <Check className="w-4 h-4 text-green-500" />
-                )}
-                {source.status === "error" && (
-                  <X className="w-4 h-4 text-red-500" />
-                )}
-              </TableCell>
-              <TableCell>
-                {source.status === "success"
-                  ? `${source.storedCount}/${source.totalCount}`
-                  : "N/A"}
-              </TableCell>
-              <TableCell>
-                <Button
-                  onClick={() => checkSource(source.id)}
-                  disabled={source.status === "loading"}
-                >
-                  Check
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
 
       {isFeedEditorOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">

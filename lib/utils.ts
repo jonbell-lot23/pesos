@@ -52,3 +52,6 @@ export function calculateMetrics(items: FeedItem[]) {
     averageLengthOfPosts,
   };
 }
+
+export const sleep = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));

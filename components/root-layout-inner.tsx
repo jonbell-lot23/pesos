@@ -37,6 +37,12 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
               <Link href="/guest/backup">
                 <h2>Backup</h2>
               </Link>
+              <Link href="/guest/feed">
+                <h2>Feed</h2>
+              </Link>
+              <Link href="/post">
+                <h2>Posts</h2>
+              </Link>
             </div>
             <SignedOut>
               <SignInButton mode="modal">
