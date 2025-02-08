@@ -2,22 +2,15 @@ import { PrismaClient } from "@prisma/client";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PostContent } from "@/components/post-content";
+import { ResolvingMetadata } from "next";
 
 const prisma = new PrismaClient();
 
-// Define the params type
-type PageParams = {
-  slug: string;
-};
-
-// Define props type according to Next.js expectations
-type Props = {
-  params: PageParams;
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const post = await getPost(props.params.slug);
+export async function generateMetadata(
+  { params }: { params: { slug: string } },
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const post = await getPost(params.slug);
 
   if (!post) {
     return {
@@ -48,8 +41,13 @@ async function getPost(slug: string) {
   }
 }
 
-export default async function PostPage(props: Props) {
-  const post = await getPost(props.params.slug);
+// Remove type annotations and let Next.js infer the types
+export default async function PostPage({
+  params,
+}: {
+  params: { slug: string };
+}) {
+  const post = await getPost(params.slug);
 
   if (!post) {
     notFound();
