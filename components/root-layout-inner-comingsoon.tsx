@@ -22,15 +22,43 @@ export function RootLayoutInnerComingSoon({
   children,
   inter,
 }: RootLayoutInnerProps) {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+
+  useEffect(() => {
+    if (!isLoaded) return; // wait until user data is loaded
+    if (user) {
+      // Fetch the local user record from the database
+      fetch("/api/getLocalUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerkId: user.id }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data.localUser) {
+            // If no local user found, prompt the user to create one
+            setShowUsernameModal(true);
+          } else {
+            setShowUsernameModal(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching local user:", error);
+          setShowUsernameModal(true);
+        });
+    }
+  }, [isLoaded, user]);
 
   return (
     <div
       className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col`}
     >
       <header className="bg-white shadow-sm"></header>
-      <main className="flex-grow">{children}</main>
+      <main className="flex-grow">
+        {children}
+        {showUsernameModal && <UsernameModal />}
+      </main>
     </div>
   );
 }

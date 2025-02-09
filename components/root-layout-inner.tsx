@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 } from "@clerk/nextjs";
 import { NextFont } from "next/dist/compiled/@next/font";
 import { usePathname } from "next/navigation";
+import UsernameModal from "./username-modal";
 
 interface RootLayoutInnerProps {
   children: React.ReactNode;
@@ -43,6 +44,30 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   }
   const username = computedUsername.toLowerCase();
 
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetch("/api/getLocalUser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerkId: user.id }),
+      })
+        .then((response) => response.json())
+        .then((data) => {
+          if (!data.localUser) {
+            setShowUsernameModal(true);
+          } else {
+            setShowUsernameModal(false);
+          }
+        })
+        .catch((error) => {
+          console.error("Error fetching local user:", error);
+          setShowUsernameModal(true);
+        });
+    }
+  }, [user, pathname]);
+
   return (
     <div
       className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col`}
@@ -56,7 +81,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
             {user ? (
               <div className="flex items-center space-x-4">
                 <div className="mr-4 flex space-x-4">
-                  <Link href={`/guest/export`}>
+                  <Link href="/guest/export">
                     <h2>Export</h2>
                   </Link>
                   <Link href="/guest/backup">
@@ -96,6 +121,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           </p>
         </div>
       </main>
+      {showUsernameModal && <UsernameModal />}
     </div>
   );
 }
