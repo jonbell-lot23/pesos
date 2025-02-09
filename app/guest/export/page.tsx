@@ -18,6 +18,7 @@ import { Loader2, ArrowDown, Check, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
+import Spinner from "../../../components/Spinner";
 
 interface FeedItem {
   title: string;
@@ -118,7 +119,7 @@ export default function ExportPage() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div>Loading...</div>
+        <Spinner />
       </div>
     );
   }
@@ -126,8 +127,7 @@ export default function ExportPage() {
   if (!isSignedIn) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <p className="mb-4">You must be signed in to continue.</p>
-        <SignInButton />
+        <Spinner />
       </div>
     );
   }

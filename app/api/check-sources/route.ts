@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
+import prisma from "../../../lib/prismadb";
 import RssParser from "rss-parser";
 
-const prisma = new PrismaClient();
 const parser = new RssParser();
 
 const generateSlug = () => {

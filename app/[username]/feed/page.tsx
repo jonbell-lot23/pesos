@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { format } from "date-fns";
+import Spinner from "../../../components/Spinner";
 
 interface Post {
   id: number;
@@ -107,8 +108,7 @@ export default function FeedPage() {
   if (!isSignedIn) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <p className="mb-4">You must be signed in to continue.</p>
-        <SignInButton />
+        <Spinner />
       </div>
     );
   }
@@ -136,23 +136,26 @@ export default function FeedPage() {
         <div className="space-y-4">
           {posts.map((post) => (
             <article key={post.id} className="border-b border-gray-200 pb-4">
-              <div className="flex justify-between items-start">
+              <div className="flex items-center">
+                <img
+                  src="/favicon.ico"
+                  alt="favicon"
+                  className="w-6 h-6 inline mr-2"
+                />
                 <a
                   href={`/post/${post.slug}`}
-                  className="text-lg font-medium text-blue-600 hover:text-blue-800"
+                  className="text-sm font-medium text-blue-600 hover:text-blue-800"
                 >
                   {post.title}
                 </a>
-                <time className="text-sm text-gray-500">
-                  {format(new Date(post.postdate), "MMM d, yyyy")}
-                </time>
               </div>
+              <time className="text-sm text-gray-500">
+                {format(new Date(post.postdate), "MMM d, yyyy")}
+              </time>
             </article>
           ))}
 
-          {posts.length === 0 && (
-            <p className="text-center text-gray-500">No posts found</p>
-          )}
+          {posts.length === 0 && <Spinner />}
         </div>
       )}
     </div>
