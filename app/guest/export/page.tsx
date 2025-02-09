@@ -135,7 +135,7 @@ export default function ExportPage() {
   if (isLoadingData) {
     return (
       <div className="min-h-screen flex justify-center items-center">
-        <div className="text-xl font-bold">Loading...</div>
+        <Spinner />
       </div>
     );
   }
@@ -146,6 +146,37 @@ export default function ExportPage() {
     url,
     status: "idle",
   }));
+
+  if (feedItems.length === 0) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center">
+        <Button
+          onClick={() => setIsModalOpen(true)}
+          className="text-sm hover:bg-blue-500"
+        >
+          Add your first feed
+        </Button>
+        {isModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-4 rounded shadow-lg w-full max-w-md">
+              <div className="flex justify-end">
+                <button
+                  className="p-2 text-sm"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Close
+                </button>
+              </div>
+              <FeedEditor
+                initialFeeds={initialFeeds}
+                onContinue={handleFeedEditorContinue}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">

@@ -37,19 +37,19 @@ export function calculateMetrics(items: FeedItem[]) {
       : (sortedDiffs[mid - 1] + sortedDiffs[mid]) / 2;
   })();
 
-  // const averageLengthOfPosts =
-  //   items.reduce(
-  //     (sum, item) => sum + (item.content?.split(/\s+/).length || 0),
-  //     0
-  //   ) / totalPosts;
-  const averageLengthOfPosts = 5;
+  const totalLength = items.reduce((sum, item) => {
+    const len = item.content ? item.content.length : item.title.length;
+    return sum + len;
+  }, 0);
+  const averageLength =
+    totalPosts > 0 ? Math.round(totalLength / totalPosts) : 0;
 
   return {
     totalPosts,
     timeSinceLastPost,
     averageTimeBetweenPosts,
     medianTimeBetweenPosts,
-    averageLengthOfPosts,
+    averageLengthOfPosts: averageLength,
   };
 }
 
