@@ -44,6 +44,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   }
   const username = computedUsername.toLowerCase();
 
+  const [localUser, setLocalUser] = useState<any>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
 
   useEffect(() => {
@@ -57,13 +58,16 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         .then((data) => {
           if (!data.localUser) {
             setShowUsernameModal(true);
+            setLocalUser(null);
           } else {
             setShowUsernameModal(false);
+            setLocalUser(data.localUser);
           }
         })
         .catch((error) => {
           console.error("Error fetching local user:", error);
           setShowUsernameModal(true);
+          setLocalUser(null);
         });
     }
   }, [user, pathname]);
@@ -87,7 +91,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                   <Link href="/guest/backup">
                     <h2>Backup</h2>
                   </Link>
-                  <Link href={`/${username}/feed`}>
+                  <Link href={`/${localUser?.username || username}/feed`}>
                     <h2>Feed</h2>
                   </Link>
                 </div>
