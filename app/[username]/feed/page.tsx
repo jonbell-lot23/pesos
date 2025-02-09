@@ -138,7 +138,9 @@ export default function FeedPage() {
             <article key={post.id} className="border-b border-gray-200 pb-4">
               <div className="flex items-center">
                 <img
-                  src="/favicon.ico"
+                  src={`https://www.google.com/s2/favicons?domain=${
+                    new URL(post.url).hostname
+                  }`}
                   alt="favicon"
                   className="w-6 h-6 inline mr-2"
                 />
