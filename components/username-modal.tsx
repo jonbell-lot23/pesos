@@ -15,12 +15,15 @@ export default function UsernameModal() {
     setError("");
 
     try {
-      const res = await fetch("/api/create-user", {
+      if (!user) {
+        throw new Error("User not loaded");
+      }
+      const res = await fetch("/api/createUser", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username, clerkId: user.id }),
       });
 
       if (!res.ok) {
@@ -30,6 +33,7 @@ export default function UsernameModal() {
       router.push("/feed-selection");
     } catch (error) {
       setError("Failed to create user. Please try again.");
+      console.error(error);
     }
 
     setLoading(false);
