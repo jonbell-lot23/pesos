@@ -16,9 +16,17 @@ export async function POST(req: NextRequest) {
   try {
     const { sourceId } = await req.json();
 
+    // Use more efficient query with index
     const source = await prisma.pesos_Sources.findUnique({
       where: { id: sourceId },
-      select: { url: true, users: { select: { userId: true } } },
+      select: {
+        id: true,
+        url: true,
+        users: {
+          take: 1, // We only need one user
+          select: { userId: true },
+        },
+      },
     });
 
     if (!source || source.users.length === 0) {
@@ -42,9 +50,18 @@ export async function POST(req: NextRequest) {
       const rssString = await response.text();
       const parsedFeed = await parser.parseString(rssString);
 
-      // Fetch existing items for this user
+      // Get potential new URLs first
+      const potentialUrls = parsedFeed.items
+        .slice(0, 15)
+        .map((item) => item.link)
+        .filter((url): url is string => !!url);
+
+      // Use the new compound index (userId, url) for efficient lookup
       const existingItems = await prisma.pesos_items.findMany({
-        where: { userId },
+        where: {
+          userId,
+          url: { in: potentialUrls },
+        },
         select: { url: true },
       });
 
@@ -63,17 +80,20 @@ export async function POST(req: NextRequest) {
           sourceId,
         }));
 
-      // Save new items to the database
-      await Promise.all(
-        newItems.map((item) => prisma.pesos_items.create({ data: item }))
-      );
+      if (newItems.length > 0) {
+        // Use createMany for better performance with multiple items
+        await prisma.pesos_items.createMany({
+          data: newItems,
+          skipDuplicates: true,
+        });
+      }
 
       return NextResponse.json({ newItems }, { status: 200 });
-    } catch {
+    } catch (error) {
       // Any error in feed processing, return empty array
       return NextResponse.json({ newItems: [] }, { status: 200 });
     }
-  } catch {
+  } catch (error) {
     // Any error in the outer scope, return empty array
     return NextResponse.json({ newItems: [] }, { status: 200 });
   }

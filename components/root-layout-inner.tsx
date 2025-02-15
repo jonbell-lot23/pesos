@@ -46,31 +46,61 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
 
   const [localUser, setLocalUser] = useState<any>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      fetch("/api/getLocalUser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerkId: user.id }),
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          if (!data.localUser) {
-            setShowUsernameModal(true);
-            setLocalUser(null);
-          } else {
-            setShowUsernameModal(false);
-            setLocalUser(data.localUser);
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching local user:", error);
+    let isMounted = true;
+
+    const checkLocalUser = async () => {
+      if (!user) {
+        setIsCheckingUser(false);
+        return;
+      }
+
+      try {
+        const response = await fetch("/api/getLocalUser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clerkId: user.id }),
+        });
+
+        if (!isMounted) return;
+
+        if (!response.ok) {
+          console.error("Error fetching local user:", response.statusText);
+          setIsCheckingUser(false);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.localUser) {
+          setLocalUser(data.localUser);
+          setShowUsernameModal(false);
+        } else if (pathname !== "/" && !pathname.startsWith("/post/")) {
+          // Only show username modal if we're not on the homepage or a post page
           setShowUsernameModal(true);
           setLocalUser(null);
-        });
-    }
+        }
+      } catch (error) {
+        console.error("Error checking local user:", error);
+      } finally {
+        if (isMounted) {
+          setIsCheckingUser(false);
+        }
+      }
+    };
+
+    setIsCheckingUser(true);
+    checkLocalUser();
+
+    return () => {
+      isMounted = false;
+    };
   }, [user, pathname]);
+
+  // Don't show the username modal while we're still checking
+  const shouldShowUsernameModal = showUsernameModal && !isCheckingUser;
 
   return (
     <div
@@ -125,7 +155,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           </p>
         </div>
       </main>
-      {showUsernameModal && <UsernameModal />}
+      {shouldShowUsernameModal && <UsernameModal />}
     </div>
   );
 }
