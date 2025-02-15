@@ -1,9 +1,11 @@
 import { useUser } from "@clerk/nextjs";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { SignInButton } from "@clerk/nextjs";
+import { Button } from "./ui/button";
 
 export default function UsernameModal() {
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,24 +29,43 @@ export default function UsernameModal() {
       });
 
       if (!res.ok) {
-        throw new Error("Failed to create user");
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to create user");
       }
 
       router.push("/feed-selection");
     } catch (error) {
-      setError("Failed to create user. Please try again.");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to create user. Please try again."
+      );
       console.error(error);
     }
 
     setLoading(false);
   };
 
+  if (!isSignedIn) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+        <div className="bg-white p-6 rounded-lg">
+          <h2 className="text-xl font-semibold mb-4">Please Sign In</h2>
+          <p className="mb-4">You need to sign in to continue.</p>
+          <SignInButton mode="modal">
+            <Button variant="default" className="w-full">
+              Sign In
+            </Button>
+          </SignInButton>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg">
-        <h2 className="text-xl font-semibold mb-4">
-          Choose a Username (modal)
-        </h2>
+        <h2 className="text-xl font-semibold mb-4">Choose a Username</h2>
         <form onSubmit={handleSubmit}>
           <input
             type="text"

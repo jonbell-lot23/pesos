@@ -54,6 +54,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     const checkLocalUser = async () => {
       if (!user) {
         setIsCheckingUser(false);
+        setShowUsernameModal(false); // Don't show username modal if not logged in
+        setLocalUser(null);
         return;
       }
 
@@ -99,8 +101,9 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     };
   }, [user, pathname]);
 
-  // Don't show the username modal while we're still checking
-  const shouldShowUsernameModal = showUsernameModal && !isCheckingUser;
+  // Don't show the username modal while we're still checking or if not signed in
+  const shouldShowUsernameModal =
+    showUsernameModal && !isCheckingUser && user !== null;
 
   return (
     <div
@@ -112,8 +115,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
             <h1 className="text-2xl font-bold text-gray-900">
               PESOS<sup className="text-md text-blue-500">*</sup>
             </h1>
-            {user ? (
-              <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4">
+              <SignedIn>
                 <div className="mr-4 flex space-x-4">
                   <Link href="/guest/export">
                     <h2>Export</h2>
@@ -125,24 +128,14 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                     <h2>Feed</h2>
                   </Link>
                 </div>
-                <SignedIn>
-                  <UserButton afterSignOutUrl="/" />
-                </SignedIn>
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <Button variant="outline">Sign In</Button>
-                  </SignInButton>
-                </SignedOut>
-              </div>
-            ) : (
-              <div className="flex items-center space-x-4">
-                <SignedOut>
-                  <SignInButton mode="modal">
-                    <Button variant="outline">Sign In</Button>
-                  </SignInButton>
-                </SignedOut>
-              </div>
-            )}
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <Button variant="outline">Sign In</Button>
+                </SignInButton>
+              </SignedOut>
+            </div>
           </div>
         </header>
       )}
