@@ -9,10 +9,42 @@ export async function POST(req: Request) {
       where: { id: clerkId },
     });
     return NextResponse.json({ localUser });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error in getLocalUser:", error);
+
+    // Check if it's a database connection error
+    if (
+      error.name === "PrismaClientInitializationError" ||
+      error.message.includes("Can't reach database server")
+    ) {
+      return NextResponse.json(
+        {
+          error:
+            "Database connection error: Unable to reach the database server. Please try again later.",
+          code: "DATABASE_CONNECTION_ERROR",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Handle other Prisma errors
+    if (error.name?.includes("Prisma")) {
+      return NextResponse.json(
+        {
+          error:
+            "Database error: Something went wrong with the database operation.",
+          code: "DATABASE_ERROR",
+        },
+        { status: 500 }
+      );
+    }
+
+    // Generic error
     return NextResponse.json(
-      { error: "Failed to fetch local user" },
+      {
+        error: "An unexpected error occurred",
+        code: "UNKNOWN_ERROR",
+      },
       { status: 500 }
     );
   }

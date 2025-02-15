@@ -15,28 +15,43 @@ const createUserSchema = z.object({
 
 export async function POST(req: Request) {
   const { username, clerkId } = await req.json();
+  console.log("[createUser] Received request with:", { username, clerkId });
 
   try {
     // Check if a local user record already exists
+    console.log(
+      "[createUser] Checking for existing user with clerkId:",
+      clerkId
+    );
     const existingUser = await prisma.pesos_User.findUnique({
       where: { id: clerkId },
     });
+    console.log("[createUser] Existing user check result:", existingUser);
 
     if (existingUser) {
+      console.log("[createUser] Found existing user, returning");
       return NextResponse.json({ success: true, localUser: existingUser });
     }
 
     // Create a new local user record using clerkId as id
+    console.log("[createUser] Creating new user with:", { username, clerkId });
     const newUser = await prisma.pesos_User.create({
       data: {
         id: clerkId,
         username,
       },
     });
+    console.log("[createUser] Successfully created new user:", newUser);
 
     return NextResponse.json({ success: true, localUser: newUser });
   } catch (error: any) {
-    console.error("Error creating local user:", error);
+    console.error("[createUser] Error creating local user:", error);
+    console.error("[createUser] Error details:", {
+      name: error.name,
+      message: error.message,
+      code: error.code,
+      meta: error.meta,
+    });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

@@ -20,6 +20,10 @@ export default function UsernameModal() {
       if (!user) {
         throw new Error("User not loaded");
       }
+      console.log("[UsernameModal] Submitting user creation with:", {
+        username,
+        clerkId: user.id,
+      });
       const res = await fetch("/api/createUser", {
         method: "POST",
         headers: {
@@ -28,19 +32,24 @@ export default function UsernameModal() {
         body: JSON.stringify({ username, clerkId: user.id }),
       });
 
+      console.log("[UsernameModal] Create user response status:", res.status);
+      const data = await res.json();
+      console.log("[UsernameModal] Create user response data:", data);
+
       if (!res.ok) {
         const errorData = await res.json();
+        console.error("[UsernameModal] Error response:", errorData);
         throw new Error(errorData.error || "Failed to create user");
       }
 
       router.push("/feed-selection");
     } catch (error) {
+      console.error("[UsernameModal] Error in handleSubmit:", error);
       setError(
         error instanceof Error
           ? error.message
           : "Failed to create user. Please try again."
       );
-      console.error(error);
     }
 
     setLoading(false);

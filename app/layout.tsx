@@ -15,13 +15,28 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <html lang="en">
-      <body className={inter.className}>
-        <ClerkProvider>
-          <RootLayoutInner inter={inter}>{children}</RootLayoutInner>
-        </ClerkProvider>
-      </body>
-    </html>
-  );
+  console.log("[RootLayout] Rendering root layout");
+
+  try {
+    return (
+      <html lang="en">
+        <body className={inter.className}>
+          <ClerkProvider>
+            <RootLayoutInner inter={inter}>{children}</RootLayoutInner>
+          </ClerkProvider>
+        </body>
+      </html>
+    );
+  } catch (error) {
+    console.error("[RootLayout] Error rendering layout:", error);
+    return (
+      <html lang="en">
+        <body>
+          <div>
+            Error loading application. Please check console for details.
+          </div>
+        </body>
+      </html>
+    );
+  }
 }

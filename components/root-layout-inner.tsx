@@ -13,6 +13,7 @@ import {
 import { NextFont } from "next/dist/compiled/@next/font";
 import { usePathname } from "next/navigation";
 import UsernameModal from "./username-modal";
+import DBErrorScreen from "./db-error-screen";
 
 interface RootLayoutInnerProps {
   children: React.ReactNode;
@@ -23,6 +24,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const { user } = useUser();
   const pathname = usePathname();
   const hideHeader = pathname.startsWith("/post/");
+  const [dbError, setDbError] = useState(false);
 
   let computedUsername = "";
   if (user) {
@@ -54,7 +56,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     const checkLocalUser = async () => {
       if (!user) {
         setIsCheckingUser(false);
-        setShowUsernameModal(false); // Don't show username modal if not logged in
+        setShowUsernameModal(false);
         setLocalUser(null);
         return;
       }
@@ -70,6 +72,16 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
 
         if (!response.ok) {
           console.error("Error fetching local user:", response.statusText);
+          // Check if it's a database error (500 status)
+          if (response.status === 500) {
+            const errorData = await response.json();
+            if (
+              errorData.error?.includes("database") ||
+              errorData.error?.includes("prisma")
+            ) {
+              setDbError(true);
+            }
+          }
           setIsCheckingUser(false);
           return;
         }
@@ -80,12 +92,19 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           setLocalUser(data.localUser);
           setShowUsernameModal(false);
         } else if (pathname !== "/" && !pathname.startsWith("/post/")) {
-          // Only show username modal if we're not on the homepage or a post page
           setShowUsernameModal(true);
           setLocalUser(null);
         }
       } catch (error) {
         console.error("Error checking local user:", error);
+        // Check if it's a database error
+        if (
+          error instanceof Error &&
+          (error.message.includes("database") ||
+            error.message.includes("prisma"))
+        ) {
+          setDbError(true);
+        }
       } finally {
         if (isMounted) {
           setIsCheckingUser(false);
@@ -100,6 +119,11 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
       isMounted = false;
     };
   }, [user, pathname]);
+
+  // If there's a database error, show the error screen
+  if (dbError) {
+    return <DBErrorScreen />;
+  }
 
   // Don't show the username modal while we're still checking or if not signed in
   const shouldShowUsernameModal =
