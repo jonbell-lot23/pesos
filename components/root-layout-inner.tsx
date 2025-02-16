@@ -145,6 +145,9 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                   <Link href="/guest/export">
                     <h2>Export</h2>
                   </Link>
+                  <Link href={`/${localUser?.username || username}/stats`}>
+                    <h2>Stats</h2>
+                  </Link>
                   <Link href="/guest/backup">
                     <h2>Backup</h2>
                   </Link>

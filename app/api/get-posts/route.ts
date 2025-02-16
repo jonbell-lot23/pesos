@@ -12,22 +12,30 @@ export async function POST(req: NextRequest) {
     });
 
     console.log("[get-posts] Found user:", user);
+    console.log("[get-posts] Received username:", username);
+    console.log("[get-posts] Database username:", user?.username);
 
     // Check if user exists and if the mapped username matches the provided username
     if (!user) {
       console.warn("[get-posts] No user found for clerkId", clerkId);
-      return NextResponse.json({ allowed: false, posts: [] }, { status: 200 });
+      return NextResponse.json(
+        { allowed: false, posts: [], error: "no_user" },
+        { status: 200 }
+      );
     }
 
     if (user.username.toLowerCase() !== username.toLowerCase()) {
       console.warn(
-        "[get-posts] Username mismatch: mapped username (",
-        user.username,
-        ") vs provided (",
-        username,
-        ")"
+        "[get-posts] Username mismatch:",
+        "\nDB username:",
+        user.username.toLowerCase(),
+        "\nProvided username:",
+        username.toLowerCase()
       );
-      return NextResponse.json({ allowed: false, posts: [] }, { status: 200 });
+      return NextResponse.json(
+        { allowed: false, posts: [], error: "username_mismatch" },
+        { status: 200 }
+      );
     }
 
     // Get all posts for this user from pesos_items
@@ -52,7 +60,6 @@ export async function POST(req: NextRequest) {
       orderBy: {
         postdate: "desc",
       },
-      take: 50,
     });
 
     console.log("[get-posts] Number of posts found:", posts.length);
