@@ -6,6 +6,12 @@ export async function POST(req: NextRequest) {
     // Destructure clerkId and username from the request body
     const { clerkId, username } = await req.json();
 
+    console.log("[get-posts] Request payload:", { clerkId, username });
+
+    // First, let's see all users in the database
+    const allUsers = await prisma.pesos_User.findMany();
+    console.log("[get-posts] All users in database:", allUsers);
+
     // Find the user in the pesos_User table by clerkId
     const user = await prisma.pesos_User.findUnique({
       where: { id: clerkId },
