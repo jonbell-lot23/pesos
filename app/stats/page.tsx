@@ -54,14 +54,31 @@ export default function StatsPage() {
       if (!isSignedIn) {
         router.push("/");
       } else {
-        Promise.all([
-          fetch("/api/database-stats").then((res) => res.json()),
-          fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`).then(
-            (res) => res.json()
-          ),
-          fetch(`/api/getPosts?all=true`).then((res) => res.json()),
-        ])
-          .then(([statsData, postsData, allPostsData]) => {
+        const fetchData = async () => {
+          try {
+            const [statsResponse, postsResponse, allPostsResponse] =
+              await Promise.all([
+                fetch("/api/database-stats"),
+                fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`),
+                fetch(`/api/getPosts?all=true`),
+              ]);
+
+            if (!statsResponse.ok) {
+              throw new Error(`Stats API error: ${statsResponse.statusText}`);
+            }
+            if (!postsResponse.ok) {
+              throw new Error(`Posts API error: ${postsResponse.statusText}`);
+            }
+            if (!allPostsResponse.ok) {
+              throw new Error(
+                `All posts API error: ${allPostsResponse.statusText}`
+              );
+            }
+
+            const statsData = await statsResponse.json();
+            const postsData = await postsResponse.json();
+            const allPostsData = await allPostsResponse.json();
+
             if (statsData.stats) {
               setStats(statsData.stats);
             }
@@ -73,15 +90,17 @@ export default function StatsPage() {
               setAllPosts(allPostsData.posts);
             }
             setLoading(false);
-          })
-          .catch((error) => {
+          } catch (error: any) {
             console.error("[StatsPage] Error details:", {
               message: error.message,
               stack: error.stack,
             });
             setError(error.message || "Failed to fetch data");
             setLoading(false);
-          });
+          }
+        };
+
+        fetchData();
       }
     }
   }, [isLoaded, isSignedIn, router, user?.id, currentPage]);
