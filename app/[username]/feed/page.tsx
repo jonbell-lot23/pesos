@@ -119,7 +119,9 @@ export default function FeedPage() {
   ) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <p className="mb-4">Not authorized.</p>
+        <p className="mb-4">
+          This is {routeUsername}'s feed. It's been set to private.
+        </p>
       </div>
     );
   }

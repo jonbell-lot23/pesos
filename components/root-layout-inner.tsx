@@ -142,13 +142,13 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
             <div className="flex items-center space-x-4">
               <SignedIn>
                 <div className="mr-4 flex space-x-4">
-                  <Link href="/guest/export">
+                  <Link href="/export">
                     <h2>Export</h2>
                   </Link>
-                  <Link href={`/${localUser?.username || username}/stats`}>
+                  <Link href="/stats">
                     <h2>Stats</h2>
                   </Link>
-                  <Link href="/guest/backup">
+                  <Link href="/backup">
                     <h2>Backup</h2>
                   </Link>
                   <Link href={`/${localUser?.username || username}/feed`}>
