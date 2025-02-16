@@ -60,7 +60,7 @@ export default function StatsPage() {
               await Promise.all([
                 fetch("/api/database-stats"),
                 fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`),
-                fetch(`/api/getPosts?all=true`),
+                fetch(`/api/getPosts?limit=200`),
               ]);
 
             if (!statsResponse.ok) {
@@ -87,7 +87,7 @@ export default function StatsPage() {
               setTotalPosts(postsData.total);
             }
             if (allPostsData.posts) {
-              setAllPosts(allPostsData.posts);
+              setAllPosts(allPostsData.posts.slice(0, 200));
             }
             setLoading(false);
           } catch (error: any) {
