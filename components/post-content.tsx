@@ -11,7 +11,7 @@ export function PostContent({ post }: PostContentProps) {
   const [showAbout, setShowAbout] = useState(false);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white">
       <div className="max-w-2xl mx-auto relative pt-16 px-4">
         {/* About Button */}
         <button
@@ -44,7 +44,7 @@ export function PostContent({ post }: PostContentProps) {
                 <header className="flex flex-col">
                   <time
                     dateTime={post.postdate.toString()}
-                    className="flex items-center font-light order-first text-base text-gray-500"
+                    className="flex items-center font-lighter order-first text-xs uppercase text-gray-600"
                   >
                     {new Date(post.postdate).toLocaleDateString("en-US", {
                       year: "numeric",
@@ -52,13 +52,13 @@ export function PostContent({ post }: PostContentProps) {
                       day: "numeric",
                     })}
                   </time>
-                  <h1 className="mt-2 text-3xl font-medium tracking-tight text-gray-900">
+                  <h1 className="mt-2 text-5xl font-black tracking-tight text-gray-900">
                     {post.title}
                   </h1>
                 </header>
-                <div className="mt-4">
+                <div className="mt-8">
                   <div
-                    className="prose text-gray-900 text-lg max-w-none"
+                    className="prose prose-slate prose-lg lg:prose-xl max-w-none !space-y-6 [&>p+p]:mt-10 [&>h2]:mt-16 [&>h3]:mt-16 [&>h4]:mt-16 [&>h2+p]:mt-6 [&>h3+p]:mt-6 [&>h4+p]:mt-6 [&>ul]:mt-8 [&>ol]:mt-8 [&>blockquote]:mt-10 [&>pre]:mt-10"
                     dangerouslySetInnerHTML={{ __html: post.description || "" }}
                   />
                 </div>

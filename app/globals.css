@@ -16,6 +16,16 @@
   }
 }
 
+A {
+  color: #2a0066;
+  text-decoration: underline;
+}
+
+A:hover {
+  color: #6b3bb8;
+  text-decoration: underline;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

@@ -168,8 +168,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
       )}
       <main className="flex-grow relative">
         {children}
-        <div className="border-green-700 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <p className="text-sm text-gray-700">
+        <div className="border-green-700 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
+          <p className="text-sm text-gray-700 text-center">
             *Publish Elsewhere, Syndicate On (Your Own) Site. This helps when
             sites go down, turn fascist, or whatever the case may be.
           </p>

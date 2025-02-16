@@ -5,9 +5,16 @@ import { PostContent } from "@/components/post-content";
 import prisma from "@/lib/prismadb";
 
 async function getPost(slug: string) {
-  return prisma.pesos_items.findFirst({
-    where: { slug },
-  });
+  try {
+    return await prisma.pesos_items.findFirst({
+      where: { slug },
+    });
+  } catch (error) {
+    console.error("Database error:", error);
+    throw new Error(
+      "Unable to connect to the database. Please try again later."
+    );
+  }
 }
 
 export async function generateMetadata({
