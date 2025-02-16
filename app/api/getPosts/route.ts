@@ -12,6 +12,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const offset = parseInt(searchParams.get("offset") || "0");
     const limit = parseInt(searchParams.get("limit") || "25");
+    const getAll = searchParams.get("all") === "true";
 
     // Get the local user
     const localUser = await prisma.pesos_User.findUnique({
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       },
     });
 
-    // Get paginated posts
+    // Get posts
     const posts = await prisma.pesos_items.findMany({
       where: {
         userId: localUser.id,
@@ -47,8 +48,7 @@ export async function GET(request: Request) {
       orderBy: {
         postdate: "desc",
       },
-      skip: offset,
-      take: limit,
+      ...(getAll ? {} : { skip: offset, take: limit }),
     });
 
     return NextResponse.json({

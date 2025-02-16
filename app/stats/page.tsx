@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Spinner from "@/components/Spinner";
 import { DataTable } from "@/components/data-table";
+import ActivityChart from "@/components/ActivityChart";
 
 interface Stats {
   totalPosts: number;
@@ -35,6 +36,7 @@ export default function StatsPage() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [stats, setStats] = useState<Stats | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
+  const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,14 +59,18 @@ export default function StatsPage() {
           fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`).then(
             (res) => res.json()
           ),
+          fetch(`/api/getPosts?all=true`).then((res) => res.json()),
         ])
-          .then(([statsData, postsData]) => {
+          .then(([statsData, postsData, allPostsData]) => {
             if (statsData.stats) {
               setStats(statsData.stats);
             }
             if (postsData.posts) {
               setPosts(postsData.posts);
               setTotalPosts(postsData.total);
+            }
+            if (allPostsData.posts) {
+              setAllPosts(allPostsData.posts);
             }
             setLoading(false);
           })
@@ -148,6 +154,10 @@ export default function StatsPage() {
           </div>
         </div>
       )}
+
+      <div className="mb-8">
+        <ActivityChart posts={allPosts} />
+      </div>
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <h2 className="text-lg font-semibold mb-4">Recent Posts</h2>

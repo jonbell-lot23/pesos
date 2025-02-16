@@ -21,7 +21,7 @@ export async function GET() {
       );
     }
 
-    // Get all posts for this user, ordered by date
+    // Get all posts for the user, ordered by date
     const posts = await prisma.pesos_items.findMany({
       where: {
         userId: localUser.id,
@@ -29,58 +29,56 @@ export async function GET() {
       orderBy: {
         postdate: "desc",
       },
-      select: {
-        postdate: true,
-        description: true,
-      },
     });
 
-    // Calculate stats
-    const totalPosts = posts.length;
-
-    // Time since last post (in days)
-    const daysSinceLastPost =
-      posts.length > 0
-        ? Math.round(
-            (Date.now() - posts[0].postdate.getTime()) / (1000 * 60 * 60 * 24)
-          )
-        : 0;
-
-    // Average and median time between posts
-    let timeBetweenPosts: number[] = [];
-    for (let i = 0; i < posts.length - 1; i++) {
-      const diff =
-        posts[i].postdate.getTime() - posts[i + 1].postdate.getTime();
-      timeBetweenPosts.push(diff);
+    if (!posts || posts.length === 0) {
+      return NextResponse.json({
+        stats: {
+          totalPosts: 0,
+          daysSinceLastPost: 0,
+          averageTimeBetweenPosts: 0,
+          medianTimeBetweenPosts: 0,
+          averagePostLength: 0,
+        },
+      });
     }
 
-    const averageTimeBetweenPosts =
-      timeBetweenPosts.length > 0
-        ? Math.round(
-            timeBetweenPosts.reduce((a, b) => a + b, 0) /
-              timeBetweenPosts.length /
-              (1000 * 60 * 60 * 24)
-          )
-        : 0;
+    // Calculate total posts
+    const totalPosts = posts.length;
 
-    const medianTimeBetweenPosts =
-      timeBetweenPosts.length > 0
-        ? Math.round(
-            timeBetweenPosts.sort((a, b) => a - b)[
-              Math.floor(timeBetweenPosts.length / 2)
-            ] /
-              (1000 * 60 * 60)
-          )
-        : 0;
+    // Calculate days since last post
+    const lastPostDate = new Date(posts[0].postdate);
+    const now = new Date();
+    const daysSinceLastPost = Math.floor(
+      (now.getTime() - lastPostDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
-    // Average post length
-    const averagePostLength =
-      posts.length > 0
-        ? posts.reduce(
-            (sum, post) => sum + (post.description?.length || 0),
-            0
-          ) / posts.length
-        : 0;
+    // Calculate average time between posts
+    let totalTimeBetween = 0;
+    let timeDiffs = [];
+    for (let i = 0; i < posts.length - 1; i++) {
+      const timeDiff =
+        new Date(posts[i].postdate).getTime() -
+        new Date(posts[i + 1].postdate).getTime();
+      totalTimeBetween += timeDiff;
+      timeDiffs.push(timeDiff);
+    }
+    const averageTimeBetweenPosts = Math.floor(
+      totalTimeBetween / (posts.length - 1) / (1000 * 60 * 60 * 24)
+    );
+
+    // Calculate median time between posts
+    timeDiffs.sort((a, b) => a - b);
+    const medianTimeBetweenPosts = Math.floor(
+      timeDiffs[Math.floor(timeDiffs.length / 2)] / (1000 * 60 * 60)
+    );
+
+    // Calculate average post length
+    const totalLength = posts.reduce(
+      (sum, post) => sum + (post.description?.length || 0),
+      0
+    );
+    const averagePostLength = totalLength / posts.length;
 
     return NextResponse.json({
       stats: {
@@ -92,9 +90,9 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Error fetching database stats:", error);
+    console.error("Error calculating database stats:", error);
     return NextResponse.json(
-      { error: "Failed to fetch database stats" },
+      { error: "Failed to calculate database stats" },
       { status: 500 }
     );
   }
