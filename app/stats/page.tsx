@@ -4,130 +4,61 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Spinner from "@/components/Spinner";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import MetricsDisplay from "@/components/ui/MetricsDisplay";
-import { calculateMetrics } from "@/lib/utils";
+import { StatsTable } from "@/components/StatsTable";
 
-interface FeedItem {
-  title: string;
-  link: string;
-  pubDate: string;
-  source?: string;
-  content?: string;
+interface ActivityEntry {
+  date: string;
+  count: number;
+  type: string;
 }
 
 export default function StatsPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn, user } = useUser();
-  const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(true);
+  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [localUser, setLocalUser] = useState<any>(null);
 
-  // First get the local user data
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user?.id) {
-      if (isLoaded && !isSignedIn) {
+    if (isLoaded) {
+      if (!isSignedIn) {
         router.push("/");
-      }
-      return;
-    }
+      } else {
+        console.log("[StatsPage] Fetching activity stats for user:", user?.id);
+        // Fetch activity stats
+        fetch("/api/activity-stats")
+          .then(async (res) => {
+            console.log("[StatsPage] Response status:", res.status);
+            const data = await res.json();
+            console.log("[StatsPage] Response data:", data);
 
-    async function getLocalUser() {
-      try {
-        const response = await fetch("/api/getLocalUser", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clerkId: user!.id }),
-        });
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch local user");
-        }
-
-        const data = await response.json();
-        if (data.localUser) {
-          setLocalUser(data.localUser);
-        }
-      } catch (error) {
-        console.error("Error fetching local user:", error);
-        setError("Failed to load user data");
-      }
-    }
-
-    getLocalUser();
-  }, [isLoaded, isSignedIn, user?.id, router]);
-
-  // Then load the stats data once we have the local user
-  useEffect(() => {
-    if (!localUser?.username) return;
-
-    async function loadData() {
-      try {
-        const payload = {
-          clerkId: user!.id,
-          username: localUser.username,
-        };
-
-        const res = await fetch("/api/get-posts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) {
-          throw new Error("Failed to fetch data");
-        }
-
-        const data = await res.json();
-        if (data.posts) {
-          const items = data.posts.map((post: any) => ({
-            title: post.title,
-            link: post.url,
-            pubDate: post.postdate,
-            source: post.sourceUrl,
-            content: post.description,
-          }));
-
-          setFeedItems(
-            items.sort(
-              (a: FeedItem, b: FeedItem) =>
-                new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-            )
-          );
-        } else {
-          setError("No posts found");
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Failed to load posts");
-      } finally {
-        setIsLoadingData(false);
+            if (!res.ok) {
+              throw new Error(data.error || "Failed to fetch activity stats");
+            }
+            return data;
+          })
+          .then((data) => {
+            if (data.activity) {
+              console.log("[StatsPage] Setting activity data:", data.activity);
+              setActivity(data.activity);
+            }
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error("[StatsPage] Error details:", {
+              message: error.message,
+              stack: error.stack,
+            });
+            setError(error.message || "Failed to fetch activity stats");
+            setLoading(false);
+          });
       }
     }
+  }, [isLoaded, isSignedIn, router, user?.id]);
 
-    loadData();
-  }, [localUser?.username, user?.id]);
-
-  if (!isLoaded || !isSignedIn) {
+  if (!isLoaded || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <Spinner />
-      </div>
-    );
-  }
-
-  if (isLoadingData) {
-    return (
-      <div className="min-h-screen flex justify-center items-center">
         <Spinner />
       </div>
     );
@@ -136,61 +67,68 @@ export default function StatsPage() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-white">
-        <div className="text-red-500 mb-4">{error}</div>
-        <Button
-          onClick={() => window.location.reload()}
-          className="text-sm hover:bg-blue-500"
-        >
-          Retry
-        </Button>
+        <div className="text-red-500 mb-4 max-w-lg text-center">
+          <div className="font-bold mb-2">Error:</div>
+          <div>{error}</div>
+          {error.includes("User not found") && (
+            <div className="mt-4 text-sm">
+              It looks like you haven't completed the user setup process. Please
+              go through the initial setup flow first.
+            </div>
+          )}
+        </div>
+        <div className="flex gap-4">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Retry
+          </button>
+          {error.includes("User not found") && (
+            <button
+              onClick={() => router.push("/guest/backup")}
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            >
+              Go to Setup
+            </button>
+          )}
+        </div>
       </div>
     );
   }
 
-  const metrics = calculateMetrics(feedItems);
-
   return (
-    <div className="p-8">
-      <h1 className="text-2xl font-bold mb-6">Database Stats</h1>
-      <MetricsDisplay {...metrics} />
-      <div className="flex justify-center items-center my-8">
-        <Button
-          onClick={() => {
-            const dataStr =
-              "data:text/json;charset=utf-8," +
-              encodeURIComponent(JSON.stringify(feedItems));
-            const downloadAnchorNode = document.createElement("a");
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "feeds_export.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-          }}
-          className="text-sm hover:bg-blue-500"
-        >
-          Export as JSON
-        </Button>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Activity Stats</h1>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-lg font-semibold mb-2">Total Posts</h2>
+          <p className="text-3xl font-bold">
+            {activity
+              .filter((entry) => entry.type === "Posts")
+              .reduce((sum, entry) => sum + entry.count, 0)}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-lg font-semibold mb-2">Total Sources</h2>
+          <p className="text-3xl font-bold">
+            {activity
+              .filter((entry) => entry.type === "Sources Added")
+              .reduce((sum, entry) => sum + entry.count, 0)}
+          </p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-lg font-semibold mb-2">Active Days</h2>
+          <p className="text-3xl font-bold">
+            {new Set(activity.map((entry) => entry.date)).size}
+          </p>
+        </div>
       </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Date</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Source</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {feedItems.map((item, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                {new Date(item.pubDate).toLocaleDateString()}
-              </TableCell>
-              <TableCell>{item.title}</TableCell>
-              <TableCell>{item.source}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+
+      <div className="bg-white rounded-lg shadow-sm border p-6">
+        <h2 className="text-lg font-semibold mb-4">Activity History</h2>
+        <StatsTable activity={activity} />
+      </div>
     </div>
   );
 }

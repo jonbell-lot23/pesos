@@ -5,9 +5,9 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export default authMiddleware({
-  ignoredRoutes: ["/((?!api|trpc))(_next.*|.+\\.[\\w]+$)", "/api/fetch-feeds"],
+  publicRoutes: ["/", "/feed-selection", "/demo"],
 });
 
 export const config = {
-  matcher: [],
+  matcher: ["/((?!.+\\.[\\w]+$|_next).*)", "/", "/(api|trpc)(.*)"],
 };
