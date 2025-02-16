@@ -46,7 +46,7 @@ export default function StatsPage() {
         const response = await fetch("/api/getLocalUser", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clerkId: user.id }),
+          body: JSON.stringify({ clerkId: user!.id }),
         });
 
         if (!response.ok) {
