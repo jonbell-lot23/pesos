@@ -1,46 +1,70 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Spinner from "@/components/Spinner";
-import { StatsTable } from "@/components/StatsTable";
+import { DataTable } from "@/components/data-table";
 
-interface ActivityEntry {
-  date: string;
-  count: number;
-  type: string;
+interface Stats {
+  totalPosts: number;
+  daysSinceLastPost: number;
+  averageTimeBetweenPosts: number;
+  medianTimeBetweenPosts: number;
+  averagePostLength: number;
+}
+
+interface Post {
+  id: number;
+  title: string;
+  url: string;
+  description: string | null;
+  postdate: Date;
+  source: string | null;
+  slug: string | null;
+  Source: {
+    emoji: string;
+    name: string;
+    userid: number;
+  } | null;
 }
 
 export default function StatsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { isLoaded, isSignedIn, user } = useUser();
-  const [activity, setActivity] = useState<ActivityEntry[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [totalPosts, setTotalPosts] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(0);
+
+  useEffect(() => {
+    const page = searchParams.get("page");
+    if (page) {
+      setCurrentPage(parseInt(page) - 1);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (isLoaded) {
       if (!isSignedIn) {
         router.push("/");
       } else {
-        console.log("[StatsPage] Fetching activity stats for user:", user?.id);
-        // Fetch activity stats
-        fetch("/api/activity-stats")
-          .then(async (res) => {
-            console.log("[StatsPage] Response status:", res.status);
-            const data = await res.json();
-            console.log("[StatsPage] Response data:", data);
-
-            if (!res.ok) {
-              throw new Error(data.error || "Failed to fetch activity stats");
+        Promise.all([
+          fetch("/api/database-stats").then((res) => res.json()),
+          fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`).then(
+            (res) => res.json()
+          ),
+        ])
+          .then(([statsData, postsData]) => {
+            if (statsData.stats) {
+              setStats(statsData.stats);
             }
-            return data;
-          })
-          .then((data) => {
-            if (data.activity) {
-              console.log("[StatsPage] Setting activity data:", data.activity);
-              setActivity(data.activity);
+            if (postsData.posts) {
+              setPosts(postsData.posts);
+              setTotalPosts(postsData.total);
             }
             setLoading(false);
           })
@@ -49,12 +73,19 @@ export default function StatsPage() {
               message: error.message,
               stack: error.stack,
             });
-            setError(error.message || "Failed to fetch activity stats");
+            setError(error.message || "Failed to fetch data");
             setLoading(false);
           });
       }
     }
-  }, [isLoaded, isSignedIn, router, user?.id]);
+  }, [isLoaded, isSignedIn, router, user?.id, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    const newParams = new URLSearchParams(searchParams.toString());
+    newParams.set("page", (page + 1).toString());
+    router.push(`/stats?${newParams.toString()}`);
+  };
 
   if (!isLoaded || loading) {
     return (
@@ -70,64 +101,74 @@ export default function StatsPage() {
         <div className="text-red-500 mb-4 max-w-lg text-center">
           <div className="font-bold mb-2">Error:</div>
           <div>{error}</div>
-          {error.includes("User not found") && (
-            <div className="mt-4 text-sm">
-              It looks like you haven't completed the user setup process. Please
-              go through the initial setup flow first.
-            </div>
-          )}
         </div>
-        <div className="flex gap-4">
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Retry
-          </button>
-          {error.includes("User not found") && (
-            <button
-              onClick={() => router.push("/guest/backup")}
-              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
-            >
-              Go to Setup
-            </button>
-          )}
-        </div>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Activity Stats</h1>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold mb-2">Total Posts</h2>
-          <p className="text-3xl font-bold">
-            {activity
-              .filter((entry) => entry.type === "Posts")
-              .reduce((sum, entry) => sum + entry.count, 0)}
-          </p>
+      <h1 className="text-2xl font-bold mb-6">Database Stats</h1>
+
+      {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-3xl font-bold">{stats.totalPosts}</p>
+            <h2 className="text-lg font-semibold">Total Posts</h2>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-3xl font-bold">{stats.daysSinceLastPost} days</p>
+            <h2 className="text-lg font-semibold">Time Since Last Post</h2>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-3xl font-bold">
+              {stats.averageTimeBetweenPosts} days
+            </p>
+            <h2 className="text-lg font-semibold">
+              Average Time Between Posts
+            </h2>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-3xl font-bold">
+              {stats.medianTimeBetweenPosts} hours
+            </p>
+            <h2 className="text-lg font-semibold">Median Time Between Posts</h2>
+          </div>
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-3xl font-bold">
+              {stats.averagePostLength.toFixed(2)}
+            </p>
+            <h2 className="text-lg font-semibold">Average Length of Posts</h2>
+          </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold mb-2">Total Sources</h2>
-          <p className="text-3xl font-bold">
-            {activity
-              .filter((entry) => entry.type === "Sources Added")
-              .reduce((sum, entry) => sum + entry.count, 0)}
-          </p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow-sm border">
-          <h2 className="text-lg font-semibold mb-2">Active Days</h2>
-          <p className="text-3xl font-bold">
-            {new Set(activity.map((entry) => entry.date)).size}
-          </p>
-        </div>
-      </div>
+      )}
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">Activity History</h2>
-        <StatsTable activity={activity} />
+        <h2 className="text-lg font-semibold mb-4">Recent Posts</h2>
+        <DataTable posts={posts} />
+
+        {/* Pagination */}
+        <div className="mt-4 flex justify-center">
+          {Array.from({ length: Math.ceil(totalPosts / 25) }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => handlePageChange(i)}
+              className={`mx-1 px-3 py-1 rounded ${
+                currentPage === i
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 hover:bg-gray-300"
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
