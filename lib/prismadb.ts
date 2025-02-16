@@ -6,10 +6,27 @@ declare global {
   var prisma: PrismaClient | undefined;
 }
 
-const prisma = global.prisma || new PrismaClient();
+const prisma =
+  global.prisma ||
+  new PrismaClient({
+    log: ["query"],
+  });
 
+// Only do this in development
 if (process.env.NODE_ENV !== "production") {
   global.prisma = prisma;
 }
+
+// Ensure connections are properly closed when the app exits
+async function cleanup() {
+  if (global.prisma) {
+    await global.prisma.$disconnect();
+    console.log("Prisma Client disconnected");
+  }
+}
+
+// Handle cleanup on app termination
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
 
 export default prisma;
