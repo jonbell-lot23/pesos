@@ -4,6 +4,7 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { clerkClient } from "@clerk/nextjs/server";
 
 // Modify the regex to accept both "clrk_" and "user_" prefixes.
 const createUserSchema = z.object({
@@ -33,19 +34,52 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, localUser: existingUser });
     }
 
+    // Fetch Clerk user information
+    const clerkUser = await clerkClient.users.getUser(clerkId);
+    console.log(
+      "[createUser] Fetched Clerk user publicMetadata:",
+      clerkUser.publicMetadata
+    );
+
+    // Use the chosen username from publicMetadata if available, otherwise the provided username
+    const finalUsername = clerkUser.publicMetadata?.chosenUsername || username;
+    console.log("[createUser] Final username chosen:", finalUsername, {
+      clerkUserPublicMetadata: clerkUser.publicMetadata,
+    });
+
     // Create a new local user record using clerkId as id
-    console.log("[createUser] Creating new user with:", { username, clerkId });
+    console.log("[createUser] Creating new user with:", {
+      finalUsername,
+      clerkId,
+    });
     const newUser = await prisma.pesos_User.create({
       data: {
         id: clerkId,
-        username,
+        username: finalUsername,
       },
     });
     console.log("[createUser] Successfully created new user:", newUser);
 
+    // If chosenUsername is not already set in Clerk, update it
+    if (!clerkUser.publicMetadata?.chosenUsername) {
+      const updateResponse = await clerkClient.users.updateUser(clerkId, {
+        publicMetadata: { chosenUsername: finalUsername },
+      });
+      console.log(
+        "[createUser] Updated Clerk publicMetadata with chosenUsername:",
+        finalUsername,
+        updateResponse
+      );
+    }
+
     return NextResponse.json({ success: true, localUser: newUser });
   } catch (error: any) {
     console.error("[createUser] Error creating local user:", error);
+    if (error.code === "P2002") {
+      console.error(
+        "[createUser] Duplicate entry detected for clerkId (likely due to multiple creation attempts)."
+      );
+    }
     console.error("[createUser] Error details:", {
       name: error.name,
       message: error.message,

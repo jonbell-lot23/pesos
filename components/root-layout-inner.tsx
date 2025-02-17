@@ -159,7 +159,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
               </SignedIn>
               <SignedOut>
                 <SignInButton mode="modal">
-                  <Button variant="outline">Sign In</Button>
+                  <Button variant="outline">Log in</Button>
                 </SignInButton>
               </SignedOut>
             </div>

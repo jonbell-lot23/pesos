@@ -3,11 +3,15 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { clerkId } = await req.json();
-    // Look up the local user record using the Clerk user ID.
-    const localUser = await prisma.pesos_User.findUnique({
+    const { clerkId, chosenUsername } = await req.json();
+    let localUser = await prisma.pesos_User.findUnique({
       where: { id: clerkId },
     });
+    if (!localUser && chosenUsername) {
+      localUser = await prisma.pesos_User.findUnique({
+        where: { username: chosenUsername },
+      });
+    }
     return NextResponse.json({ localUser });
   } catch (error: any) {
     console.error("Error in getLocalUser:", error);
