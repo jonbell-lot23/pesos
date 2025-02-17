@@ -45,6 +45,10 @@ export default function ExportPage() {
   useEffect(() => {
     if (!mounted) return;
     async function loadFeeds() {
+      if (!searchParams) {
+        setIsLoadingData(false);
+        return;
+      }
       const qs = searchParams.getAll("feedUrls");
       if (qs.length === 0) {
         if (!isSignedIn) {
@@ -140,7 +144,7 @@ export default function ExportPage() {
     );
   }
 
-  const feedUrls = searchParams.getAll("feedUrls");
+  const feedUrls = searchParams?.getAll("feedUrls") ?? [];
   const initialFeeds: FeedEntry[] = feedUrls.map((url, index) => ({
     id: String(index + 1),
     url,

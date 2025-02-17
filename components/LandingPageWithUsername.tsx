@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUser, SignInButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
@@ -12,6 +12,41 @@ export default function LandingPageWithUsername() {
   const [availability, setAvailability] = useState("neutral"); // 'neutral' | 'checking' | 'available' | 'unavailable'
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleSubmitUsername = useCallback(
+    async (usernameToSubmit: string) => {
+      setLoading(true);
+      try {
+        if (!user) return;
+
+        const payload = { username: usernameToSubmit, clerkId: user.id };
+        console.log("[LandingPageWithUsername] Submitting username:", payload);
+
+        const res = await fetch("/api/createUser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await res.json();
+        console.log("[LandingPageWithUsername] Submission response:", data);
+
+        if (!res.ok) throw new Error(data.error || "Failed to create user");
+
+        router.push("/stats");
+      } catch (error) {
+        console.error(
+          "[LandingPageWithUsername] Error submitting username:",
+          error
+        );
+        setError(
+          error instanceof Error ? error.message : "Failed to create user"
+        );
+      }
+      setLoading(false);
+    },
+    [user, router]
+  );
 
   // Check for returning user with stored username
   useEffect(() => {
@@ -25,7 +60,7 @@ export default function LandingPageWithUsername() {
         handleSubmitUsername(storedUsername);
       }
     }
-  }, [user]);
+  }, [user, handleSubmitUsername]);
 
   useEffect(() => {
     if (!username.trim()) {
@@ -52,7 +87,7 @@ export default function LandingPageWithUsername() {
         handleSubmitUsername(storedUsername);
       }
     }
-  }, [user, loading, availability]);
+  }, [user, loading, availability, handleSubmitUsername]);
 
   async function checkAvailability(name: string) {
     try {
@@ -98,38 +133,6 @@ export default function LandingPageWithUsername() {
     );
     localStorage.setItem("chosenUsername", username);
     router.push("/sign-in");
-  };
-
-  const handleSubmitUsername = async (usernameToSubmit: string) => {
-    setLoading(true);
-    try {
-      if (!user) return;
-
-      const payload = { username: usernameToSubmit, clerkId: user.id };
-      console.log("[LandingPageWithUsername] Submitting username:", payload);
-
-      const res = await fetch("/api/createUser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      const data = await res.json();
-      console.log("[LandingPageWithUsername] Submission response:", data);
-
-      if (!res.ok) throw new Error(data.error || "Failed to create user");
-
-      router.push("/stats");
-    } catch (error) {
-      console.error(
-        "[LandingPageWithUsername] Error submitting username:",
-        error
-      );
-      setError(
-        error instanceof Error ? error.message : "Failed to create user"
-      );
-    }
-    setLoading(false);
   };
 
   return (

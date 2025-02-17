@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect } from "react";
 import { SignIn } from "@clerk/nextjs";
 
@@ -18,9 +20,10 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div style={{ padding: "24px" }}>
-      <h1>Login Page</h1>
-      <SignIn path="/sign-in" routing="path" />
+    <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="w-full max-w-md">
+        <SignIn path="/sign-in" routing="path" signUpUrl="/sign-up" />
+      </div>
     </div>
   );
 }
