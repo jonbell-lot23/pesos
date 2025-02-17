@@ -119,7 +119,7 @@ export default function LandingPageWithUsername() {
 
       if (!res.ok) throw new Error(data.error || "Failed to create user");
 
-      router.push("/feed-selection");
+      router.push("/stats");
     } catch (error) {
       console.error(
         "[LandingPageWithUsername] Error submitting username:",

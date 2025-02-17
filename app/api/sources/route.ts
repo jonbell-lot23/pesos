@@ -41,26 +41,72 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "URL is required" }, { status: 400 });
     }
 
-    // Create or find the source
-    const source = await prisma.pesos_Sources.upsert({
-      where: { url },
-      update: {},
-      create: { url },
+    // Use a transaction to ensure consistency
+    const result = await prisma.$transaction(async (tx) => {
+      // First, try to find the source by URL
+      const existingSource = await tx.pesos_Sources.findUnique({
+        where: { url },
+      });
+
+      let source;
+      if (existingSource) {
+        source = existingSource;
+        console.log("Found existing source:", source);
+      } else {
+        try {
+          source = await tx.pesos_Sources.create({
+            data: { url },
+          });
+          console.log("Created new source:", source);
+        } catch (error) {
+          console.error("Error creating source:", error);
+          throw new Error(
+            "Failed to create source - possible ID sequence issue"
+          );
+        }
+      }
+
+      // Now handle the user-source relationship
+      const existingRelation = await tx.pesos_UserSources.findUnique({
+        where: {
+          userId_sourceId: {
+            userId,
+            sourceId: source.id,
+          },
+        },
+      });
+
+      if (!existingRelation) {
+        try {
+          await tx.pesos_UserSources.create({
+            data: {
+              userId,
+              sourceId: source.id,
+            },
+          });
+          console.log("Created new user-source relationship");
+        } catch (error) {
+          console.error("Error creating user-source relationship:", error);
+          throw new Error("Failed to create user-source relationship");
+        }
+      } else {
+        console.log("User-source relationship already exists");
+      }
+
+      return source;
     });
 
-    // Create the user-source relationship if it doesn't exist
-    await prisma.pesos_UserSources.create({
-      data: {
-        userId,
-        sourceId: source.id,
-      },
-    });
-
-    return NextResponse.json({ source });
+    return NextResponse.json({ source: result });
   } catch (error) {
-    console.error("Error creating source:", error);
+    console.error("Error in POST /api/sources:", error);
+    if (error instanceof Error) {
+      return NextResponse.json(
+        { error: error.message || "Failed to create source" },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
-      { error: "Failed to create source" },
+      { error: "An unexpected error occurred" },
       { status: 500 }
     );
   }
