@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignInButton } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { SignInButton } from "@clerk/nextjs";
 
 export default function LandingPageWithUsername() {
   const { user } = useUser();
@@ -13,6 +12,20 @@ export default function LandingPageWithUsername() {
   const [availability, setAvailability] = useState("neutral"); // 'neutral' | 'checking' | 'available' | 'unavailable'
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Check for returning user with stored username
+  useEffect(() => {
+    if (user) {
+      const storedUsername = localStorage.getItem("chosenUsername");
+      console.log(
+        "[LandingPageWithUsername] User loaded, stored username:",
+        storedUsername
+      );
+      if (storedUsername) {
+        handleSubmitUsername(storedUsername);
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!username.trim()) {
@@ -26,11 +39,20 @@ export default function LandingPageWithUsername() {
   }, [username]);
 
   useEffect(() => {
-    console.log(
-      "[LandingPageWithUsername] Component loaded with chosenUsername from localStorage:",
-      localStorage.getItem("chosenUsername")
-    );
-  }, []);
+    if (user && !loading) {
+      const storedUsername = localStorage.getItem("chosenUsername");
+      console.log(
+        "[LandingPageWithUsername] User loaded, stored username:",
+        storedUsername
+      );
+      if (storedUsername && availability === "available") {
+        console.log(
+          "[LandingPageWithUsername] Auto-submitting stored username after sign-in"
+        );
+        handleSubmitUsername(storedUsername);
+      }
+    }
+  }, [user, loading, availability]);
 
   async function checkAvailability(name: string) {
     try {
@@ -65,44 +87,46 @@ export default function LandingPageWithUsername() {
     );
   };
 
-  const handleReserve = async () => {
+  const handleGetStarted = () => {
     if (availability !== "available") {
-      console.log("Username unavailable, cannot reserve.");
+      console.log("Username unavailable, cannot proceed.");
       return;
     }
+    console.log(
+      "[LandingPageWithUsername] Saving username and redirecting to sign-in:",
+      username
+    );
+    localStorage.setItem("chosenUsername", username);
+    router.push("/sign-in");
+  };
+
+  const handleSubmitUsername = async (usernameToSubmit: string) => {
     setLoading(true);
     try {
-      if (!user) {
-        throw new Error("User not loaded");
-      }
-      const payload = { username, clerkId: user.id };
-      console.log(
-        "[LandingPageWithUsername] Submitting user reservation with payload:",
-        payload
-      );
+      if (!user) return;
+
+      const payload = { username: usernameToSubmit, clerkId: user.id };
+      console.log("[LandingPageWithUsername] Submitting username:", payload);
+
       const res = await fetch("/api/createUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      console.log(
-        "[LandingPageWithUsername] Create user response status:",
-        res.status
-      );
+
       const data = await res.json();
-      console.log("[LandingPageWithUsername] Create user response data:", data);
-      // Save reserved username and redirect
-      localStorage.setItem("reservedUsername", username);
+      console.log("[LandingPageWithUsername] Submission response:", data);
+
+      if (!res.ok) throw new Error(data.error || "Failed to create user");
+
       router.push("/feed-selection");
     } catch (error) {
       console.error(
-        "[LandingPageWithUsername] Error in reserving username:",
+        "[LandingPageWithUsername] Error submitting username:",
         error
       );
       setError(
-        error instanceof Error
-          ? error.message
-          : "Failed to create user. Please try again."
+        error instanceof Error ? error.message : "Failed to create user"
       );
     }
     setLoading(false);
@@ -144,7 +168,7 @@ export default function LandingPageWithUsername() {
         </SignInButton>
       ) : (
         <button
-          onClick={handleReserve}
+          onClick={() => handleSubmitUsername(username)}
           className="px-6 py-3 bg-black text-white rounded hover:bg-gray-800"
         >
           Get started

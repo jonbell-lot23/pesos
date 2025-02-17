@@ -23,7 +23,7 @@ interface RootLayoutInnerProps {
 export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const { user } = useUser();
   const pathname = usePathname();
-  const hideHeader = pathname.startsWith("/post/");
+  const hideHeader = pathname?.startsWith("/post/") ?? false;
   const [dbError, setDbError] = useState(false);
 
   let computedUsername = "";
@@ -91,7 +91,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         if (data.localUser) {
           setLocalUser(data.localUser);
           setShowUsernameModal(false);
-        } else if (pathname !== "/" && !pathname.startsWith("/post/")) {
+        } else if (pathname && !pathname.startsWith("/post/")) {
           setShowUsernameModal(true);
           setLocalUser(null);
         }
@@ -142,17 +142,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
             <div className="flex items-center space-x-4">
               <SignedIn>
                 <div className="mr-4 flex space-x-4">
-                  <Link href="/export">
-                    <h2>Export</h2>
-                  </Link>
                   <Link href="/stats">
                     <h2>Stats</h2>
-                  </Link>
-                  <Link href="/backup">
-                    <h2>Backup</h2>
-                  </Link>
-                  <Link href={`/${localUser?.username || username}/feed`}>
-                    <h2>Feed</h2>
                   </Link>
                 </div>
                 <UserButton afterSignOutUrl="/" />
