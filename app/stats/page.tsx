@@ -164,13 +164,59 @@ export default function StatsPage() {
         }
       }
 
+      // After saving all feeds, trigger the backup process
+      const backupResponse = await fetch("/api/backup", {
+        method: "POST",
+      });
+
+      if (!backupResponse.ok) {
+        const errorData = await backupResponse.json();
+        throw new Error(errorData.error || "Failed to start backup process");
+      }
+
       setShowFeedEditor(false);
-      window.location.reload();
+
+      // Show a loading state while backup runs
+      setLoading(true);
+      setError("Backup in progress - this may take a few minutes...");
+
+      // Poll the backup status every 5 seconds
+      const pollBackup = async () => {
+        try {
+          const statusResponse = await fetch("/api/backup/status");
+          if (!statusResponse.ok) {
+            throw new Error("Failed to check backup status");
+          }
+
+          const statusData = await statusResponse.json();
+
+          if (statusData.status === "completed") {
+            window.location.reload();
+          } else if (statusData.status === "failed") {
+            setError("Backup failed. Please try again.");
+            setLoading(false);
+          } else if (statusData.status === "running") {
+            // Still running, check again in 5 seconds
+            setTimeout(pollBackup, 5000);
+          } else {
+            setError("Unknown backup status. Please refresh the page.");
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error("Error checking backup status:", error);
+          setError("Error checking backup status. Please refresh the page.");
+          setLoading(false);
+        }
+      };
+
+      // Start polling
+      setTimeout(pollBackup, 5000);
     } catch (error) {
       console.error("Error saving feeds:", error);
       setFeedEditorError(
         error instanceof Error ? error.message : "Failed to save feeds"
       );
+      setLoading(false);
     }
   };
 
