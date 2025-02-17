@@ -17,11 +17,16 @@ interface Post {
 
 export default function FeedPage() {
   const params = useParams();
-  const { username } = params;
-  const routeUsername = Array.isArray(username) ? username[0] : username;
   const { isLoaded, isSignedIn, user } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const username = params?.username;
+  const routeUsername = username
+    ? Array.isArray(username)
+      ? username[0]
+      : username
+    : "";
 
   const fetchPosts = useCallback(async () => {
     console.log("[FeedPage] fetchPosts: Called with user:", user);
@@ -96,6 +101,14 @@ export default function FeedPage() {
       setIsLoading(false);
     }
   }, [isSignedIn, user?.id, user?.username, routeUsername, fetchPosts]);
+
+  if (!username) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div>Invalid username</div>
+      </div>
+    );
+  }
 
   if (!isLoaded) {
     return (
