@@ -20,8 +20,6 @@ export default function LandingPageWithUsername() {
         if (!user) return;
 
         const payload = { username: usernameToSubmit, clerkId: user.id };
-        console.log("[LandingPageWithUsername] Submitting username:", payload);
-
         const res = await fetch("/api/createUser", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -29,16 +27,10 @@ export default function LandingPageWithUsername() {
         });
 
         const data = await res.json();
-        console.log("[LandingPageWithUsername] Submission response:", data);
-
         if (!res.ok) throw new Error(data.error || "Failed to create user");
 
-        router.push("/stats");
+        router.push("/dashboard");
       } catch (error) {
-        console.error(
-          "[LandingPageWithUsername] Error submitting username:",
-          error
-        );
         setError(
           error instanceof Error ? error.message : "Failed to create user"
         );
@@ -47,20 +39,6 @@ export default function LandingPageWithUsername() {
     },
     [user, router]
   );
-
-  // Check for returning user with stored username
-  useEffect(() => {
-    if (user) {
-      const storedUsername = localStorage.getItem("chosenUsername");
-      console.log(
-        "[LandingPageWithUsername] User loaded, stored username:",
-        storedUsername
-      );
-      if (storedUsername) {
-        handleSubmitUsername(storedUsername);
-      }
-    }
-  }, [user, handleSubmitUsername]);
 
   useEffect(() => {
     if (!username.trim()) {
@@ -73,22 +51,6 @@ export default function LandingPageWithUsername() {
     return () => clearTimeout(timer);
   }, [username]);
 
-  useEffect(() => {
-    if (user && !loading) {
-      const storedUsername = localStorage.getItem("chosenUsername");
-      console.log(
-        "[LandingPageWithUsername] User loaded, stored username:",
-        storedUsername
-      );
-      if (storedUsername && availability === "available") {
-        console.log(
-          "[LandingPageWithUsername] Auto-submitting stored username after sign-in"
-        );
-        handleSubmitUsername(storedUsername);
-      }
-    }
-  }, [user, loading, availability, handleSubmitUsername]);
-
   async function checkAvailability(name: string) {
     try {
       setAvailability("checking");
@@ -100,6 +62,9 @@ export default function LandingPageWithUsername() {
         setAvailability("available");
       } else {
         setAvailability("unavailable");
+        if (data.error) {
+          setError(data.error);
+        }
       }
     } catch (err) {
       console.error(err);
@@ -110,38 +75,12 @@ export default function LandingPageWithUsername() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
-    console.log(
-      "[LandingPageWithUsername] Input changed. New value:",
-      newValue
-    );
     setUsername(newValue);
-    localStorage.setItem("chosenUsername", newValue);
-    console.log(
-      "[LandingPageWithUsername] Updated chosenUsername in localStorage:",
-      localStorage.getItem("chosenUsername")
-    );
-  };
-
-  const handleGetStarted = () => {
-    if (availability !== "available") {
-      console.log("Username unavailable, cannot proceed.");
-      return;
-    }
-    console.log(
-      "[LandingPageWithUsername] Saving username and redirecting to sign-in:",
-      username
-    );
-    localStorage.setItem("chosenUsername", username);
-    router.push("/sign-in");
+    setError("");
   };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-8 relative">
-      {loading && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded">Loading...</div>
-        </div>
-      )}
       <h1 className="text-3xl font-bold mb-8">Reserve your username</h1>
       <div className="mb-4 flex items-center">
         <span className="mr-2 text-lg">PESOS.site/</span>
@@ -165,16 +104,20 @@ export default function LandingPageWithUsername() {
       {error && <div className="text-red-600 mb-4">{error}</div>}
       {!user ? (
         <SignInButton mode="modal">
-          <button className="px-6 py-3 bg-black text-white rounded hover:bg-gray-800">
+          <button
+            disabled={availability !== "available"}
+            className="px-6 py-3 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Get started
           </button>
         </SignInButton>
       ) : (
         <button
           onClick={() => handleSubmitUsername(username)}
-          className="px-6 py-3 bg-black text-white rounded hover:bg-gray-800"
+          disabled={availability !== "available" || loading}
+          className="px-6 py-3 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Get started
+          {loading ? "Creating..." : "Get started"}
         </button>
       )}
     </div>

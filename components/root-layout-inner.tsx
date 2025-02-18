@@ -135,31 +135,30 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     >
       {!hideHeader && (
         <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
-              PESOS<sup className="text-md text-blue-500">*</sup>
-            </h1>
-            <div className="flex items-center space-x-4">
-              <SignedIn>
-                <div className="mr-4 flex space-x-4">
-                  <Link href="/stats">
-                    <h2>Stats</h2>
-                  </Link>
-                </div>
-                <UserButton afterSignOutUrl="/" />
-              </SignedIn>
-              <SignedOut>
-                <SignInButton mode="modal">
-                  <Button variant="outline">Log in</Button>
-                </SignInButton>
-              </SignedOut>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div className="flex justify-between items-center">
+              <h1 className="text-2xl font-bold text-gray-900">
+                PESOS<sup className="text-md text-blue-500">*</sup>
+              </h1>
+              <div className="flex items-center space-x-4">
+                <SignedIn>
+                  <UserButton afterSignOutUrl="/" />
+                </SignedIn>
+                <SignedOut>
+                  <SignInButton mode="modal">
+                    <Button variant="outline">Log in</Button>
+                  </SignInButton>
+                </SignedOut>
+              </div>
             </div>
           </div>
         </header>
       )}
       <main className="flex-grow relative">
-        {children}
-        <div className="border-green-700 max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-center items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {children}
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-center items-center">
           <p className="text-sm text-gray-700 text-center">
             *Publish Elsewhere, Syndicate On (Your Own) Site. This helps when
             sites go down, turn fascist, or whatever the case may be.

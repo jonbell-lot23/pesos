@@ -1,19 +1,32 @@
 "use client";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import LandingPageWithUsername from "@/components/LandingPageWithUsername";
+import Spinner from "@/components/Spinner";
 
 export default function Page() {
-  console.log("DEBUG: Reserve your username page (app/page.tsx) loaded.");
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
+  const [isRedirecting, setIsRedirecting] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
+
     if (user) {
-      router.replace("/stats");
+      router.replace("/dashboard");
+    } else {
+      setIsRedirecting(false);
     }
-  }, [user, router]);
+  }, [user, router, isLoaded]);
+
+  if (!isLoaded || isRedirecting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Spinner />
+      </div>
+    );
+  }
 
   return <LandingPageWithUsername />;
 }
