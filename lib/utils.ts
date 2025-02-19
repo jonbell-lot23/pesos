@@ -55,3 +55,38 @@ export function calculateMetrics(items: FeedItem[]) {
 
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
+
+export interface UsernameValidationResult {
+  isValid: boolean;
+  error?: string;
+}
+
+export function validateUsername(username: string): UsernameValidationResult {
+  // Trim whitespace
+  const trimmedUsername = username.trim();
+
+  // Check length
+  if (trimmedUsername.length < 3) {
+    return {
+      isValid: false,
+      error: "Username must be at least 3 characters long",
+    };
+  }
+  if (trimmedUsername.length > 28) {
+    return {
+      isValid: false,
+      error: "Username must be no more than 28 characters long",
+    };
+  }
+
+  // Check for valid characters (alphanumeric and underscore only)
+  const validUsernameRegex = /^[a-zA-Z0-9_]+$/;
+  if (!validUsernameRegex.test(trimmedUsername)) {
+    return {
+      isValid: false,
+      error: "Username can only contain letters, numbers, and underscores",
+    };
+  }
+
+  return { isValid: true };
+}

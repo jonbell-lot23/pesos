@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { SignInButton } from "@clerk/nextjs";
 import { Button } from "./ui/button";
+import { validateUsername } from "@/lib/utils";
 
 export default function UsernameModal() {
   const { user, isSignedIn } = useUser();
@@ -14,6 +15,8 @@ export default function UsernameModal() {
   const [loadingLocal, setLoadingLocal] = useState(true);
   const [username, setUsername] = useState("");
   const [error, setError] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [availability, setAvailability] = useState("neutral"); // 'neutral' | 'checking' | 'available' | 'unavailable'
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -29,19 +32,11 @@ export default function UsernameModal() {
     manualChosenName,
   });
 
-  // Modify the useEffect to initialize the username state from localStorage if a value exists
+  // Move useEffect before any conditional returns
   useEffect(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("chosenUsername");
-      console.log(
-        "[UsernameModal] Found chosenUsername in localStorage on mount:",
-        stored
-      );
       if (stored && stored.trim() !== "") {
-        console.log(
-          "[UsernameModal] Using existing chosenUsername from localStorage:",
-          stored
-        );
         setManualChosenName(stored);
         setUsername(stored);
       } else {
@@ -77,6 +72,17 @@ export default function UsernameModal() {
   // DEBUG: Commenting out auto-redirect / early return logic that prevents the modal from displaying
   // if (currentUser && manualChosenName) return null;
 
+  useEffect(() => {
+    if (!username.trim() || username.trim().length < 3) {
+      setAvailability("neutral");
+      return;
+    }
+    const timer = setTimeout(() => {
+      checkAvailability(username);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [username]);
+
   if (!isSignedIn) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -93,28 +99,60 @@ export default function UsernameModal() {
     );
   }
 
-  // If loading local user check, don't render anything
   if (loadingLocal) return null;
 
   // Always render the modal to allow manual name update
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    const oldValue = localStorage.getItem("chosenUsername") || "(none)";
-    console.log(
-      "[UsernameModal] onChange - Old chosenUsername:",
-      oldValue,
-      "New input value:",
-      newValue
-    );
+    // Only allow alphanumeric and underscore
+    const newValue = e.target.value.replace(/[^a-zA-Z0-9_]/g, "");
     setUsername(newValue);
+    setError("");
+    setValidationError(""); // Clear any previous validation errors
+
+    // Only proceed with availability check if we have at least 3 characters
+    if (newValue.length >= 3) {
+      setAvailability("checking");
+    } else {
+      setAvailability("neutral");
+    }
   };
+
+  async function checkAvailability(name: string) {
+    try {
+      setAvailability("checking");
+      const res = await fetch(
+        `/api/check-username?username=${encodeURIComponent(name)}`
+      );
+      const data = await res.json();
+      if (data.available) {
+        setAvailability("available");
+      } else {
+        setAvailability("unavailable");
+        if (data.error) {
+          setError(data.error);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Error checking username");
+      setAvailability("unavailable");
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log(
-      "[UsernameModal] handleSubmit triggered with username state:",
-      username
-    );
+    if (!username.trim()) {
+      setError("Username cannot be empty");
+      return;
+    }
+
+    // Validate username before submitting
+    const validationResult = validateUsername(username);
+    if (!validationResult.isValid) {
+      setValidationError(validationResult.error || "");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
@@ -123,43 +161,22 @@ export default function UsernameModal() {
         throw new Error("User not loaded");
       }
       const payload = { username, clerkId: currentUser.id };
-      console.log(
-        "[UsernameModal] Submitting user creation with payload:",
-        payload
-      );
       const res = await fetch("/api/createUser", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      console.log("[UsernameModal] Create user response status:", res.status);
-      const data = await res.json();
-      console.log("[UsernameModal] Create user response data:", data);
 
+      const data = await res.json();
       if (!res.ok) {
-        console.error("[UsernameModal] Error response in handleSubmit:", data);
         throw new Error(data.error || "Failed to create user");
       }
 
-      const oldUsername = localStorage.getItem("chosenUsername") || "(none)";
-      console.log(
-        "[UsernameModal] Before updating localStorage in handleSubmit - Old chosenUsername:",
-        oldUsername,
-        "New chosenUsername:",
-        username
-      );
-
-      localStorage.removeItem("chosenUsername");
       localStorage.setItem("chosenUsername", username);
       setManualChosenName(username);
-      console.log(
-        "[UsernameModal] Updated chosenUsername in localStorage:",
-        localStorage.getItem("chosenUsername")
-      );
 
       router.push("/feed-selection");
     } catch (error) {
-      console.error("[UsernameModal] Error in handleSubmit:", error);
       setError(
         error instanceof Error
           ? error.message
@@ -177,36 +194,56 @@ export default function UsernameModal() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md">
         <h2 className="text-xl font-semibold mb-4">Choose a Username</h2>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            value={username}
-            onChange={handleInputChange}
-            onKeyUp={(e) =>
-              console.log(
-                "[UsernameModal] onKeyUp:",
-                e.key,
-                e.currentTarget.value
-              )
-            }
-            onKeyDown={(e) =>
-              console.log(
-                "[UsernameModal] onKeyDown:",
-                e.key,
-                e.currentTarget.value
-              )
-            }
-            className="border border-gray-300 rounded px-3 py-2 w-full mb-4"
-            placeholder="Enter a username"
-            required
-          />
-          {error && <p className="text-red-500 mb-4">{error}</p>}
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex flex-col space-y-2">
+            <label
+              htmlFor="username"
+              className="text-sm font-medium text-gray-700"
+            >
+              Choose your username
+            </label>
+            <div className="relative">
+              <input
+                id="username"
+                type="text"
+                value={username}
+                onChange={handleInputChange}
+                className={`w-full border p-2 rounded text-lg ${
+                  availability === "unavailable"
+                    ? "border-red-500 focus:ring-red-500"
+                    : availability === "available"
+                    ? "border-green-500 focus:ring-green-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
+                placeholder="Enter a username"
+                required
+              />
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                {availability === "checking" && (
+                  <span className="text-gray-500">Checking...</span>
+                )}
+                {availability === "available" && (
+                  <span className="text-green-600">Available ✓</span>
+                )}
+                {availability === "unavailable" && (
+                  <span className="text-red-600">Unavailable</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Validation Messages - only show if there was a submit attempt */}
+          {validationError && (
+            <div className="text-red-600 text-sm">{validationError}</div>
+          )}
+          {error && <div className="text-red-600 text-sm">{error}</div>}
+
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-500 text-white rounded px-4 py-2 w-full"
+            className="w-full bg-blue-500 text-white rounded px-4 py-2 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Creating..." : "Create User"}
           </button>
