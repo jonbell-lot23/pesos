@@ -69,9 +69,7 @@ export default function UsernameModal() {
     }
   }, []);
 
-  // DEBUG: Commenting out auto-redirect / early return logic that prevents the modal from displaying
-  // if (currentUser && manualChosenName) return null;
-
+  // Move useEffect before any conditional returns
   useEffect(() => {
     if (!username.trim() || username.trim().length < 3) {
       setAvailability("neutral");
@@ -82,6 +80,11 @@ export default function UsernameModal() {
     }, 500);
     return () => clearTimeout(timer);
   }, [username]);
+
+  // Restore the auto-redirect logic
+  if (currentUser?.publicMetadata?.chosenUsername || manualChosenName) {
+    return null;
+  }
 
   if (!isSignedIn) {
     return (
@@ -101,17 +104,34 @@ export default function UsernameModal() {
 
   if (loadingLocal) return null;
 
+  // Add the key down handler before the handleInputChange declaration
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    console.log("[KEYPRESS]:", e.key);
+  };
+
   // Always render the modal to allow manual name update
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log("[KEYSTROKE]:", e.target.value);
     // Only allow alphanumeric and underscore
     const newValue = e.target.value.replace(/[^a-zA-Z0-9_]/g, "");
+    console.log("[UsernameModal] Input changed to:", newValue);
+
     setUsername(newValue);
+    // Update localStorage immediately during typing
+    localStorage.setItem("chosenUsername", newValue);
+    console.log("[UsernameModal] Updated localStorage with:", newValue);
+    console.log(
+      "[UsernameModal] Verification - current localStorage value:",
+      localStorage.getItem("chosenUsername")
+    );
+
     setError("");
     setValidationError(""); // Clear any previous validation errors
 
     // Only proceed with availability check if we have at least 3 characters
     if (newValue.length >= 3) {
       setAvailability("checking");
+      console.log("[UsernameModal] Checking availability for:", newValue);
     } else {
       setAvailability("neutral");
     }
@@ -195,7 +215,7 @@ export default function UsernameModal() {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
       <div className="bg-white p-6 rounded-lg w-full max-w-md">
-        <h2 className="text-xl font-semibold mb-4">Choose a Username</h2>
+        <h2 className="text-xl font-semibold mb-4">Choose your username</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col space-y-2">
             <label
@@ -210,6 +230,7 @@ export default function UsernameModal() {
                 type="text"
                 value={username}
                 onChange={handleInputChange}
+                onKeyDown={handleKeyDown}
                 className={`w-full border p-2 rounded text-lg ${
                   availability === "unavailable"
                     ? "border-red-500 focus:ring-red-500"
@@ -233,13 +254,10 @@ export default function UsernameModal() {
               </div>
             </div>
           </div>
-
-          {/* Validation Messages - only show if there was a submit attempt */}
           {validationError && (
             <div className="text-red-600 text-sm">{validationError}</div>
           )}
           {error && <div className="text-red-600 text-sm">{error}</div>}
-
           <button
             type="submit"
             disabled={loading}

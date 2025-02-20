@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { validateUsername } from "@/lib/utils";
 
 export default function LandingPageWithUsername() {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
 
   const [username, setUsername] = useState("");
@@ -15,9 +15,25 @@ export default function LandingPageWithUsername() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Clear localStorage on mount
+  useEffect(() => {
+    // Only clear if we don't have a verified user
+    if (!user?.publicMetadata?.chosenUsername) {
+      localStorage.removeItem("chosenUsername");
+      console.log("[LandingPage] Cleared localStorage on mount");
+    }
+  }, [user]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Only allow alphanumeric and underscore
     const newValue = e.target.value.replace(/[^a-zA-Z0-9_]/g, "");
+
+    console.log("[handleInputChange] Current value:", newValue);
+
+    // Save to localStorage as they type
+    localStorage.setItem("chosenUsername", newValue);
+    console.log("[handleInputChange] Saved to localStorage:", newValue);
+
     setUsername(newValue);
     setError("");
     setValidationError(""); // Clear any previous validation errors
@@ -76,6 +92,14 @@ export default function LandingPageWithUsername() {
       try {
         if (!user) return;
 
+        // Clear any existing username from localStorage
+        localStorage.removeItem("chosenUsername");
+
+        console.log("[LandingPage] Creating user with:", {
+          username: usernameToSubmit,
+          clerkId: user.id,
+        });
+
         const payload = { username: usernameToSubmit, clerkId: user.id };
         const res = await fetch("/api/createUser", {
           method: "POST",
@@ -84,18 +108,69 @@ export default function LandingPageWithUsername() {
         });
 
         const data = await res.json();
+        console.log("[LandingPage] Create user response:", data);
+
         if (!res.ok) throw new Error(data.error || "Failed to create user");
 
-        router.push("/dashboard");
+        // Verify the user was created
+        if (!data.success || !data.localUser) {
+          throw new Error(
+            "User creation failed: " + (data.error || "Unknown error")
+          );
+        }
+
+        // Double check the user exists in the database
+        const verifyRes = await fetch("/api/getLocalUser", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            clerkId: user.id,
+            chosenUsername: usernameToSubmit,
+          }),
+        });
+
+        const verifyData = await verifyRes.json();
+        console.log("[LandingPage] Verify user response:", verifyData);
+
+        if (!verifyData.localUser) {
+          throw new Error(
+            "User verification failed - user not found in database"
+          );
+        }
+
+        // Only save to localStorage after successful creation and verification
+        localStorage.setItem("chosenUsername", usernameToSubmit);
+        console.log(
+          "[LandingPage] User verified and saved to localStorage:",
+          usernameToSubmit
+        );
+
+        // Clear any existing feed selection
+        localStorage.removeItem("selectedFeeds");
+
+        // Redirect to feed selection after successful user creation and verification
+        router.push("/feed-selection");
       } catch (error) {
+        console.error("[LandingPage] Error creating user:", error);
         setError(
           error instanceof Error ? error.message : "Failed to create user"
         );
+        setLoading(false);
+        return;
       }
       setLoading(false);
     },
     [user, router]
   );
+
+  // Show loading state while Clerk is initializing
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-8 relative">
@@ -145,7 +220,7 @@ export default function LandingPageWithUsername() {
         {error && <div className="text-red-600 text-sm">{error}</div>}
 
         {/* Submit Button */}
-        {!user ? (
+        {!isLoaded || !user ? (
           <SignInButton mode="modal">
             <button className="w-full px-6 py-3 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">
               Get started
