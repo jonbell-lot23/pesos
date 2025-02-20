@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
-import pool from "@/lib/dbPool";
+import pool, { withRetry } from "@/lib/dbPool";
 
 // Keep track of recent errors
 const errorHistory = {
@@ -56,9 +56,9 @@ export async function GET() {
   }
 
   try {
-    // Check pool connection with timeout
-    const client = await pool.connect();
-    try {
+    // Check pool connection with retry mechanism
+    await withRetry(async (client) => {
+      // Basic connectivity check
       await client.query("SELECT 1");
       healthStatus.pool = true;
 
@@ -79,11 +79,9 @@ export async function GET() {
           waitingCount: parseInt(poolStatus.rows[0].waiting) || 0,
         };
       }
-    } finally {
-      client.release();
-    }
+    }, 2); // Only try twice for health checks to fail faster
   } catch (error) {
-    console.error("[Health] Pool connection failed:", error);
+    console.error("[Health] Pool connection failed after retries:", error);
     poolError = error instanceof Error ? error.message : "Unknown pool error";
     healthStatus.lastError = poolError;
     errorHistory.lastError = poolError;
