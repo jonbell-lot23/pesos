@@ -33,7 +33,7 @@ export default function FeedSelection() {
         newFeeds[index] = {
           url: value,
           status: "error",
-          error: result.error,
+          error: result.error || "Failed to validate feed",
         };
       }
     } catch (error) {

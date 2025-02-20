@@ -62,9 +62,9 @@ export default function Page() {
 
             if (createData.success) {
               console.log(
-                "[Page] Successfully created user, proceeding to feed selection"
+                "[Page] Successfully created user, proceeding to dashboard"
               );
-              router.replace("/feed-selection");
+              router.replace("/dashboard");
               return;
             }
           } catch (error) {
@@ -96,18 +96,8 @@ export default function Page() {
           }
 
           // User exists in database, proceed with redirect
-          const selectedFeeds = localStorage.getItem("selectedFeeds");
-          if (!selectedFeeds) {
-            console.log(
-              "[Page] User verified and no feeds selected, redirecting to feed selection"
-            );
-            router.replace("/feed-selection");
-          } else {
-            console.log(
-              "[Page] User verified and feeds exist, redirecting to dashboard"
-            );
-            router.replace("/dashboard");
-          }
+          console.log("[Page] User verified, redirecting to dashboard");
+          router.replace("/dashboard");
         } catch (error) {
           console.error("[Page] Error verifying user:", error);
           setIsRedirecting(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import Spinner from "@/components/Spinner";
@@ -119,7 +119,7 @@ export default function StatsPage() {
     router.push(`/stats?${newParams.toString()}`);
   };
 
-  const loadFeeds = async () => {
+  const loadFeeds = useCallback(async () => {
     if (!user?.id) return;
     try {
       const response = await fetch("/api/sources");
@@ -131,10 +131,22 @@ export default function StatsPage() {
         status: "success" as const,
       }));
       setFeeds(existingFeeds);
+
+      // Auto-show feed editor if no feeds exist
+      if (existingFeeds.length === 0) {
+        setShowFeedEditor(true);
+      }
     } catch (error) {
       console.error("Error loading feeds:", error);
     }
-  };
+  }, [user?.id]);
+
+  // Load feeds on mount
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      loadFeeds();
+    }
+  }, [isSignedIn, user?.id, loadFeeds]);
 
   const handleEditFeeds = async () => {
     await loadFeeds();
