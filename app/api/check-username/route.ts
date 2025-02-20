@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
+import prisma from "@/lib/prismadb";
 
 // Add reserved usernames
 const RESERVED_USERNAMES = [

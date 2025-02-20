@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useRouter } from "next/navigation";
 import { getUserSources, addUserSource } from "@/app/actions/sources";
-import { prisma } from "@/lib/prisma"; // Importing the Prisma client
+import prisma from "@/lib/prismadb"; // Importing the Prisma client
 import { Loader2, Check, X } from "lucide-react";
 import {
   Table,

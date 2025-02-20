@@ -1,7 +1,7 @@
 // Removed NextResponse import since we're using the native Response directly.
 // Import your database client or user-creation module.
 // For example, if you're using Prisma:
-import { prisma } from "@/lib/prisma";
+import prisma from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clerkClient } from "@clerk/nextjs/server";

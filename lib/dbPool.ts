@@ -10,10 +10,10 @@ if (!connectionString) {
 
 const pool = new Pool({
   connectionString,
-  max: 3, // Reduced further since Supabase handles pooling
+  max: 2, // Reduced from 3 since we're also using Prisma
   min: 0,
-  idleTimeoutMillis: 5000, // Reduced since Supabase handles connection management
-  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 3000, // Reduced from 5000
+  connectionTimeoutMillis: 3000, // Reduced from 5000
   allowExitOnIdle: true,
   // Add statement timeout to prevent long-running queries
   statement_timeout: 10000, // 10 seconds
@@ -33,21 +33,22 @@ pool.on("error", (err) => {
 });
 
 pool.on("remove", () => {
-  console.log("[Pool] Client removed");
+  console.log("[Pool] Client removed from pool");
 });
 
-// Cleanup function to be called when shutting down
-async function closePool() {
+// Cleanup function
+const cleanup = async () => {
   try {
     await pool.end();
-    console.log("[Pool] Pool has ended");
-  } catch (error) {
-    console.error("[Pool] Error closing pool:", error);
+    console.log("[Pool] All connections closed");
+  } catch (err) {
+    console.error("[Pool] Error during cleanup:", err);
   }
-}
+};
 
 // Handle cleanup on app termination
-process.on("SIGTERM", closePool);
-process.on("SIGINT", closePool);
+process.on("SIGTERM", cleanup);
+process.on("SIGINT", cleanup);
+process.on("beforeExit", cleanup);
 
 export default pool;

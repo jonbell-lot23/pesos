@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
-import prisma from "../../../lib/prismadb";
+import prisma from "@/lib/prismadb";
+import { Prisma } from "@prisma/client";
 
 export async function POST(request: Request) {
   try {
@@ -18,31 +19,84 @@ export async function POST(request: Request) {
       );
     }
 
-    // Process each feed URL
-    const results = await Promise.all(
-      feeds.map(async (feedUrl: string) => {
-        // Find or create the source
-        const source = await prisma.pesos_Sources.upsert({
-          where: { url: feedUrl },
-          update: {},
-          create: { url: feedUrl },
-        });
+    // Process feeds in batches to avoid overwhelming the connection pool
+    const BATCH_SIZE = 5;
+    const results = [];
 
-        // Create the user-source relationship
-        await prisma.pesos_UserSources.create({
-          data: {
-            userId,
-            sourceId: source.id,
-          },
-        });
+    for (let i = 0; i < feeds.length; i += BATCH_SIZE) {
+      const batch = feeds.slice(i, i + BATCH_SIZE);
 
-        return source;
-      })
-    );
+      // Process each batch in parallel, but with transaction protection
+      const batchResults = await Promise.all(
+        batch.map(async (feedUrl: string) => {
+          // Use transaction to ensure atomicity
+          return prisma.$transaction(
+            async (tx) => {
+              try {
+                // Find or create the source
+                const source = await tx.pesos_Sources.upsert({
+                  where: { url: feedUrl },
+                  update: {},
+                  create: { url: feedUrl },
+                });
 
-    return NextResponse.json({ success: true, sources: results });
+                // Create the user-source relationship
+                await tx.pesos_UserSources.upsert({
+                  where: {
+                    userId_sourceId: {
+                      userId,
+                      sourceId: source.id,
+                    },
+                  },
+                  update: {},
+                  create: {
+                    userId,
+                    sourceId: source.id,
+                  },
+                });
+
+                return source;
+              } catch (error) {
+                // Log the error but don't fail the entire batch
+                console.error(`Error processing feed ${feedUrl}:`, error);
+                return null;
+              }
+            },
+            {
+              maxWait: 5000, // Maximum time to wait for transaction
+              timeout: 10000, // Maximum time for the transaction to complete
+            }
+          );
+        })
+      );
+
+      results.push(...batchResults.filter(Boolean));
+
+      // Add a small delay between batches to prevent overwhelming the connection pool
+      if (i + BATCH_SIZE < feeds.length) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      sources: results,
+      processedCount: results.length,
+      totalFeeds: feeds.length,
+    });
   } catch (error) {
     console.error("Error migrating feeds:", error);
+
+    // Handle specific Prisma errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === "P2002") {
+        return NextResponse.json(
+          { error: "Duplicate feed URLs found" },
+          { status: 400 }
+        );
+      }
+    }
+
     return NextResponse.json(
       { error: "Failed to migrate feeds" },
       { status: 500 }

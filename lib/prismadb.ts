@@ -9,7 +9,14 @@ declare global {
 const prisma =
   global.prisma ||
   new PrismaClient({
-    log: ["query"],
+    log: ["error", "warn"],
+    // Connection pooling is handled by the underlying database connector
+    // We can only configure the logging and datasource URL
+    datasources: {
+      db: {
+        url: process.env.DATABASE_URL,
+      },
+    },
   });
 
 // Only do this in development
@@ -28,5 +35,20 @@ async function cleanup() {
 // Handle cleanup on app termination
 process.on("SIGTERM", cleanup);
 process.on("SIGINT", cleanup);
+process.on("beforeExit", cleanup);
+process.on("exit", cleanup);
+
+// Handle uncaught errors to prevent connection leaks
+process.on("uncaughtException", async (e) => {
+  console.error(e);
+  await cleanup();
+  process.exit(1);
+});
+
+process.on("unhandledRejection", async (e) => {
+  console.error(e);
+  await cleanup();
+  process.exit(1);
+});
 
 export default prisma;
