@@ -12,14 +12,22 @@ const pool = new Pool({
   connectionString,
   max: 2, // Reduced from 3 since we're also using Prisma
   min: 0,
-  idleTimeoutMillis: 3000, // Reduced from 5000
-  connectionTimeoutMillis: 3000, // Reduced from 5000
+  idleTimeoutMillis: 1000, // Reduced from 3000 - close idle connections faster
+  connectionTimeoutMillis: 2000, // Reduced from 3000 - fail faster
   allowExitOnIdle: true,
   // Add statement timeout to prevent long-running queries
-  statement_timeout: 10000, // 10 seconds
+  statement_timeout: 5000, // Reduced from 10000 - fail queries faster
   // Add SSL configuration for Supabase
   ssl: {
     rejectUnauthorized: false, // Required for Supabase connections
+  },
+  // Add retry logic
+  max_retries: 3,
+  retry_strategy: (err: any) => {
+    if (err.message.includes("too many clients")) {
+      return new Error("Too many connections - please try again later");
+    }
+    return err;
   },
 });
 
@@ -36,6 +44,15 @@ pool.on("remove", () => {
   console.log("[Pool] Client removed from pool");
 });
 
+// Add additional monitoring
+pool.on("acquire", () => {
+  console.log("[Pool] Client acquired from pool");
+});
+
+pool.on("acquireRequest", () => {
+  console.log("[Pool] Connection requested from pool");
+});
+
 // Cleanup function
 const cleanup = async () => {
   try {
@@ -50,5 +67,33 @@ const cleanup = async () => {
 process.on("SIGTERM", cleanup);
 process.on("SIGINT", cleanup);
 process.on("beforeExit", cleanup);
+
+// Export a wrapper function to handle retries
+export async function withRetry<T>(
+  operation: (client: any) => Promise<T>,
+  maxRetries = 3
+): Promise<T> {
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const client = await pool.connect();
+      try {
+        return await operation(client);
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        const delay = Math.min(100 * Math.pow(2, attempt), 1000);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        console.log(
+          `[Pool] Retrying operation, attempt ${attempt + 1} of ${maxRetries}`
+        );
+      }
+    }
+  }
+  throw lastError;
+}
 
 export default pool;

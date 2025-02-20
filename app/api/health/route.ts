@@ -2,6 +2,20 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import pool from "@/lib/dbPool";
 
+// Keep track of recent errors
+const errorHistory = {
+  lastError: null as string | null,
+  errorCount: 0,
+  lastErrorTime: null as Date | null,
+  resetTime: new Date(),
+};
+
+// Reset error count every hour
+setInterval(() => {
+  errorHistory.errorCount = 0;
+  errorHistory.resetTime = new Date();
+}, 60 * 60 * 1000);
+
 export async function GET() {
   const healthStatus = {
     prisma: false,
@@ -12,28 +26,44 @@ export async function GET() {
       waitingCount: 0,
     },
     timestamp: new Date().toISOString(),
-    lastError: null as string | null,
+    lastError: errorHistory.lastError,
+    errorCount: errorHistory.errorCount,
+    lastErrorTime: errorHistory.lastErrorTime?.toISOString() || null,
+    resetTime: errorHistory.resetTime.toISOString(),
   };
 
+  let prismaError = null;
+  let poolError = null;
+
   try {
-    // Check Prisma connection
-    await prisma.$queryRaw`SELECT 1`;
+    // Check Prisma connection with timeout
+    const prismaPromise = Promise.race([
+      prisma.$queryRaw`SELECT 1`,
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Prisma connection timeout")), 5000)
+      ),
+    ]);
+    await prismaPromise;
     healthStatus.prisma = true;
   } catch (error) {
     console.error("[Health] Prisma connection failed:", error);
-    healthStatus.lastError =
+    prismaError =
       error instanceof Error ? error.message : "Unknown Prisma error";
+    healthStatus.lastError = prismaError;
+    errorHistory.lastError = prismaError;
+    errorHistory.lastErrorTime = new Date();
+    errorHistory.errorCount++;
   }
 
   try {
-    // Check pool connection and get stats
+    // Check pool connection with timeout
     const client = await pool.connect();
     try {
       await client.query("SELECT 1");
       healthStatus.pool = true;
 
       // Get pool stats
-      const poolStatus = await pool.query(`
+      const poolStatus = await client.query(`
         SELECT count(*) as total,
                sum(case when state = 'idle' then 1 else 0 end) as idle,
                sum(case when state = 'active' then 1 else 0 end) as active,
@@ -54,28 +84,63 @@ export async function GET() {
     }
   } catch (error) {
     console.error("[Health] Pool connection failed:", error);
-    healthStatus.lastError =
-      error instanceof Error ? error.message : "Unknown pool error";
+    poolError = error instanceof Error ? error.message : "Unknown pool error";
+    healthStatus.lastError = poolError;
+    errorHistory.lastError = poolError;
+    errorHistory.lastErrorTime = new Date();
+    errorHistory.errorCount++;
   }
 
-  const isHealthy = healthStatus.prisma && healthStatus.pool;
+  // More stringent health check criteria
+  const isHealthy =
+    healthStatus.prisma &&
+    healthStatus.pool &&
+    healthStatus.poolStats.waitingCount === 0 &&
+    errorHistory.errorCount < 3; // Consider unhealthy if we've had multiple errors recently
 
-  // Log health check results
+  // Log health check results with more detail
   console.log("[Health] Check completed:", {
     healthy: isHealthy,
-    prisma: healthStatus.prisma,
-    pool: healthStatus.pool,
-    poolStats: healthStatus.poolStats,
-    lastError: healthStatus.lastError,
+    prisma: {
+      connected: healthStatus.prisma,
+      error: prismaError,
+    },
+    pool: {
+      connected: healthStatus.pool,
+      error: poolError,
+      stats: healthStatus.poolStats,
+    },
+    errorHistory: {
+      count: errorHistory.errorCount,
+      lastError: errorHistory.lastError,
+      lastErrorTime: errorHistory.lastErrorTime,
+    },
   });
+
+  // If we're not healthy, return 503 status
+  const status = isHealthy ? 200 : 503;
 
   return NextResponse.json(
     {
       status: isHealthy ? "healthy" : "unhealthy",
       details: healthStatus,
+      recommendations: !isHealthy
+        ? [
+            errorHistory.errorCount >= 3
+              ? "Multiple connection errors detected - consider restarting the application"
+              : null,
+            healthStatus.poolStats.waitingCount > 0
+              ? "High number of waiting connections - check for connection leaks"
+              : null,
+            !healthStatus.prisma
+              ? "Prisma connection failed - check database connectivity"
+              : null,
+            !healthStatus.pool
+              ? "Pool connection failed - check database connectivity"
+              : null,
+          ].filter(Boolean)
+        : [],
     },
-    {
-      status: isHealthy ? 200 : 503,
-    }
+    { status }
   );
 }
