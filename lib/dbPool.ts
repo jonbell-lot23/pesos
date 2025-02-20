@@ -1,4 +1,4 @@
-import { Pool } from "pg";
+import { Pool, PoolClient } from "pg";
 
 // Supabase already provides connection pooling, so we'll use their URL
 const connectionString =
@@ -15,19 +15,8 @@ const pool = new Pool({
   idleTimeoutMillis: 1000, // Reduced from 3000 - close idle connections faster
   connectionTimeoutMillis: 2000, // Reduced from 3000 - fail faster
   allowExitOnIdle: true,
-  // Add statement timeout to prevent long-running queries
-  statement_timeout: 5000, // Reduced from 10000 - fail queries faster
-  // Add SSL configuration for Supabase
   ssl: {
     rejectUnauthorized: false, // Required for Supabase connections
-  },
-  // Add retry logic
-  max_retries: 3,
-  retry_strategy: (err: any) => {
-    if (err.message.includes("too many clients")) {
-      return new Error("Too many connections - please try again later");
-    }
-    return err;
   },
 });
 
@@ -49,10 +38,6 @@ pool.on("acquire", () => {
   console.log("[Pool] Client acquired from pool");
 });
 
-pool.on("acquireRequest", () => {
-  console.log("[Pool] Connection requested from pool");
-});
-
 // Cleanup function
 const cleanup = async () => {
   try {
@@ -70,7 +55,7 @@ process.on("beforeExit", cleanup);
 
 // Export a wrapper function to handle retries
 export async function withRetry<T>(
-  operation: (client: any) => Promise<T>,
+  operation: (client: PoolClient) => Promise<T>,
   maxRetries = 3
 ): Promise<T> {
   let lastError;
@@ -90,7 +75,9 @@ export async function withRetry<T>(
         console.log(
           `[Pool] Retrying operation, attempt ${attempt + 1} of ${maxRetries}`
         );
+        continue;
       }
+      break;
     }
   }
   throw lastError;
