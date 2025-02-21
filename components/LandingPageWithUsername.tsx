@@ -173,68 +173,82 @@ export default function LandingPageWithUsername() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-8 relative">
-      <h1 className="text-3xl font-bold mb-8">Reserve your username</h1>
+    <div className="flex min-h-screen flex-col items-center p-8 relative">
+      {/* Hero Section */}
+      <div className="w-full max-w-6xl mx-auto text-center mb-16">
+        {/* Illustration Space */}
+        <div
+          className="w-full h-96 mb-16 rounded-xl flex items-center justify-center bg-cover bg-center"
+          style={{ backgroundImage: "url('/couch.jpg')" }}
+        ></div>
 
-      <div className="w-full max-w-md space-y-4">
-        <div className="flex flex-col space-y-2">
-          <label
-            htmlFor="username"
-            className="text-sm font-medium text-gray-700"
-          >
-            Choose your username
-          </label>
-          <div className="relative">
-            <input
-              id="username"
-              type="text"
-              placeholder="type a username"
-              value={username}
-              onChange={handleInputChange}
-              className={`w-full border p-2 rounded text-lg ${
-                availability === "unavailable"
-                  ? "border-red-500 focus:ring-red-500"
-                  : availability === "available"
-                  ? "border-green-500 focus:ring-green-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              }`}
-            />
-            <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-              {availability === "checking" && (
-                <span className="text-gray-500">Checking...</span>
-              )}
-              {availability === "available" && (
-                <span className="text-green-600">Available ✓</span>
-              )}
-              {availability === "unavailable" && (
-                <span className="text-red-600">Unavailable</span>
+        {/* Description and Sign In Sections */}
+        <div className="grid md:grid-cols-2 gap-8 mb-16">
+          <div className="space-y-4 p-0 rounded-xl text-left">
+            <h2 className="text-2xl font-bold text-black">What is PESOS?</h2>
+            <p className="text-gray-700 leading-relaxed mr-12">
+              PESOS stands for Publish Elsewhere, Syndicate (on your) Own Site.
+              It's a way to take all the stuff you're posting all over the
+              internet and pull it back into one simple, searchable, ownable,
+              exportable place.
+            </p>
+          </div>
+
+          {/* Username Section */}
+          <div className="space-y-4 p-6 bg-white rounded-xl shadow-lg">
+            <h2 className="text-2xl font-bold text-left mb-6">Get Started</h2>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  id="username"
+                  type="text"
+                  placeholder="Choose a username"
+                  value={username}
+                  onChange={handleInputChange}
+                  className={`w-full border p-2 rounded-lg text-lg ${
+                    availability === "unavailable"
+                      ? "border-red-500 focus:ring-red-500"
+                      : availability === "available"
+                      ? "border-green-500 focus:ring-green-500"
+                      : "border-gray-300 focus:ring-blue-500"
+                  }`}
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                  {availability === "checking" && (
+                    <span className="text-gray-500">Checking...</span>
+                  )}
+                  {availability === "available" && (
+                    <span className="text-green-600">Available ✓</span>
+                  )}
+                  {availability === "unavailable" && (
+                    <span className="text-red-600">Unavailable</span>
+                  )}
+                </div>
+              </div>
+
+              {!isLoaded || !user ? (
+                <SignInButton mode="modal">
+                  <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                    {"->"}
+                  </button>
+                </SignInButton>
+              ) : (
+                <button
+                  onClick={() => handleSubmitUsername(username)}
+                  disabled={loading}
+                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                >
+                  {loading ? "Creating..." : "Get started"}
+                </button>
               )}
             </div>
+
+            {validationError && (
+              <div className="text-red-600 text-sm">{validationError}</div>
+            )}
+            {error && <div className="text-red-600 text-sm">{error}</div>}
           </div>
         </div>
-
-        {/* Validation Messages - only show if there was a submit attempt */}
-        {validationError && (
-          <div className="text-red-600 text-sm">{validationError}</div>
-        )}
-        {error && <div className="text-red-600 text-sm">{error}</div>}
-
-        {/* Submit Button */}
-        {!isLoaded || !user ? (
-          <SignInButton mode="modal">
-            <button className="w-full px-6 py-3 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed">
-              Get started
-            </button>
-          </SignInButton>
-        ) : (
-          <button
-            onClick={() => handleSubmitUsername(username)}
-            disabled={loading}
-            className="w-full px-6 py-3 bg-black text-white rounded hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Creating..." : "Get started"}
-          </button>
-        )}
       </div>
     </div>
   );
