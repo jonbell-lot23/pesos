@@ -118,13 +118,3 @@ export async function GET(request: Request) {
     );
   }
 }
-
-// Function to manually clear cache for a user
-export async function clearPostsCache(userId: string) {
-  // Clear all cache entries for this user
-  Array.from(postsCache.keys()).forEach((key) => {
-    if (key.startsWith(userId)) {
-      postsCache.delete(key);
-    }
-  });
-}
