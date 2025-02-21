@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prismadb";
+import pg from "pg";
 import RssParser from "rss-parser";
 
 const parser = new RssParser();
@@ -9,6 +9,7 @@ type UpdateStatus = {
   status: "idle" | "running" | "completed" | "failed";
   lastError: string | null;
   lastRun: Date | null;
+  logs: string[];
 };
 
 declare global {
@@ -22,6 +23,7 @@ if (!global.updateStatus) {
     status: "idle",
     lastError: null,
     lastRun: null,
+    logs: [],
   };
 }
 
@@ -42,7 +44,18 @@ interface UpdateStats {
   executionTimeMs: number;
 }
 
-const BATCH_SIZE = 5; // Process 5 feeds at a time to avoid overwhelming the connection pool
+const BATCH_SIZE = 5;
+
+function addLog(message: string) {
+  if (global.updateStatus) {
+    global.updateStatus.logs.push(`${new Date().toISOString()} - ${message}`);
+    // Keep only last 1000 logs
+    if (global.updateStatus.logs.length > 1000) {
+      global.updateStatus.logs = global.updateStatus.logs.slice(-1000);
+    }
+  }
+  console.log(message);
+}
 
 export async function GET() {
   // Check if another update is already running
@@ -52,6 +65,7 @@ export async function GET() {
         error: "Update already in progress",
         lastError: global.updateStatus.lastError,
         lastRun: global.updateStatus.lastRun,
+        logs: global.updateStatus.logs,
       },
       { status: 409 }
     );
@@ -72,30 +86,56 @@ export async function GET() {
     global.updateStatus.isRunning = true;
     global.updateStatus.status = "running";
     global.updateStatus.lastError = null;
+    global.updateStatus.logs = [];
   }
 
+  // Create database client
+  const client = new pg.Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false,
+    },
+  });
+
   try {
-    // Get all unique sources
-    const sources = await prisma.pesos_Sources.findMany({
-      include: {
-        users: true, // Include the user relationships
-      },
-    });
+    addLog("Connecting to database...");
+    await client.connect();
+    addLog("Connected successfully!");
+
+    // Get all sources with their users
+    addLog("Fetching sources from database...");
+    const sourcesResult = await client.query(`
+      SELECT s.*, array_agg(us."userId") as user_ids 
+      FROM "pesos_Sources" s 
+      LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" 
+      GROUP BY s.id
+    `);
+    const sources = sourcesResult.rows;
+    addLog(`Found ${sources.length} sources to process`);
 
     // Process sources in batches
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {
       const batch = sources.slice(i, i + BATCH_SIZE);
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+      const totalBatches = Math.ceil(sources.length / BATCH_SIZE);
+
+      addLog(`Processing batch ${batchNum} of ${totalBatches}`);
 
       // Process each batch in parallel
       await Promise.all(
         batch.map(async (source) => {
-          if (!source.users.length) {
+          const userIds = source.user_ids.filter((id: string) => id != null);
+
+          if (!userIds.length) {
+            addLog(`Skipping ${source.url} - no users associated`);
             stats.skippedFeeds.push(source.url);
             return;
           }
 
+          addLog(`Processing ${source.url} (${userIds.length} users)`);
+
           try {
-            // Fetch with timeout
+            // Fetch feed
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
 
@@ -113,74 +153,81 @@ export async function GET() {
 
             const rssString = await response.text();
             const parsedFeed = await parser.parseString(rssString);
+            addLog(`Found ${parsedFeed.items.length} items in ${source.url}`);
 
-            // Process items in transaction to ensure atomicity
-            const feedStats = await prisma.$transaction(
-              async (tx) => {
-                const stats: FeedStats = {
-                  url: source.url,
-                  newItemsCount: 0,
-                  totalItemsProcessed: 0,
-                };
+            const feedStats: FeedStats = {
+              url: source.url,
+              newItemsCount: 0,
+              totalItemsProcessed: 0,
+            };
 
-                // Get all user IDs for this source
-                const userIds = source.users.map((u) => u.userId);
+            // Process items
+            const feedItems = parsedFeed.items.slice(0, 50);
+            feedStats.totalItemsProcessed = feedItems.length;
 
-                // Get potential new URLs from the feed
-                const feedItems = parsedFeed.items.slice(0, 50); // Limit to 50 most recent items
-                stats.totalItemsProcessed = feedItems.length;
+            for (const userId of userIds) {
+              // Get existing items
+              const existingResult = await client.query(
+                `SELECT url FROM "pesos_items" WHERE "userId" = $1 AND "sourceId" = $2 AND url = ANY($3)`,
+                [
+                  userId,
+                  source.id,
+                  feedItems.map((item) => item.link).filter(Boolean),
+                ]
+              );
 
-                // For each user of this source, process their items
-                for (const userId of userIds) {
-                  // Check which items already exist for this user
-                  const existingItems = await tx.pesos_items.findMany({
-                    where: {
-                      userId,
-                      sourceId: source.id,
-                      url: {
-                        in: feedItems
-                          .map((item) => item.link)
-                          .filter(Boolean) as string[],
-                      },
-                    },
-                    select: { url: true },
-                  });
+              const existingUrls = new Set(
+                existingResult.rows.map((row) => row.url)
+              );
 
-                  const existingUrls = new Set(
-                    existingItems.map((item) => item.url)
-                  );
+              // Filter new items
+              const newItems = feedItems
+                .filter(
+                  (item): item is typeof item & { link: string } =>
+                    item.link != null && !existingUrls.has(item.link)
+                )
+                .map((item) => ({
+                  title: item.title || "•",
+                  url: item.link,
+                  description: item["content:encoded"] || item.content || "",
+                  postdate: new Date(item.pubDate || item.date),
+                  slug: Math.random().toString(36).substring(2, 15),
+                  userId,
+                  sourceId: source.id,
+                }));
 
-                  // Prepare new items for this user
-                  const newItems = feedItems
-                    .filter((item) => item.link && !existingUrls.has(item.link))
-                    .map((item) => ({
-                      title: item.title || "•",
-                      url: item.link ?? "",
-                      description:
-                        item["content:encoded"] || item.content || "",
-                      postdate: new Date(item.pubDate || item.date),
-                      slug: Math.random().toString(36).substring(2, 15),
-                      userId,
-                      sourceId: source.id,
-                    }));
+              if (newItems.length > 0) {
+                addLog(
+                  `Adding ${newItems.length} new items from ${source.url}`
+                );
 
-                  if (newItems.length > 0) {
-                    // Store new items
-                    await tx.pesos_items.createMany({
-                      data: newItems,
-                      skipDuplicates: true,
-                    });
-                    stats.newItemsCount += newItems.length;
-                  }
-                }
+                // Insert new items
+                const values = newItems
+                  .map(
+                    (item) => `(
+                    '${item.title.replace(/'/g, "''")}',
+                    '${item.url.replace(/'/g, "''")}',
+                    '${item.description.replace(/'/g, "''")}',
+                    '${item.postdate.toISOString()}',
+                    '${item.slug}',
+                    '${item.userId}',
+                    '${item.sourceId}'
+                  )`
+                  )
+                  .join(",");
 
-                return stats;
-              },
-              {
-                maxWait: 5000,
-                timeout: 30000,
+                await client.query(`
+                  INSERT INTO "pesos_items" (
+                    "title", "url", "description", 
+                    "postdate", "slug", "userId", "sourceId"
+                  )
+                  VALUES ${values}
+                  ON CONFLICT DO NOTHING
+                `);
+
+                feedStats.newItemsCount += newItems.length;
               }
-            );
+            }
 
             if (feedStats.newItemsCount > 0) {
               stats.successfulFeeds.push(feedStats);
@@ -188,23 +235,25 @@ export async function GET() {
             }
             stats.totalFeedsProcessed++;
           } catch (error) {
+            const errorMessage =
+              error instanceof Error ? error.message : "Unknown error";
+            addLog(`Error processing ${source.url}: ${errorMessage}`);
             stats.failedFeeds.push({
               url: source.url,
               newItemsCount: 0,
               totalItemsProcessed: 0,
-              error: error instanceof Error ? error.message : "Unknown error",
+              error: errorMessage,
             });
             stats.totalErrors++;
 
-            // Store the last error but continue processing
-            if (global.updateStatus && error instanceof Error) {
-              global.updateStatus.lastError = error.message;
+            if (global.updateStatus) {
+              global.updateStatus.lastError = errorMessage;
             }
           }
         })
       );
 
-      // Add a small delay between batches to prevent overwhelming the connection pool
+      // Add a small delay between batches
       if (i + BATCH_SIZE < sources.length) {
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
@@ -222,7 +271,6 @@ export async function GET() {
     // Format the response message
     let message = `Feed Update Complete\n\n`;
 
-    // Successful feeds with new items
     if (stats.successfulFeeds.length > 0) {
       message += `Feeds with new items:\n`;
       stats.successfulFeeds
@@ -233,7 +281,6 @@ export async function GET() {
       message += `\n`;
     }
 
-    // Failed feeds
     if (stats.failedFeeds.length > 0) {
       message += `Failed feeds:\n`;
       stats.failedFeeds.forEach((feed) => {
@@ -242,7 +289,6 @@ export async function GET() {
       message += `\n`;
     }
 
-    // Summary
     const successfulWithoutNewItems =
       stats.totalFeedsProcessed -
       stats.successfulFeeds.length -
@@ -260,29 +306,43 @@ export async function GET() {
       2
     )}s\n`;
 
+    addLog(message);
+
     return NextResponse.json({
       success: true,
       message,
       stats,
+      logs: global.updateStatus?.logs || [],
     });
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error occurred";
+    addLog(`Fatal error: ${errorMessage}`);
+
     // Update global status on error
     if (global.updateStatus) {
       global.updateStatus.isRunning = false;
       global.updateStatus.status = "failed";
-      if (error instanceof Error) {
-        global.updateStatus.lastError = error.message;
-      }
+      global.updateStatus.lastError = errorMessage;
     }
 
-    console.error("Error in feed update:", error);
     return NextResponse.json(
       {
         success: false,
-        error:
-          error instanceof Error ? error.message : "Unknown error occurred",
+        error: errorMessage,
+        logs: global.updateStatus?.logs || [],
       },
       { status: 500 }
     );
+  } finally {
+    try {
+      addLog("Disconnecting from database...");
+      await client.end();
+      addLog("Successfully disconnected from database");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      addLog(`Error disconnecting from database: ${errorMessage}`);
+    }
   }
 }

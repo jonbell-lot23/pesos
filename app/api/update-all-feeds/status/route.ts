@@ -7,6 +7,7 @@ type UpdateStatus = {
   status: "idle" | "running" | "completed" | "failed";
   lastError: string | null;
   lastRun: Date | null;
+  logs: string[];
 };
 
 // This will be updated by the main update endpoint
@@ -21,18 +22,26 @@ if (!global.updateStatus) {
     status: "idle",
     lastError: null,
     lastRun: null,
+    logs: [],
   };
 }
 
-export async function GET() {
-  // Check if this is a cron job request
-  const headersList = headers();
-  const authorization = headersList.get("authorization");
-  const isCronRequest =
-    authorization === `Bearer ${process.env.CRON_SECRET_TOKEN}`;
+export async function GET(request: Request) {
+  // Get the manual parameter from the URL
+  const { searchParams } = new URL(request.url);
+  const isManual = searchParams.get("manual") === "true";
 
-  if (!isCronRequest) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // If it's a manual request from the dashboard, don't require auth
+  if (!isManual) {
+    // Check if this is a cron job request
+    const headersList = headers();
+    const authorization = headersList.get("authorization");
+    const isCronRequest =
+      authorization === `Bearer ${process.env.CRON_SECRET_TOKEN}`;
+
+    if (!isCronRequest) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
   }
 
   return NextResponse.json(
@@ -41,6 +50,7 @@ export async function GET() {
       status: "idle",
       lastError: null,
       lastRun: null,
+      logs: [],
     }
   );
 }

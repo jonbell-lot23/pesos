@@ -8,6 +8,7 @@ import { DataTable } from "@/components/data-table";
 import ActivityChart from "@/components/ActivityChart";
 import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
 import { Button } from "@/components/ui/button";
+import UpdateFeedsButton from "@/components/UpdateFeedsButton";
 
 interface Stats {
   totalPosts: number;
@@ -46,6 +47,7 @@ export default function StatsPage() {
   const [showFeedEditor, setShowFeedEditor] = useState(false);
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [feedEditorError, setFeedEditorError] = useState<string | null>(null);
+  const showManualUpdate = searchParams?.get("manual") === "true";
 
   useEffect(() => {
     if (searchParams) {
@@ -250,8 +252,13 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Database Stats</h1>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-2xl font-bold">Your Feeds</h1>
+        <div className="flex gap-4">
+          {showManualUpdate && <UpdateFeedsButton />}
+        </div>
+      </div>
 
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
