@@ -137,11 +137,30 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <div className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold text-gray-900">
-                PESOS<sup className="text-md text-blue-500">*</sup>
-              </h1>
+              <div>
+                <SignedIn>
+                  <Link href="/dashboard">
+                    <h1 className="text-2xl font-bold text-gray-900 hover:text-gray-700">
+                      PESOS
+                    </h1>
+                  </Link>
+                </SignedIn>
+                <SignedOut>
+                  <Link href="/">
+                    <h1 className="text-2xl font-bold text-gray-900 hover:text-gray-700 no-underline">
+                      PESOS
+                    </h1>
+                  </Link>
+                </SignedOut>
+              </div>
               <div className="flex items-center space-x-4">
                 <SignedIn>
+                  <Link
+                    href="/about"
+                    className="text-gray-600 hover:text-gray-900"
+                  >
+                    About
+                  </Link>
                   <UserButton afterSignOutUrl="/" />
                 </SignedIn>
                 <SignedOut>
@@ -159,7 +178,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           {children}
         </div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-center items-center">
-          <p className="text-sm text-gray-700 text-center">
+          <p className="text-sm text-gray-700 text-center hidden">
             *Publish Elsewhere, Syndicate On (Your Own) Site. This helps when
             sites go down, turn fascist, or whatever the case may be.
           </p>

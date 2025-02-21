@@ -259,41 +259,7 @@ export default function StatsPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Database Stats</h1>
-        <Button
-          onClick={handleEditFeeds}
-          className="bg-blue-500 text-white hover:bg-blue-600"
-        >
-          Edit Feeds
-        </Button>
-      </div>
-
-      {showFeedEditor && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Edit RSS Feeds</h2>
-              <Button
-                onClick={() => setShowFeedEditor(false)}
-                variant="ghost"
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </Button>
-            </div>
-            {feedEditorError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
-                {feedEditorError}
-              </div>
-            )}
-            <FeedEditor
-              initialFeeds={feeds}
-              onContinue={handleFeedEditorContinue}
-            />
-          </div>
-        </div>
-      )}
+      <h1 className="text-2xl font-bold mb-6">Database Stats</h1>
 
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
@@ -328,12 +294,20 @@ export default function StatsPage() {
         </div>
       )}
 
-      <div className="mb-8">
+      <div className="mb-8 hidden">
         <ActivityChart posts={allPosts} />
       </div>
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
-        <h2 className="text-lg font-semibold mb-4">Recent Posts</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold">Recent Posts</h2>
+          <Button
+            onClick={handleEditFeeds}
+            className="bg-black text-white hover:bg-gray-800"
+          >
+            Edit Feeds
+          </Button>
+        </div>
         <DataTable posts={posts} />
 
         {/* Pagination */}
@@ -353,6 +327,32 @@ export default function StatsPage() {
           ))}
         </div>
       </div>
+
+      {showFeedEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Edit RSS Feeds</h2>
+              <Button
+                onClick={() => setShowFeedEditor(false)}
+                variant="ghost"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+            {feedEditorError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
+                {feedEditorError}
+              </div>
+            )}
+            <FeedEditor
+              initialFeeds={feeds}
+              onContinue={handleFeedEditorContinue}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
