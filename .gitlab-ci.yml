@@ -12,3 +12,5 @@ update-feeds:
     - node scripts/update-feeds.mjs
   environment:
     name: production
+  variables:
+    NODE_ENV: "production"
