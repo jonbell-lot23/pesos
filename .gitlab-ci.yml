@@ -6,6 +6,8 @@ update-feeds:
   image: node:22
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
+  before_script:
+    - npm install rss-parser pg
   script:
     - node scripts/update-feeds.mjs
   environment:
