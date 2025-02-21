@@ -1,29 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
-import { revalidatePath } from "next/cache";
-
-// Cache duration in seconds
-const CACHE_DURATION = 30; // 30 seconds
-
-// In-memory cache
-const postsCache = new Map<
-  string,
-  {
-    data: any;
-    timestamp: number;
-  }
->();
-
-// Generate cache key based on request parameters
-function getCacheKey(
-  userId: string,
-  offset: number,
-  limit: number,
-  getAll: boolean
-) {
-  return `${userId}:${offset}:${limit}:${getAll}`;
-}
+import {
+  postsCache,
+  POSTS_CACHE_DURATION,
+  getPostsCacheKey,
+} from "@/lib/cache";
 
 export async function GET(request: Request) {
   try {
@@ -42,10 +24,10 @@ export async function GET(request: Request) {
     const getAll = searchParams.get("all") === "true";
 
     // Check cache first
-    const cacheKey = getCacheKey(userId, offset, limit, getAll);
+    const cacheKey = getPostsCacheKey(userId, offset, limit, getAll);
     const cached = postsCache.get(cacheKey);
     const now = Date.now();
-    if (cached && now - cached.timestamp < CACHE_DURATION * 1000) {
+    if (cached && now - cached.timestamp < POSTS_CACHE_DURATION * 1000) {
       console.log("[getPosts/GET] Returning cached data for key:", cacheKey);
       return NextResponse.json(cached.data);
     }
@@ -145,5 +127,4 @@ export async function clearPostsCache(userId: string) {
       postsCache.delete(key);
     }
   });
-  revalidatePath("/api/getPosts");
 }

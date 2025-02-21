@@ -1,19 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
-import { revalidatePath } from "next/cache";
-
-// Cache duration in seconds
-const CACHE_DURATION = 60; // 1 minute
-
-// In-memory cache
-const statsCache = new Map<
-  string,
-  {
-    data: any;
-    timestamp: number;
-  }
->();
+import { statsCache, STATS_CACHE_DURATION } from "@/lib/cache";
 
 export async function GET() {
   try {
@@ -29,7 +17,7 @@ export async function GET() {
     // Check cache first
     const cached = statsCache.get(userId);
     const now = Date.now();
-    if (cached && now - cached.timestamp < CACHE_DURATION * 1000) {
+    if (cached && now - cached.timestamp < STATS_CACHE_DURATION * 1000) {
       console.log(
         "[database-stats/GET] Returning cached data for user:",
         userId
@@ -172,10 +160,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
-
-// Function to manually clear cache for a user
-export async function clearStatsCache(userId: string) {
-  statsCache.delete(userId);
-  revalidatePath("/api/database-stats");
 }
