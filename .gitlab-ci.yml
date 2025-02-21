@@ -1,0 +1,12 @@
+stages:
+  - update
+
+update-feeds:
+  stage: update
+  image: node:22
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "schedule"
+  script:
+    - node scripts/update-feeds.mjs
+  environment:
+    name: production
