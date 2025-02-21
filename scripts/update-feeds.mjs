@@ -1,65 +1,62 @@
-import { PrismaClient } from "@prisma/client";
 import RssParser from "rss-parser";
+import pg from "pg";
+const { Client } = pg;
+
+// Enable detailed Node.js debugging
+process.env.DEBUG = "*";
+
+// Force Node to show unhandled promise rejections
+process.on("unhandledRejection", (err) => {
+  console.error("🚨 UNHANDLED REJECTION:", err);
+  console.error("Stack trace:", err.stack);
+  process.exit(1);
+});
+
+// Force Node to show uncaught exceptions
+process.on("uncaughtException", (err) => {
+  console.error("🚨 UNCAUGHT EXCEPTION:", err);
+  console.error("Stack trace:", err.stack);
+  process.exit(1);
+});
 
 console.log("[Feed Update] Initializing...");
-
-const prisma = new PrismaClient({
-  log: ["query", "warn", "error"],
+console.log("[Feed Update] Node version:", process.version);
+console.log("[Feed Update] Current directory:", process.cwd());
+console.log("[Feed Update] Environment variables present:", {
+  DATABASE_URL: !!process.env.DATABASE_URL,
+  NODE_ENV: process.env.NODE_ENV,
 });
+
 const parser = new RssParser();
 const BATCH_SIZE = 5;
 
-async function updateFeeds() {
-  console.log("[Feed Update] Starting feed update process");
-  console.log("[Feed Update] Connecting to database...");
+// Create a new client
+const client = new Client({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false,
+  },
+});
 
-  const startTime = Date.now();
-  const stats = {
-    successfulFeeds: [],
-    failedFeeds: [],
-    skippedFeeds: [],
-    totalNewItems: 0,
-    totalFeedsProcessed: 0,
-    totalErrors: 0,
-  };
+async function updateFeeds() {
+  console.log("\n[Feed Update] Starting feed update process");
 
   try {
-    // Test database connection
-    try {
-      await prisma.$connect();
-      console.log("[Feed Update] Successfully connected to database");
-    } catch (error) {
-      console.error("[Feed Update] Database connection error:", error);
-      throw error;
-    }
+    // Connect to database
+    console.log("[Feed Update] Connecting to database...");
+    await client.connect();
+    console.log("[Feed Update] Connected successfully!");
 
-    // Get all unique sources
+    // Get all sources with their users
     console.log("[Feed Update] Fetching sources from database...");
-    let sources;
-    try {
-      sources = await prisma.pesos_Sources.findMany({
-        include: {
-          users: true,
-        },
-      });
-      console.log("[Feed Update] Database query completed");
-    } catch (error) {
-      console.error("[Feed Update] Error fetching sources:", error);
-      throw error;
-    }
-
-    if (!sources) {
-      console.log("[Feed Update] No sources returned from database!");
-      return;
-    }
-
-    if (sources.length === 0) {
-      console.log("[Feed Update] No sources found in database!");
-      return;
-    }
-
-    console.log(`[Feed Update] Found ${sources.length} sources to process`);
-    console.log("[Feed Update] Sources:", sources.map((s) => s.url).join(", "));
+    const sourcesResult = await client.query(`
+      SELECT s.*, array_agg(us."userId") as user_ids 
+      FROM "pesos_Sources" s 
+      LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" 
+      GROUP BY s.id
+    `);
+    const sources = sourcesResult.rows;
+    console.log(`[Feed Update] Found ${sources.length} sources`);
 
     // Process sources in batches
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {
@@ -78,22 +75,21 @@ async function updateFeeds() {
       // Process each batch in parallel
       await Promise.all(
         batch.map(async (source) => {
-          console.log(`\n[Feed Update] Processing source: ${source.url}`);
+          const userIds = source.user_ids.filter((id) => id != null);
 
-          if (!source.users.length) {
+          if (!userIds.length) {
             console.log(
               `[Feed Update] Skipping ${source.url} - no users associated`
             );
-            stats.skippedFeeds.push(source.url);
             return;
           }
 
           console.log(
-            `[Feed Update] ${source.url} has ${source.users.length} users`
+            `[Feed Update] ${source.url} has ${userIds.length} users`
           );
 
           try {
-            // Fetch with timeout
+            // Fetch feed
             console.log(`[Feed Update] Fetching ${source.url}...`);
             const controller = new AbortController();
             const timeout = setTimeout(() => controller.abort(), 10000);
@@ -118,105 +114,87 @@ async function updateFeeds() {
               `[Feed Update] Found ${parsedFeed.items.length} items in feed`
             );
 
-            // Process items in transaction to ensure atomicity
-            console.log(
-              `[Feed Update] Starting database transaction for ${source.url}...`
-            );
-            const feedStats = await prisma.$transaction(
-              async (tx) => {
-                const stats = {
-                  url: source.url,
-                  newItemsCount: 0,
-                  totalItemsProcessed: 0,
-                };
+            // Process items
+            const feedItems = parsedFeed.items.slice(0, 50);
 
-                const userIds = source.users.map((u) => u.userId);
-                const feedItems = parsedFeed.items.slice(0, 50);
-                stats.totalItemsProcessed = feedItems.length;
+            for (const userId of userIds) {
+              console.log(
+                `[Feed Update] Processing items for user ${userId}...`
+              );
 
-                for (const userId of userIds) {
-                  console.log(
-                    `[Feed Update] Processing items for user ${userId}...`
-                  );
-                  const existingItems = await tx.pesos_items.findMany({
-                    where: {
-                      userId,
-                      sourceId: source.id,
-                      url: {
-                        in: feedItems.map((item) => item.link).filter(Boolean),
-                      },
-                    },
-                    select: { url: true },
-                  });
+              // Get existing items
+              const existingResult = await client.query(
+                `SELECT url FROM "pesos_items" WHERE "userId" = $1 AND "sourceId" = $2 AND url = ANY($3)`,
+                [
+                  userId,
+                  source.id,
+                  feedItems.map((item) => item.link).filter(Boolean),
+                ]
+              );
 
-                  const existingUrls = new Set(
-                    existingItems.map((item) => item.url)
-                  );
-                  console.log(
-                    `[Feed Update] Found ${existingUrls.size} existing items`
-                  );
+              const existingUrls = new Set(
+                existingResult.rows.map((row) => row.url)
+              );
+              console.log(
+                `[Feed Update] Found ${existingUrls.size} existing items`
+              );
 
-                  const newItems = feedItems
-                    .filter((item) => item.link && !existingUrls.has(item.link))
-                    .map((item) => ({
-                      title: item.title || "•",
-                      url: item.link ?? "",
-                      description:
-                        item["content:encoded"] || item.content || "",
-                      postdate: new Date(item.pubDate || item.date),
-                      slug: Math.random().toString(36).substring(2, 15),
-                      userId,
-                      sourceId: source.id,
-                    }));
+              // Filter new items
+              const newItems = feedItems
+                .filter((item) => item.link && !existingUrls.has(item.link))
+                .map((item) => ({
+                  title: item.title || "•",
+                  url: item.link,
+                  description: item["content:encoded"] || item.content || "",
+                  postdate: new Date(item.pubDate || item.date),
+                  slug: Math.random().toString(36).substring(2, 15),
+                  userId,
+                  sourceId: source.id,
+                }));
 
-                  console.log(
-                    `[Feed Update] Found ${newItems.length} new items to add`
-                  );
+              console.log(
+                `[Feed Update] Found ${newItems.length} new items to add`
+              );
 
-                  if (newItems.length > 0) {
-                    console.log(
-                      `[Feed Update] Inserting ${newItems.length} new items...`
-                    );
-                    await tx.pesos_items.createMany({
-                      data: newItems,
-                      skipDuplicates: true,
-                    });
-                    stats.newItemsCount += newItems.length;
-                    console.log(`[Feed Update] Successfully inserted items`);
-                  }
-                }
+              if (newItems.length > 0) {
+                console.log(
+                  `[Feed Update] Inserting ${newItems.length} new items...`
+                );
 
-                return stats;
-              },
-              {
-                maxWait: 5000,
-                timeout: 30000,
+                // Insert new items
+                const values = newItems
+                  .map(
+                    (item) => `(
+                    '${item.title.replace(/'/g, "''")}',
+                    '${item.url.replace(/'/g, "''")}',
+                    '${item.description.replace(/'/g, "''")}',
+                    '${item.postdate.toISOString()}',
+                    '${item.slug}',
+                    '${item.userId}',
+                    '${item.sourceId}'
+                  )`
+                  )
+                  .join(",");
+
+                await client.query(`
+                  INSERT INTO "pesos_items" (
+                    "title", "url", "description", 
+                    "postdate", "slug", "userId", "sourceId"
+                  )
+                  VALUES ${values}
+                  ON CONFLICT DO NOTHING
+                `);
+
+                console.log(`[Feed Update] Successfully inserted items`);
               }
-            );
+            }
 
             console.log(`[Feed Update] Completed processing ${source.url}`);
-            if (feedStats.newItemsCount > 0) {
-              stats.successfulFeeds.push(feedStats);
-              stats.totalNewItems += feedStats.newItemsCount;
-              console.log(
-                `[Feed Update] Added ${feedStats.newItemsCount} new items from ${source.url}`
-              );
-            } else {
-              console.log(`[Feed Update] No new items from ${source.url}`);
-            }
-            stats.totalFeedsProcessed++;
           } catch (error) {
             console.error(
               `[Feed Update] Error processing ${source.url}:`,
               error
             );
-            stats.failedFeeds.push({
-              url: source.url,
-              newItemsCount: 0,
-              totalItemsProcessed: 0,
-              error: error instanceof Error ? error.message : "Unknown error",
-            });
-            stats.totalErrors++;
           }
         })
       );
@@ -228,54 +206,14 @@ async function updateFeeds() {
       }
     }
 
-    // Format and log the results
     console.log("\n[Feed Update] Complete!\n");
-
-    if (stats.successfulFeeds.length > 0) {
-      console.log("Feeds with new items:");
-      stats.successfulFeeds
-        .sort((a, b) => b.newItemsCount - a.newItemsCount)
-        .forEach((feed) => {
-          console.log(
-            `• ${feed.url}: ${feed.newItemsCount} new items (processed ${feed.totalItemsProcessed} items)`
-          );
-        });
-      console.log();
-    }
-
-    if (stats.failedFeeds.length > 0) {
-      console.log("Failed feeds:");
-      stats.failedFeeds.forEach((feed) => {
-        console.log(`• ${feed.url}: ${feed.error}`);
-      });
-      console.log();
-    }
-
-    const successfulWithoutNewItems =
-      stats.totalFeedsProcessed -
-      stats.successfulFeeds.length -
-      stats.failedFeeds.length;
-    if (successfulWithoutNewItems > 0) {
-      console.log(
-        `${successfulWithoutNewItems} other feeds checked (no new items or problems)\n`
-      );
-    }
-
-    console.log("Summary:");
-    console.log(`• Total new items: ${stats.totalNewItems}`);
-    console.log(`• Total feeds processed: ${stats.totalFeedsProcessed}`);
-    console.log(`• Failed feeds: ${stats.totalErrors}`);
-    console.log(`• Skipped feeds: ${stats.skippedFeeds.length}`);
-    console.log(
-      `• Execution time: ${((Date.now() - startTime) / 1000).toFixed(2)}s\n`
-    );
   } catch (error) {
     console.error("[Feed Update] Fatal error:", error);
-    throw error; // Let the outer promise handler deal with it
+    throw error;
   } finally {
     try {
       console.log("[Feed Update] Disconnecting from database...");
-      await prisma.$disconnect();
+      await client.end();
       console.log("[Feed Update] Successfully disconnected from database");
     } catch (error) {
       console.error("[Feed Update] Error disconnecting from database:", error);
