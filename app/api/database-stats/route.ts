@@ -6,7 +6,11 @@ export async function GET() {
   try {
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.warn("[database-stats/GET] No userId from auth");
+      return NextResponse.json(
+        { error: "Unauthorized", code: "NO_USER" },
+        { status: 401 }
+      );
     }
 
     // Get the local user
@@ -15,8 +19,12 @@ export async function GET() {
     });
 
     if (!localUser) {
+      console.warn(
+        "[database-stats/GET] No local user found for userId:",
+        userId
+      );
       return NextResponse.json(
-        { error: "User not found in database" },
+        { error: "User not found in database", code: "NO_LOCAL_USER" },
         { status: 404 }
       );
     }
@@ -90,9 +98,37 @@ export async function GET() {
       },
     });
   } catch (error) {
-    console.error("Error calculating database stats:", error);
+    console.error("[database-stats/GET] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Check for specific error types
+    if (error instanceof Error) {
+      if (error.message.includes("Auth") || error.message.includes("auth")) {
+        return NextResponse.json(
+          {
+            error: "Authentication error - please try again",
+            code: "AUTH_ERROR",
+          },
+          { status: 401 }
+        );
+      }
+
+      if (error.name?.includes("Prisma")) {
+        return NextResponse.json(
+          {
+            error: "Database error - please try again later",
+            code: "DB_ERROR",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { error: "Failed to calculate database stats" },
+      { error: "Failed to calculate database stats", code: "UNKNOWN_ERROR" },
       { status: 500 }
     );
   }

@@ -63,12 +63,11 @@ export default function StatsPage() {
       } else {
         const fetchData = async () => {
           try {
-            const [statsResponse, postsResponse, allPostsResponse] =
-              await Promise.all([
-                fetch("/api/database-stats"),
-                fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`),
-                fetch(`/api/getPosts?limit=200`),
-              ]);
+            // First fetch stats and paginated posts
+            const [statsResponse, postsResponse] = await Promise.all([
+              fetch("/api/database-stats"),
+              fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`),
+            ]);
 
             if (!statsResponse.ok) {
               throw new Error(`Stats API error: ${statsResponse.statusText}`);
@@ -76,15 +75,9 @@ export default function StatsPage() {
             if (!postsResponse.ok) {
               throw new Error(`Posts API error: ${postsResponse.statusText}`);
             }
-            if (!allPostsResponse.ok) {
-              throw new Error(
-                `All posts API error: ${allPostsResponse.statusText}`
-              );
-            }
 
             const statsData = await statsResponse.json();
             const postsData = await postsResponse.json();
-            const allPostsData = await allPostsResponse.json();
 
             if (statsData.stats) {
               setStats(statsData.stats);
@@ -92,9 +85,8 @@ export default function StatsPage() {
             if (postsData.posts) {
               setPosts(postsData.posts);
               setTotalPosts(postsData.total);
-            }
-            if (allPostsData.posts) {
-              setAllPosts(allPostsData.posts.slice(0, 200));
+              // Use the paginated posts for the all posts view as well
+              setAllPosts(postsData.posts);
             }
             setLoading(false);
           } catch (error: any) {

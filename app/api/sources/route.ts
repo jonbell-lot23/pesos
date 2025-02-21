@@ -6,7 +6,11 @@ export async function GET(request: Request) {
   try {
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.warn("[sources/GET] No userId from auth");
+      return NextResponse.json(
+        { error: "Unauthorized", code: "NO_USER" },
+        { status: 401 }
+      );
     }
 
     // Get all sources for the user
@@ -21,9 +25,37 @@ export async function GET(request: Request) {
       sources: userSources.map((us) => us.source),
     });
   } catch (error) {
-    console.error("Error fetching sources:", error);
+    console.error("[sources/GET] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Check for specific error types
+    if (error instanceof Error) {
+      if (error.message.includes("Auth") || error.message.includes("auth")) {
+        return NextResponse.json(
+          {
+            error: "Authentication error - please try again",
+            code: "AUTH_ERROR",
+          },
+          { status: 401 }
+        );
+      }
+
+      if (error.name?.includes("Prisma")) {
+        return NextResponse.json(
+          {
+            error: "Database error - please try again later",
+            code: "DB_ERROR",
+          },
+          { status: 500 }
+        );
+      }
+    }
+
     return NextResponse.json(
-      { error: "Failed to fetch sources" },
+      { error: "Failed to fetch sources", code: "UNKNOWN_ERROR" },
       { status: 500 }
     );
   }
@@ -33,12 +65,19 @@ export async function POST(request: Request) {
   try {
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.warn("[sources/POST] No userId from auth");
+      return NextResponse.json(
+        { error: "Unauthorized", code: "NO_USER" },
+        { status: 401 }
+      );
     }
 
     const { url } = await request.json();
     if (!url) {
-      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "URL is required", code: "MISSING_URL" },
+        { status: 400 }
+      );
     }
 
     // First try to find an existing source
@@ -49,13 +88,13 @@ export async function POST(request: Request) {
     let source;
     if (existingSource) {
       source = existingSource;
-      console.log("Found existing source:", source);
+      console.log("[sources/POST] Found existing source:", source);
     } else {
       // Create new source with explicit ID sequence
       source = await prisma.pesos_Sources.create({
         data: { url },
       });
-      console.log("Created new source:", source);
+      console.log("[sources/POST] Created new source:", source);
     }
 
     // Now handle the user-source relationship
@@ -75,22 +114,44 @@ export async function POST(request: Request) {
           sourceId: source.id,
         },
       });
-      console.log("Created new user-source relationship");
+      console.log("[sources/POST] Created new user-source relationship");
     } else {
-      console.log("User-source relationship already exists");
+      console.log("[sources/POST] User-source relationship already exists");
     }
 
     return NextResponse.json({ source });
   } catch (error) {
-    console.error("Error in POST /api/sources:", error);
+    console.error("[sources/POST] Error details:", {
+      name: error instanceof Error ? error.name : "Unknown",
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+
+    // Check for specific error types
     if (error instanceof Error) {
-      return NextResponse.json(
-        { error: error.message || "Failed to create source" },
-        { status: 500 }
-      );
+      if (error.message.includes("Auth") || error.message.includes("auth")) {
+        return NextResponse.json(
+          {
+            error: "Authentication error - please try again",
+            code: "AUTH_ERROR",
+          },
+          { status: 401 }
+        );
+      }
+
+      if (error.name?.includes("Prisma")) {
+        return NextResponse.json(
+          {
+            error: "Database error - please try again later",
+            code: "DB_ERROR",
+          },
+          { status: 500 }
+        );
+      }
     }
+
     return NextResponse.json(
-      { error: "An unexpected error occurred" },
+      { error: "An unexpected error occurred", code: "UNKNOWN_ERROR" },
       { status: 500 }
     );
   }
