@@ -1,6 +1,29 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
+import { revalidatePath } from "next/cache";
+
+// Cache duration in seconds
+const CACHE_DURATION = 30; // 30 seconds
+
+// In-memory cache
+const postsCache = new Map<
+  string,
+  {
+    data: any;
+    timestamp: number;
+  }
+>();
+
+// Generate cache key based on request parameters
+function getCacheKey(
+  userId: string,
+  offset: number,
+  limit: number,
+  getAll: boolean
+) {
+  return `${userId}:${offset}:${limit}:${getAll}`;
+}
 
 export async function GET(request: Request) {
   try {
@@ -17,6 +40,15 @@ export async function GET(request: Request) {
     const offset = parseInt(searchParams.get("offset") || "0");
     const limit = parseInt(searchParams.get("limit") || "25");
     const getAll = searchParams.get("all") === "true";
+
+    // Check cache first
+    const cacheKey = getCacheKey(userId, offset, limit, getAll);
+    const cached = postsCache.get(cacheKey);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < CACHE_DURATION * 1000) {
+      console.log("[getPosts/GET] Returning cached data for key:", cacheKey);
+      return NextResponse.json(cached.data);
+    }
 
     // Get the local user
     const localUser = await prisma.pesos_User.findUnique({
@@ -56,10 +88,18 @@ export async function GET(request: Request) {
       ...(getAll ? {} : { skip: offset, take: limit }),
     });
 
-    return NextResponse.json({
+    const response = {
       posts,
       total,
+    };
+
+    // Cache the response
+    postsCache.set(cacheKey, {
+      data: response,
+      timestamp: now,
     });
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("[getPosts/GET] Error details:", {
       name: error instanceof Error ? error.name : "Unknown",
@@ -95,4 +135,15 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+}
+
+// Function to manually clear cache for a user
+export async function clearPostsCache(userId: string) {
+  // Clear all cache entries for this user
+  Array.from(postsCache.keys()).forEach((key) => {
+    if (key.startsWith(userId)) {
+      postsCache.delete(key);
+    }
+  });
+  revalidatePath("/api/getPosts");
 }

@@ -1,6 +1,19 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
+import { revalidatePath } from "next/cache";
+
+// Cache duration in seconds
+const CACHE_DURATION = 60; // 1 minute
+
+// In-memory cache
+const statsCache = new Map<
+  string,
+  {
+    data: any;
+    timestamp: number;
+  }
+>();
 
 export async function GET() {
   try {
@@ -11,6 +24,17 @@ export async function GET() {
         { error: "Unauthorized", code: "NO_USER" },
         { status: 401 }
       );
+    }
+
+    // Check cache first
+    const cached = statsCache.get(userId);
+    const now = Date.now();
+    if (cached && now - cached.timestamp < CACHE_DURATION * 1000) {
+      console.log(
+        "[database-stats/GET] Returning cached data for user:",
+        userId
+      );
+      return NextResponse.json(cached.data);
     }
 
     // Get the local user
@@ -40,7 +64,7 @@ export async function GET() {
     });
 
     if (!posts || posts.length === 0) {
-      return NextResponse.json({
+      const emptyStats = {
         stats: {
           totalPosts: 0,
           daysSinceLastPost: 0,
@@ -48,7 +72,15 @@ export async function GET() {
           medianTimeBetweenPosts: 0,
           averagePostLength: 0,
         },
+      };
+
+      // Cache empty stats
+      statsCache.set(userId, {
+        data: emptyStats,
+        timestamp: now,
       });
+
+      return NextResponse.json(emptyStats);
     }
 
     // Calculate total posts
@@ -56,9 +88,9 @@ export async function GET() {
 
     // Calculate days since last post
     const lastPostDate = new Date(posts[0].postdate);
-    const now = new Date();
+    const nowDate = new Date();
     const daysSinceLastPost = Math.floor(
-      (now.getTime() - lastPostDate.getTime()) / (1000 * 60 * 60 * 24)
+      (nowDate.getTime() - lastPostDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
     // Calculate average time between posts
@@ -88,7 +120,7 @@ export async function GET() {
     );
     const averagePostLength = totalLength / posts.length;
 
-    return NextResponse.json({
+    const response = {
       stats: {
         totalPosts,
         daysSinceLastPost,
@@ -96,7 +128,15 @@ export async function GET() {
         medianTimeBetweenPosts,
         averagePostLength,
       },
+    };
+
+    // Cache the response
+    statsCache.set(userId, {
+      data: response,
+      timestamp: now,
     });
+
+    return NextResponse.json(response);
   } catch (error) {
     console.error("[database-stats/GET] Error details:", {
       name: error instanceof Error ? error.name : "Unknown",
@@ -132,4 +172,10 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+// Function to manually clear cache for a user
+export async function clearStatsCache(userId: string) {
+  statsCache.delete(userId);
+  revalidatePath("/api/database-stats");
 }
