@@ -1,14 +1,18 @@
 import { PrismaClient } from "@prisma/client";
 
-// Use a global variable so that the client is reused in development
+// Track active clients for cleanup
 declare global {
   // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
+  var _prismaClients: PrismaClient[];
 }
 
-const prisma =
-  global.prisma ||
-  new PrismaClient({
+if (!global._prismaClients) {
+  global._prismaClients = [];
+}
+
+function createPrismaClient() {
+  const client = new PrismaClient({
     log: ["error", "warn"],
     // Connection pooling is handled by the underlying database connector
     // We can only configure the logging and datasource URL
@@ -19,16 +23,40 @@ const prisma =
     },
   });
 
-// Only do this in development
-if (process.env.NODE_ENV !== "production") {
+  // Track this client for cleanup
+  if (process.env.NODE_ENV === "development") {
+    global._prismaClients.push(client);
+  }
+
+  return client;
+}
+
+const prisma = global.prisma || createPrismaClient();
+
+if (process.env.NODE_ENV === "development") {
   global.prisma = prisma;
 }
 
-// Ensure connections are properly closed when the app exits
+// Cleanup function that handles all tracked clients
 async function cleanup() {
-  if (global.prisma) {
+  if (process.env.NODE_ENV === "development" && global._prismaClients) {
+    console.log(
+      `[Prisma] Cleaning up ${global._prismaClients.length} clients...`
+    );
+    await Promise.all(
+      global._prismaClients.map(async (client) => {
+        try {
+          await client.$disconnect();
+        } catch (e) {
+          console.error("[Prisma] Error disconnecting client:", e);
+        }
+      })
+    );
+    global._prismaClients = [];
+    console.log("[Prisma] All clients disconnected");
+  } else if (global.prisma) {
     await global.prisma.$disconnect();
-    console.log("Prisma Client disconnected");
+    console.log("[Prisma] Client disconnected");
   }
 }
 

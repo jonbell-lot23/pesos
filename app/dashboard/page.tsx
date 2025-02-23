@@ -253,6 +253,39 @@ export default function StatsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      {process.env.NODE_ENV === "development" && (
+        <div className="mb-4">
+          <Button
+            onClick={async () => {
+              try {
+                // First simulate the error
+                const response = await fetch("/api/test-db-error", {
+                  method: "POST",
+                });
+
+                if (!response.ok) {
+                  // Force a fresh database query by adding a cache-busting parameter
+                  const freshResponse = await fetch(
+                    "/api/database-stats?fresh=true"
+                  );
+                  if (!freshResponse.ok) {
+                    // Now we should see the error screen
+                    setError("Database connection error");
+                    return;
+                  }
+                }
+              } catch (error) {
+                console.error("Error simulating DB error:", error);
+                setError("Database connection error");
+              }
+            }}
+            variant="outline"
+            className="bg-red-100 hover:bg-red-200 text-red-700 border-red-300"
+          >
+            Simulate DB Error
+          </Button>
+        </div>
+      )}
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Your Feeds</h1>
         <div className="flex gap-4">

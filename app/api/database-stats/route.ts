@@ -2,6 +2,31 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
 import { statsCache, STATS_CACHE_DURATION } from "@/lib/cache";
+import { withRetry } from "@/lib/dbPool";
+
+// Helper function to retry database operations
+async function retryOperation<T>(operation: () => Promise<T>): Promise<T> {
+  let lastError;
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      return await operation();
+    } catch (error) {
+      lastError = error;
+      if (attempt < 3) {
+        // Wait before retrying, with exponential backoff
+        await new Promise((resolve) =>
+          setTimeout(resolve, Math.min(100 * Math.pow(2, attempt), 1000))
+        );
+        // Disconnect and reconnect Prisma before retrying
+        await prisma.$disconnect();
+        await prisma.$connect();
+        continue;
+      }
+      throw lastError;
+    }
+  }
+  throw lastError;
+}
 
 export async function GET() {
   try {
@@ -25,9 +50,11 @@ export async function GET() {
       return NextResponse.json(cached.data);
     }
 
-    // Get the local user
-    const localUser = await prisma.pesos_User.findUnique({
-      where: { id: userId },
+    // Get the local user with retry
+    const localUser = await retryOperation(async () => {
+      return await prisma.pesos_User.findUnique({
+        where: { id: userId },
+      });
     });
 
     if (!localUser) {
@@ -41,14 +68,21 @@ export async function GET() {
       );
     }
 
-    // Get all posts for the user, ordered by date
-    const posts = await prisma.pesos_items.findMany({
-      where: {
-        userId: localUser.id,
-      },
-      orderBy: {
-        postdate: "desc",
-      },
+    // Get all posts for the user with retry
+    const posts = await retryOperation(async () => {
+      return await prisma.pesos_items.findMany({
+        where: {
+          userId: localUser.id,
+        },
+        orderBy: {
+          postdate: "desc",
+        },
+        // Limit the fields we need to reduce data transfer
+        select: {
+          postdate: true,
+          description: true,
+        },
+      });
     });
 
     if (!posts || posts.length === 0) {
@@ -62,7 +96,6 @@ export async function GET() {
         },
       };
 
-      // Cache empty stats
       statsCache.set(userId, {
         data: emptyStats,
         timestamp: now,
@@ -71,17 +104,14 @@ export async function GET() {
       return NextResponse.json(emptyStats);
     }
 
-    // Calculate total posts
+    // Calculate statistics
     const totalPosts = posts.length;
-
-    // Calculate days since last post
     const lastPostDate = new Date(posts[0].postdate);
     const nowDate = new Date();
     const daysSinceLastPost = Math.floor(
       (nowDate.getTime() - lastPostDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    // Calculate average time between posts
     let totalTimeBetween = 0;
     let timeDiffs = [];
     for (let i = 0; i < posts.length - 1; i++) {
@@ -91,17 +121,16 @@ export async function GET() {
       totalTimeBetween += timeDiff;
       timeDiffs.push(timeDiff);
     }
+
     const averageTimeBetweenPosts = Math.floor(
       totalTimeBetween / (posts.length - 1) / (1000 * 60 * 60 * 24)
     );
 
-    // Calculate median time between posts
     timeDiffs.sort((a, b) => a - b);
     const medianTimeBetweenPosts = Math.floor(
       timeDiffs[Math.floor(timeDiffs.length / 2)] / (1000 * 60 * 60)
     );
 
-    // Calculate average post length
     const totalLength = posts.reduce(
       (sum, post) => sum + (post.description?.length || 0),
       0
@@ -118,7 +147,6 @@ export async function GET() {
       },
     };
 
-    // Cache the response
     statsCache.set(userId, {
       data: response,
       timestamp: now,
@@ -147,16 +175,21 @@ export async function GET() {
       if (error.name?.includes("Prisma")) {
         return NextResponse.json(
           {
-            error: "Database error - please try again later",
+            error: "Database connection issue - retrying...",
             code: "DB_ERROR",
+            retryAfter: 5, // Suggest retry after 5 seconds
           },
-          { status: 500 }
+          { status: 503 }
         );
       }
     }
 
     return NextResponse.json(
-      { error: "Failed to calculate database stats", code: "UNKNOWN_ERROR" },
+      {
+        error: "Failed to calculate database stats",
+        code: "UNKNOWN_ERROR",
+        retryAfter: 5,
+      },
       { status: 500 }
     );
   }
