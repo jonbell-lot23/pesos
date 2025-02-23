@@ -130,9 +130,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     showUsernameModal && !isCheckingUser && user !== null;
 
   return (
-    <div
-      className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col`}
-    >
+    <div className={`${inter.className} min-h-screen bg-white flex flex-col`}>
       {!hideHeader && (
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

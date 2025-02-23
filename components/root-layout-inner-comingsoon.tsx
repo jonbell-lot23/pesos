@@ -51,9 +51,7 @@ export function RootLayoutInnerComingSoon({
   }, [isLoaded, user]);
 
   return (
-    <div
-      className={`${inter.className} min-h-screen bg-gradient-to-b from-gray-100 to-gray-200 flex flex-col`}
-    >
+    <div className={`${inter.className} min-h-screen bg-white flex flex-col`}>
       <header className="bg-white shadow-sm"></header>
       <main className="flex-grow">
         {children}

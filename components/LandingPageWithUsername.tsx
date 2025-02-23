@@ -195,7 +195,7 @@ export default function LandingPageWithUsername() {
           </div>
 
           {/* Username Section */}
-          <div className="space-y-4 p-6 bg-white rounded-lg">
+          <div className="space-y-4 bg-white rounded-lg">
             <h2 className="text-2xl font-bold text-left mb-6">Get Started</h2>
             <div className="flex gap-2">
               <div className="relative flex-1">
