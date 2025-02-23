@@ -60,20 +60,35 @@ async function cleanup() {
   }
 }
 
+// Remove any existing listeners to prevent duplicates
+[
+  "SIGTERM",
+  "SIGINT",
+  "beforeExit",
+  "exit",
+  "uncaughtException",
+  "unhandledRejection",
+].forEach((event) => {
+  process.removeAllListeners(event);
+});
+
+// Set higher max listeners to prevent warnings
+process.setMaxListeners(20);
+
 // Handle cleanup on app termination
-process.on("SIGTERM", cleanup);
-process.on("SIGINT", cleanup);
-process.on("beforeExit", cleanup);
-process.on("exit", cleanup);
+process.once("SIGTERM", cleanup);
+process.once("SIGINT", cleanup);
+process.once("beforeExit", cleanup);
+process.once("exit", cleanup);
 
 // Handle uncaught errors to prevent connection leaks
-process.on("uncaughtException", async (e) => {
+process.once("uncaughtException", async (e) => {
   console.error(e);
   await cleanup();
   process.exit(1);
 });
 
-process.on("unhandledRejection", async (e) => {
+process.once("unhandledRejection", async (e) => {
   console.error(e);
   await cleanup();
   process.exit(1);

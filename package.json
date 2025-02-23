@@ -28,6 +28,7 @@
     "eslint": "8.46.0",
     "eslint-config-next": "13.4.12",
     "google-auth-library": "^9.15.1",
+    "html-react-parser": "^5.2.2",
     "lucide-react": "^0.474.0",
     "next": "14",
     "pg": "^8.13.3",
@@ -44,6 +45,7 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
     "@types/pg": "^8.11.11",
     "@types/xml2js": "^0.4.14",
     "prisma": "6.4.1"

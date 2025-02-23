@@ -10,14 +10,6 @@ import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
 import { Button } from "@/components/ui/button";
 import UpdateFeedsButton from "@/components/UpdateFeedsButton";
 
-interface Stats {
-  totalPosts: number;
-  daysSinceLastPost: number;
-  averageTimeBetweenPosts: number;
-  medianTimeBetweenPosts: number;
-  averagePostLength: number;
-}
-
 interface Post {
   id: number;
   title: string;
@@ -37,7 +29,6 @@ export default function StatsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { isLoaded, isSignedIn, user } = useUser();
-  const [stats, setStats] = useState<Stats | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [allPosts, setAllPosts] = useState<Post[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
@@ -65,25 +56,16 @@ export default function StatsPage() {
       } else {
         const fetchData = async () => {
           try {
-            // First fetch stats and paginated posts
-            const [statsResponse, postsResponse] = await Promise.all([
-              fetch("/api/database-stats"),
-              fetch(`/api/getPosts?offset=${currentPage * 25}&limit=25`),
-            ]);
+            const postsResponse = await fetch(
+              `/api/getPosts?offset=${currentPage * 25}&limit=25`
+            );
 
-            if (!statsResponse.ok) {
-              throw new Error(`Stats API error: ${statsResponse.statusText}`);
-            }
             if (!postsResponse.ok) {
               throw new Error(`Posts API error: ${postsResponse.statusText}`);
             }
 
-            const statsData = await statsResponse.json();
             const postsData = await postsResponse.json();
 
-            if (statsData.stats) {
-              setStats(statsData.stats);
-            }
             if (postsData.posts) {
               setPosts(postsData.posts);
               setTotalPosts(postsData.total);
@@ -253,78 +235,12 @@ export default function StatsPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {process.env.NODE_ENV === "development" && (
-        <div className="mb-4">
-          <Button
-            onClick={async () => {
-              try {
-                // First simulate the error
-                const response = await fetch("/api/test-db-error", {
-                  method: "POST",
-                });
-
-                if (!response.ok) {
-                  // Force a fresh database query by adding a cache-busting parameter
-                  const freshResponse = await fetch(
-                    "/api/database-stats?fresh=true"
-                  );
-                  if (!freshResponse.ok) {
-                    // Now we should see the error screen
-                    setError("Database connection error");
-                    return;
-                  }
-                }
-              } catch (error) {
-                console.error("Error simulating DB error:", error);
-                setError("Database connection error");
-              }
-            }}
-            variant="outline"
-            className="bg-red-100 hover:bg-red-200 text-red-700 border-red-300"
-          >
-            Simulate DB Error
-          </Button>
-        </div>
-      )}
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Your Feeds</h1>
+        <h1 className="text-2xl font-bold">Backups</h1>
         <div className="flex gap-4">
           {showManualUpdate && <UpdateFeedsButton />}
         </div>
       </div>
-
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <p className="text-3xl font-bold">{stats.totalPosts}</p>
-            <h2 className="text-lg font-semibold">Total Posts</h2>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <p className="text-3xl font-bold">{stats.daysSinceLastPost} days</p>
-            <h2 className="text-lg font-semibold">Time Since Last Post</h2>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <p className="text-3xl font-bold">
-              {stats.averageTimeBetweenPosts} days
-            </p>
-            <h2 className="text-lg font-semibold">
-              Average Time Between Posts
-            </h2>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <p className="text-3xl font-bold">
-              {stats.medianTimeBetweenPosts} hours
-            </p>
-            <h2 className="text-lg font-semibold">Median Time Between Posts</h2>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <p className="text-3xl font-bold">
-              {stats.averagePostLength.toFixed(2)}
-            </p>
-            <h2 className="text-lg font-semibold">Average Length of Posts</h2>
-          </div>
-        </div>
-      )}
 
       <div className="mb-8 hidden">
         <ActivityChart posts={allPosts} />

@@ -8,6 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatDistanceToNow } from "date-fns";
 
 interface Post {
   id: number;
@@ -28,6 +29,12 @@ interface DataTableProps {
   posts: Post[];
 }
 
+function stripHtml(html: string) {
+  const tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
 export function DataTable({ posts }: DataTableProps) {
   return (
     <Table>
@@ -42,23 +49,25 @@ export function DataTable({ posts }: DataTableProps) {
         {posts.map((post) => (
           <TableRow key={post.url} className="even:bg-muted/50">
             <TableCell className="max-w-[240px] truncate">
-              <div className="flex items-center">
-                <a href={`/table/${post.Source?.userid}/1`}>
-                  <div className="w-4 h-4 bg-black rounded-full mr-2"></div>
-                </a>
-                <a
-                  href={`/post/${post.slug}`}
-                  className="text-blue-600 hover:underline truncate block"
-                >
-                  {post.title}
-                </a>
-              </div>
+              <a
+                href={`/post/${post.slug}`}
+                className="text-blue-600 hover:underline truncate block"
+              >
+                {post.title}
+              </a>
             </TableCell>
             <TableCell className="max-w-[640px] truncate">
-              {post.description}
+              {post.description && (
+                <span className="text-sm text-gray-600">
+                  {stripHtml(post.description).slice(0, 120)}
+                  {post.description.length > 120 ? "..." : ""}
+                </span>
+              )}
             </TableCell>
-            <TableCell className="font-mono">
-              {new Date(post.postdate).toISOString().split("T")[0]}
+            <TableCell>
+              {formatDistanceToNow(new Date(post.postdate), {
+                addSuffix: true,
+              })}
             </TableCell>
           </TableRow>
         ))}
