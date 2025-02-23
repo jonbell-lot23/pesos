@@ -44,7 +44,7 @@ export default function Page() {
         // If we have a username in localStorage but user isn't in database yet, create them
         if (localUsername && localUsername.trim() !== "") {
           console.log(
-            "[Page] Found username in localStorage, attempting to create user"
+            "[Page] Found username in localStorage, attempting to create user..."
           );
           try {
             // Try to create the user
