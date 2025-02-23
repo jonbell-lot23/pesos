@@ -37,5 +37,9 @@ export default async function Page({ params }: { params: { slug: string } }) {
   if (!post) {
     notFound();
   }
-  return <PostContent post={post} />;
+  return (
+    <div className="absolute inset-0 bg-white">
+      <PostContent post={post} />
+    </div>
+  );
 }

@@ -47,6 +47,24 @@ function stripHtml(html: string) {
   return tmp.textContent || tmp.innerText || "";
 }
 
+const formatTimeShort = (date: Date) => {
+  const distance = formatDistanceToNow(new Date(date), { addSuffix: false });
+  return distance
+    .replace(" minutes", "m")
+    .replace(" minute", "m")
+    .replace(" hours", "h")
+    .replace(" hour", "h")
+    .replace(" days", "d")
+    .replace(" day", "d")
+    .replace(" months", "mo")
+    .replace(" month", "mo")
+    .replace(" years", "y")
+    .replace(" year", "y")
+    .replace("about ", "")
+    .replace("over ", "")
+    .replace("almost ", "");
+};
+
 export function DataTable({ posts }: DataTableProps) {
   return (
     <Table>
@@ -54,7 +72,7 @@ export function DataTable({ posts }: DataTableProps) {
         <TableRow>
           <TableHead>title & url</TableHead>
           <TableHead>description</TableHead>
-          <TableHead>postdate</TableHead>
+          <TableHead></TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -76,11 +94,7 @@ export function DataTable({ posts }: DataTableProps) {
                 </span>
               )}
             </TableCell>
-            <TableCell>
-              {formatDistanceToNow(new Date(post.postdate), {
-                addSuffix: true,
-              })}
-            </TableCell>
+            <TableCell>{formatTimeShort(post.postdate)}</TableCell>
           </TableRow>
         ))}
       </TableBody>

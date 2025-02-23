@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import Spinner from "../../../components/Spinner";
 
 interface Post {
@@ -14,6 +14,24 @@ interface Post {
   sourceId: number;
   slug: string;
 }
+
+const formatTimeShort = (date: Date) => {
+  const distance = formatDistanceToNow(new Date(date), { addSuffix: false });
+  return distance
+    .replace(" minutes", "m")
+    .replace(" minute", "m")
+    .replace(" hours", "h")
+    .replace(" hour", "h")
+    .replace(" days", "d")
+    .replace(" day", "d")
+    .replace(" months", "mo")
+    .replace(" month", "mo")
+    .replace(" years", "y")
+    .replace(" year", "y")
+    .replace("about ", "")
+    .replace("over ", "")
+    .replace("almost ", "");
+};
 
 export default function FeedPage() {
   const params = useParams();
@@ -167,7 +185,7 @@ export default function FeedPage() {
                 </a>
               </div>
               <time className="text-sm text-gray-500">
-                {format(new Date(post.postdate), "MMM d, yyyy")}
+                {formatTimeShort(new Date(post.postdate))}
               </time>
             </article>
           ))}

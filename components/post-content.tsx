@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { pesos_items } from "@prisma/client";
+import { format } from "date-fns";
 
 interface PostContentProps {
   post: pesos_items;
@@ -46,11 +47,10 @@ export function PostContent({ post }: PostContentProps) {
                     dateTime={post.postdate.toString()}
                     className="flex items-center font-lighter order-first text-xs uppercase text-gray-600"
                   >
-                    {new Date(post.postdate).toLocaleDateString("en-US", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
+                    {format(
+                      new Date(post.postdate),
+                      "MMMM d, yyyy 'at' h:mm a"
+                    )}
                   </time>
                   <h1 className="mt-2 text-5xl font-black tracking-tight text-gray-900">
                     {post.title}
@@ -58,7 +58,7 @@ export function PostContent({ post }: PostContentProps) {
                 </header>
                 <div className="mt-8">
                   <div
-                    className="prose prose-slate prose-lg lg:prose-xl max-w-none !space-y-6 [&>p+p]:mt-10 [&>h2]:mt-16 [&>h3]:mt-16 [&>h4]:mt-16 [&>h2+p]:mt-6 [&>h3+p]:mt-6 [&>h4+p]:mt-6 [&>ul]:mt-8 [&>ol]:mt-8 [&>blockquote]:mt-10 [&>pre]:mt-10"
+                    className="prose prose-slate prose-lg lg:prose-xl max-w-none !space-y-6 [&>p+p]:mt-10 [&>h2]:mt-16 [&>h3]:mt-16 [&>h4]:mt-16 [&>h2+p]:mt-6 [&>h3+p]:mt-6 [&>h4+p]:mt-6 [&>ul]:mt-8 [&>ol]:mt-8 [&>blockquote]:mt-10 [&>pre]:mt-10 [&>*]:bg-white"
                     dangerouslySetInnerHTML={{ __html: post.description || "" }}
                   />
                 </div>
