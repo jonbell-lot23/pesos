@@ -1,6 +1,16 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 
+// This route should only run during runtime, not during build
+export const dynamic = "force-dynamic";
+export const runtime = "edge";
+export const preferredRegion = "iad1";
+
+// Disable static generation for this route
+export const generateStaticParams = () => {
+  return [];
+};
+
 export async function GET() {
   try {
     // Call the update-all-feeds endpoint
