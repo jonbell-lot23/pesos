@@ -187,10 +187,16 @@ export default function LandingPageWithUsername() {
           <div className="space-y-4 p-0 rounded-xl text-left">
             <h2 className="text-2xl font-bold text-black">What is PESOS?</h2>
             <p className="text-gray-700 leading-relaxed mr-12">
-              PESOS stands for Publish Elsewhere, Syndicate (on your) Own Site.
-              It's a way to take all the stuff you're posting all over the
-              internet and pull it back into one simple, searchable, ownable,
-              exportable place.
+              <a
+                href="https://indieweb.org/PESOS"
+                className="underline hover:text-blue-600"
+              >
+                P.E.S.O.S.
+              </a>{" "}
+              stands for Publish Elsewhere, Syndicate (on your) Own Site. It's a
+              way to take all the stuff you're posting all over the internet and
+              pull it back into one simple, searchable, ownable, exportable
+              place.
             </p>
           </div>
 
