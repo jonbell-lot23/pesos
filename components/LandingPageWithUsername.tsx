@@ -196,16 +196,21 @@ export default function LandingPageWithUsername() {
 
           {/* Username Section */}
           <div className="space-y-4 bg-white rounded-lg">
-            <h2 className="text-2xl font-bold text-left mb-6">Get Started</h2>
+            <h2 className="text-2xl font-bold text-left mb-6">Stay tuned!</h2>
             <div className="flex gap-2">
               <div className="relative flex-1">
+                <p className="text-left">
+                  I've closed new sign-ups for now while I fix some stuff.
+                  <br />
+                  Thanks for your patience!
+                </p>
                 <input
                   id="username"
                   type="text"
                   placeholder="Choose a username"
                   value={username}
                   onChange={handleInputChange}
-                  className={`w-full border p-2 rounded-lg text-lg ${
+                  className={`w-full border p-2 rounded-lg hidden text-lg ${
                     availability === "unavailable"
                       ? "border-red-500 focus:ring-red-500"
                       : availability === "available"
@@ -226,7 +231,7 @@ export default function LandingPageWithUsername() {
                 </div>
               </div>
 
-              {!isLoaded || !user ? (
+              {/* {!isLoaded || !user ? (
                 <SignInButton mode="modal">
                   <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
                     {"->"}
@@ -240,7 +245,7 @@ export default function LandingPageWithUsername() {
                 >
                   {loading ? "Creating..." : "Get started"}
                 </button>
-              )}
+              )} */}
             </div>
 
             {validationError && (
