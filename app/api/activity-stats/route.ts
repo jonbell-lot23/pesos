@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth, currentUser } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
 
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const { userId } = auth();

@@ -4,6 +4,8 @@ import prisma from "@/lib/prismadb";
 import { statsCache, STATS_CACHE_DURATION } from "@/lib/cache";
 import { withRetry } from "@/lib/dbPool";
 
+export const dynamic = "force-dynamic";
+
 // Helper function to retry database operations
 async function retryOperation<T>(operation: () => Promise<T>): Promise<T> {
   let lastError;
