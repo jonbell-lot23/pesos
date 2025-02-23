@@ -9,6 +9,9 @@ export default function BackupPage() {
   const router = useRouter();
   const { isLoaded, isSignedIn } = useUser();
 
+  // Add client-side check for any document usage
+  const isClient = typeof window !== "undefined";
+
   useEffect(() => {
     if (isLoaded) {
       if (isSignedIn) {

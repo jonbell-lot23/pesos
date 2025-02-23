@@ -120,6 +120,21 @@ export default function ExportPage() {
 
   const metrics = calculateMetrics(feedItems);
 
+  const handleExport = () => {
+    if (typeof window === "undefined") return;
+
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(feedItems));
+    const link = document.createElement("a");
+    link.href = dataStr;
+    link.download = "feeds_export.json";
+    // Append, click, and remove in one go
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -193,20 +208,7 @@ export default function ExportPage() {
           >
             Edit feeds
           </Button>
-          <Button
-            onClick={() => {
-              const dataStr =
-                "data:text/json;charset=utf-8," +
-                encodeURIComponent(JSON.stringify(feedItems));
-              const downloadAnchorNode = document.createElement("a");
-              downloadAnchorNode.setAttribute("href", dataStr);
-              downloadAnchorNode.setAttribute("download", "feeds_export.json");
-              document.body.appendChild(downloadAnchorNode);
-              downloadAnchorNode.click();
-              downloadAnchorNode.remove();
-            }}
-            className="text-sm hover:bg-blue-500"
-          >
+          <Button onClick={handleExport} className="text-sm hover:bg-blue-500">
             Export as JSON
           </Button>
         </div>

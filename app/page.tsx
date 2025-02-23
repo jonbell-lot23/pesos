@@ -9,18 +9,27 @@ export default function Page() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(true);
+  const [localUsername, setLocalUsername] = useState<string | null>(null);
 
   // Add effect to watch localStorage changes
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const storedUsername = localStorage.getItem("chosenUsername");
+    setLocalUsername(storedUsername);
+
     const originalSetItem = localStorage.setItem;
     localStorage.setItem = function (key, value) {
       console.log(`[localStorage] Setting ${key} to:`, value);
       originalSetItem.apply(this, [key, value]);
+      if (key === "chosenUsername") {
+        setLocalUsername(value);
+      }
     };
 
     // Log initial state
     console.log("[Page] Initial localStorage state:", {
-      chosenUsername: localStorage.getItem("chosenUsername"),
+      chosenUsername: storedUsername,
     });
 
     return () => {
@@ -36,9 +45,6 @@ export default function Page() {
         // Check if user has a username in Clerk metadata
         const hasClerkUsername = user.publicMetadata?.chosenUsername;
         console.log("[Page] Clerk username:", hasClerkUsername);
-
-        // Check localStorage for username
-        const localUsername = localStorage.getItem("chosenUsername");
         console.log("[Page] Local username:", localUsername);
 
         // If we have a username in localStorage but user isn't in database yet, create them
@@ -109,7 +115,7 @@ export default function Page() {
     }
 
     checkUserAndRedirect();
-  }, [user, router, isLoaded]);
+  }, [user, router, isLoaded, localUsername]);
 
   // Add effect to log state changes
   useEffect(() => {
@@ -117,8 +123,9 @@ export default function Page() {
       isLoaded,
       isRedirecting,
       hasUser: !!user,
+      localUsername,
     });
-  }, [isLoaded, isRedirecting, user]);
+  }, [isLoaded, isRedirecting, user, localUsername]);
 
   if (!isLoaded || isRedirecting) {
     return (

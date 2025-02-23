@@ -30,6 +30,18 @@ interface DataTableProps {
 }
 
 function stripHtml(html: string) {
+  if (typeof window === "undefined") {
+    // Server-side: Use basic string replacement
+    return html
+      .replace(/<[^>]*>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .trim();
+  }
+
+  // Client-side: Use DOM parsing
   const tmp = document.createElement("DIV");
   tmp.innerHTML = html;
   return tmp.textContent || tmp.innerText || "";
