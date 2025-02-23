@@ -74,8 +74,8 @@ export default function FeedSelection() {
     // Store in localStorage as backup
     localStorage.setItem("feeds", JSON.stringify(validFeeds.map((f) => f.url)));
 
-    // Redirect to feed-display with db-view tab
-    router.push("/feed-display?tab=db-view");
+    // Redirect to dashboard
+    router.push("/dashboard");
   };
 
   return (
