@@ -1,10 +1,27 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
+import lottie from "lottie-web";
 
 export default function Spinner() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const anim = lottie.loadAnimation({
+        container: containerRef.current,
+        renderer: "svg",
+        loop: true,
+        autoplay: true,
+        path: "/fire_loader.json",
+      });
+
+      return () => anim.destroy();
+    }
+  }, []);
+
   return (
     <div className="flex justify-center items-center py-4">
-      <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+      <div ref={containerRef} className="w-32 h-32"></div>
     </div>
   );
 }
