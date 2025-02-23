@@ -249,12 +249,45 @@ export default function StatsPage() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold">Recent Posts</h2>
-          <Button
-            onClick={handleEditFeeds}
-            className="bg-black text-white hover:bg-gray-800"
-          >
-            Edit Feeds
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={handleEditFeeds}
+              className="bg-black text-white hover:bg-gray-800"
+            >
+              Edit Feeds
+            </Button>
+            <Button
+              onClick={async () => {
+                try {
+                  const response = await fetch("/api/export");
+                  if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(
+                      errorData.error || "Failed to download backup"
+                    );
+                  }
+                  const blob = await response.blob();
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "backup.json";
+                  document.body.appendChild(a);
+                  a.click();
+                  window.URL.revokeObjectURL(url);
+                  document.body.removeChild(a);
+                } catch (error) {
+                  console.error("Download error:", error);
+                  alert(
+                    "Failed to download backup: " +
+                      (error instanceof Error ? error.message : "Unknown error")
+                  );
+                }
+              }}
+              className="bg-black text-white hover:bg-gray-800"
+            >
+              Download as JSON
+            </Button>
+          </div>
         </div>
         <DataTable posts={posts} />
 
