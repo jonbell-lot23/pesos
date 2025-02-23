@@ -8,37 +8,49 @@ import { useEffect, useState } from "react";
 import LandingPageWithUsername from "@/components/LandingPageWithUsername";
 import Spinner from "@/components/Spinner";
 
+// Client-side component to handle localStorage
+function LocalStorageHandler({
+  onUsernameChange,
+}: {
+  onUsernameChange: (username: string | null) => void;
+}) {
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const storedUsername = localStorage.getItem("chosenUsername");
+    onUsernameChange(storedUsername);
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "chosenUsername") {
+        onUsernameChange(e.newValue);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+    };
+  }, [onUsernameChange]);
+
+  return null;
+}
+
 export default function Page() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
   const [isRedirecting, setIsRedirecting] = useState(true);
   const [localUsername, setLocalUsername] = useState<string | null>(null);
 
-  // Add effect to watch localStorage changes
+  // Add effect to log state changes
   useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const storedUsername = localStorage.getItem("chosenUsername");
-    setLocalUsername(storedUsername);
-
-    const originalSetItem = localStorage.setItem;
-    localStorage.setItem = function (key, value) {
-      console.log(`[localStorage] Setting ${key} to:`, value);
-      originalSetItem.apply(this, [key, value]);
-      if (key === "chosenUsername") {
-        setLocalUsername(value);
-      }
-    };
-
-    // Log initial state
-    console.log("[Page] Initial localStorage state:", {
-      chosenUsername: storedUsername,
+    console.log("[Page] State updated:", {
+      isLoaded,
+      isRedirecting,
+      hasUser: !!user,
+      localUsername,
     });
-
-    return () => {
-      localStorage.setItem = originalSetItem;
-    };
-  }, []);
+  }, [isLoaded, isRedirecting, user, localUsername]);
 
   useEffect(() => {
     if (!isLoaded) return;
@@ -120,16 +132,6 @@ export default function Page() {
     checkUserAndRedirect();
   }, [user, router, isLoaded, localUsername]);
 
-  // Add effect to log state changes
-  useEffect(() => {
-    console.log("[Page] State updated:", {
-      isLoaded,
-      isRedirecting,
-      hasUser: !!user,
-      localUsername,
-    });
-  }, [isLoaded, isRedirecting, user, localUsername]);
-
   if (!isLoaded || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -139,5 +141,10 @@ export default function Page() {
   }
 
   console.log("[Page] Rendering LandingPageWithUsername");
-  return <LandingPageWithUsername />;
+  return (
+    <>
+      <LocalStorageHandler onUsernameChange={setLocalUsername} />
+      <LandingPageWithUsername />
+    </>
+  );
 }

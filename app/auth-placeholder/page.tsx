@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,7 +18,7 @@ declare global {
       accounts: {
         id: {
           initialize: (config: any) => void;
-          renderButton: (element: HTMLElement, config: any) => void;
+          renderButton: (element: any, config: any) => void;
           prompt: () => void;
         };
       };
@@ -28,23 +28,7 @@ declare global {
 
 export default function AuthPlaceholder() {
   const router = useRouter();
-
-  useEffect(() => {
-    if (typeof window.google !== "undefined") {
-      window.google.accounts.id.initialize({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        callback: handleCredentialResponse,
-      });
-
-      window.google.accounts.id.renderButton(
-        document.getElementById("googleSignInButton")!,
-        {
-          theme: "outline",
-          size: "large",
-        }
-      );
-    }
-  }, []);
+  const buttonRef = useRef<HTMLDivElement>(null);
 
   const handleCredentialResponse = (response: any) => {
     // Send the response.credential to your server for verification
@@ -68,31 +52,48 @@ export default function AuthPlaceholder() {
       });
   };
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !buttonRef.current) return;
+
+    const initializeGoogle = () => {
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+          callback: handleCredentialResponse,
+        });
+
+        window.google.accounts.id.renderButton(buttonRef.current, {
+          theme: "outline",
+          size: "large",
+        });
+      }
+    };
+
+    // Initialize if Google API is already loaded
+    initializeGoogle();
+
+    // Or wait for it to load
+    const script = document.querySelector('script[src*="accounts.google.com"]');
+    if (script) {
+      script.addEventListener("load", initializeGoogle);
+    }
+
+    return () => {
+      if (script) {
+        script.removeEventListener("load", initializeGoogle);
+      }
+    };
+  }, []);
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-blue-100 to-white p-4 w-full">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">
-            Google Authentication
-          </CardTitle>
-          <CardDescription>
-            Connect your Google account to complete the setup.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="mb-4">
-            To securely store your RSS feed backups, we need to connect to your
-            Google account. This allows us to save your data in Google Drive.
-          </p>
-          <p className="mb-4">
-            Don't worry, we only request access to a specific folder for PESOS
-            and won't access any of your other data.
-          </p>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <div id="googleSignInButton"></div>
-        </CardFooter>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Sign In</CardTitle>
+        <CardDescription>Choose your sign in method</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div id="googleSignInButton" ref={buttonRef} />
+      </CardContent>
+    </Card>
   );
 }

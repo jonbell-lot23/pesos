@@ -40,6 +40,25 @@ interface FeedError {
   error: string;
 }
 
+// Client component to handle tab selection
+function TabsWithUrlSync({ children }: { children: React.ReactNode }) {
+  const [defaultTab, setDefaultTab] = useState("db-view");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const tab =
+        new URLSearchParams(window.location.search).get("tab") || "db-view";
+      setDefaultTab(tab);
+    }
+  }, []);
+
+  return (
+    <Tabs defaultValue={defaultTab} className="w-full">
+      {children}
+    </Tabs>
+  );
+}
+
 export default function FeedDisplay() {
   const [feedItems, setFeedItems] = useState<FeedItem[]>([]);
   const [filteredItems, setFilteredItems] = useState<FeedItem[]>([]);
@@ -198,15 +217,7 @@ export default function FeedDisplay() {
           </AlertDescription>
         </Alert>
       )}
-      <Tabs
-        defaultValue={
-          typeof window !== "undefined"
-            ? new URLSearchParams(window.location.search).get("tab") ||
-              "db-view"
-            : "db-view"
-        }
-        className="w-full"
-      >
+      <TabsWithUrlSync>
         <TabsList>
           <TabsTrigger value="db-view">DB View</TabsTrigger>
           <TabsTrigger value="stream-view">Stream View</TabsTrigger>
@@ -315,7 +326,7 @@ export default function FeedDisplay() {
             <Button>Export Data</Button>
           </div>
         </TabsContent>
-      </Tabs>
+      </TabsWithUrlSync>
       <p className="text-sm mt-8 text-center">
         *Publish Elsewhere, Syndicate (to your) Own Site
       </p>
