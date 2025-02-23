@@ -9,6 +9,7 @@ import ActivityChart from "@/components/ActivityChart";
 import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
 import { Button } from "@/components/ui/button";
 import UpdateFeedsButton from "@/components/UpdateFeedsButton";
+import { Settings, Download } from "lucide-react";
 
 interface Post {
   id: number;
@@ -234,8 +235,8 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
+    <div className="container mx-auto px-0 md:px-4 py-4 md:py-8">
+      <div className="flex justify-between items-center mb-4 md:mb-8 px-4 md:px-0">
         <h1 className="text-2xl font-bold">Backups</h1>
         <div className="flex gap-4">
           {showManualUpdate && <UpdateFeedsButton />}
@@ -246,15 +247,16 @@ export default function StatsPage() {
         <ActivityChart posts={allPosts} />
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border p-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white rounded-none md:rounded-lg shadow-sm border border-x-0 md:border-x p-3 md:p-6">
+        <div className="flex justify-between items-center mb-4 px-2 md:px-0">
           <h2 className="text-lg font-semibold">Recent Posts</h2>
-          <div className="flex gap-2">
+          <div className="flex gap-1 md:gap-2">
             <Button
               onClick={handleEditFeeds}
               className="bg-black text-white hover:bg-gray-800"
             >
-              Edit Feeds
+              <Settings className="w-4 h-4 md:hidden" />
+              <span className="hidden md:inline">Edit Feeds</span>
             </Button>
             <Button
               onClick={async () => {
@@ -285,7 +287,8 @@ export default function StatsPage() {
               }}
               className="bg-black text-white hover:bg-gray-800"
             >
-              Download as JSON
+              <Download className="w-4 h-4 md:hidden" />
+              <span className="hidden md:inline">Download as JSON</span>
             </Button>
           </div>
         </div>
