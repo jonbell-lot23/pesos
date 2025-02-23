@@ -211,7 +211,7 @@ export default function StatsPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAFA]">
         <Spinner />
       </div>
     );
@@ -219,7 +219,7 @@ export default function StatsPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-white">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#FAFAFA]">
         <div className="text-red-500 mb-4 max-w-lg text-center">
           <div className="font-bold mb-2">Error:</div>
           <div>{error}</div>

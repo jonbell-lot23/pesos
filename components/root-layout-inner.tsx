@@ -23,8 +23,13 @@ interface RootLayoutInnerProps {
 export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const { user } = useUser();
   const pathname = usePathname();
-  const hideHeader = pathname?.startsWith("/post/") ?? false;
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [isCheckingUser, setIsCheckingUser] = useState(true);
+  const [hideHeader, setHideHeader] = useState(false);
   const [dbError, setDbError] = useState(false);
+
+  // Determine if we're on the landing page
+  const isLandingPage = pathname === "/";
 
   let computedUsername = "";
   if (user) {
@@ -47,8 +52,6 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const username = computedUsername.toLowerCase();
 
   const [localUser, setLocalUser] = useState<any>(null);
-  const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const [isCheckingUser, setIsCheckingUser] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
@@ -130,7 +133,11 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     showUsernameModal && !isCheckingUser && user !== null;
 
   return (
-    <div className={`${inter.className} min-h-screen bg-white flex flex-col`}>
+    <div
+      className={`${inter.className} min-h-screen flex flex-col ${
+        isLandingPage ? "bg-white" : "bg-[#FAFAFA]"
+      }`}
+    >
       {!hideHeader && (
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
