@@ -191,7 +191,7 @@ export default function LandingPageWithUsername() {
                 href="https://indieweb.org/PESOS"
                 className="underline hover:text-blue-600"
               >
-                P.E.S.O.S.
+                PESOS
               </a>{" "}
               stands for Publish Elsewhere, Syndicate (on your) Own Site. It's a
               way to take all the stuff you're posting all over the internet and
