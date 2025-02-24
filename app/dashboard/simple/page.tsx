@@ -137,39 +137,43 @@ export default function SimpleDashboard() {
             </h1>
 
             {latestPost ? (
-              <div className="space-y-4 md:space-y-8">
-                <p className="text-xl md:text-2xl leading-snug text-white font-medium">
-                  You have{" "}
-                  <span className="font-extrabold">{stats?.totalPosts}</span>{" "}
-                  items stored, and your most recent item is{" "}
-                  <a
-                    href={latestPost.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
-                  >
-                    {latestPost.title}
-                  </a>{" "}
-                  which was backed up{" "}
-                  <span className="font-extrabold">
-                    {formatDate(latestPost.postdate)}
-                  </span>
-                  .
-                </p>
+              <>
+                <div className="space-y-4 md:space-y-8">
+                  <p className="text-xl md:text-2xl leading-snug text-white font-medium">
+                    You have{" "}
+                    <span className="font-extrabold">{stats?.totalPosts}</span>{" "}
+                    items stored, and your most recent item is{" "}
+                    <a
+                      href={latestPost.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
+                    >
+                      {latestPost.title}
+                    </a>{" "}
+                    which was backed up{" "}
+                    <span className="font-extrabold">
+                      {formatDate(latestPost.postdate)}
+                    </span>
+                    .
+                  </p>
 
-                <p className="text-xl md:text-2xl leading-snug text-white font-medium">
-                  Right now we're checking feeds once an hour.
-                </p>
+                  <p className="text-xl md:text-2xl leading-snug text-white font-medium">
+                    Right now we're checking feeds once an hour.
+                  </p>
+                </div>
 
-                <p className="text-xl md:text-2xl leading-snug text-white font-medium">
-                  <Link
-                    href="/dashboard/all_posts"
-                    className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
-                  >
-                    Switch to advanced mode
-                  </Link>
-                </p>
-              </div>
+                <div className="absolute bottom-8 left-0 right-0 md:relative md:bottom-auto md:mt-8 px-4 md:px-0">
+                  <p className="text-xl md:text-2xl leading-snug text-white font-medium">
+                    <Link
+                      href="/dashboard/all_posts"
+                      className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
+                    >
+                      Switch to advanced mode {">"}
+                    </Link>
+                  </p>
+                </div>
+              </>
             ) : (
               <p className="text-xl md:text-2xl leading-snug text-white font-medium">
                 To get started, let's add a project and see if it has an RSS
