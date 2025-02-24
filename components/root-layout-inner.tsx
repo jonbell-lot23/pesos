@@ -14,7 +14,7 @@ import { NextFont } from "next/dist/compiled/@next/font";
 import { usePathname } from "next/navigation";
 import UsernameModal from "./username-modal";
 import DBErrorScreen from "./db-error-screen";
-import { Settings, Download } from "lucide-react";
+import { Settings, Download, Loader2 } from "lucide-react";
 import FeedEditor from "@/components/FeedEditor";
 
 interface FeedEntry {
@@ -38,6 +38,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const [showFeedEditor, setShowFeedEditor] = useState(false);
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [feedEditorError, setFeedEditorError] = useState<string | null>(null);
+  const [isSavingFeeds, setIsSavingFeeds] = useState(false);
+  const [loadingDots, setLoadingDots] = useState("");
 
   // Determine if we're on the landing page
   const isLandingPage = pathname === "/";
@@ -86,9 +88,21 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
     setShowFeedEditor(true);
   };
 
+  useEffect(() => {
+    if (isSavingFeeds) {
+      const interval = setInterval(() => {
+        setLoadingDots((dots) => (dots.length >= 3 ? "" : dots + "."));
+      }, 500);
+      return () => clearInterval(interval);
+    }
+  }, [isSavingFeeds]);
+
   const handleFeedEditorContinue = async (newFeeds: FeedEntry[]) => {
     setFeedEditorError(null);
+    setIsSavingFeeds(true);
+
     try {
+      // First save all the feeds
       for (const feed of newFeeds) {
         const response = await fetch("/api/sources", {
           method: "POST",
@@ -104,13 +118,34 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         }
       }
 
-      setShowFeedEditor(false);
-      window.location.reload(); // Refresh to show the new feeds in the UI
+      // Now trigger immediate scraping and wait for completion
+      const scrapeResponse = await fetch("/api/scrape-all", {
+        method: "POST",
+      });
+
+      const scrapeData = await scrapeResponse.json();
+
+      if (!scrapeResponse.ok || !scrapeData.success) {
+        throw new Error(
+          scrapeData.error ||
+            scrapeData.errors?.join("\n") ||
+            "Failed to scrape feeds"
+        );
+      }
+
+      // If we have any errors but some successes, show a warning but continue
+      if (scrapeData.errors?.length) {
+        console.warn("Some feeds failed to scrape:", scrapeData.errors);
+      }
+
+      // Only redirect after scraping is complete
+      window.location.href = "/dashboard/simple";
     } catch (error) {
-      console.error("Error saving feeds:", error);
+      console.error("Error saving/scraping feeds:", error);
       setFeedEditorError(
         error instanceof Error ? error.message : "Failed to save feeds"
       );
+      setIsSavingFeeds(false);
     }
   };
 
@@ -296,26 +331,39 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
       {shouldShowUsernameModal && <UsernameModal />}
       {showFeedEditor && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Edit RSS Feeds</h2>
-              <Button
-                onClick={() => setShowFeedEditor(false)}
-                variant="ghost"
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ✕
-              </Button>
-            </div>
-            {feedEditorError && (
-              <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
-                {feedEditorError}
+          <div className="bg-white rounded-lg p-3 sm:p-4 max-w-xl w-full mx-2 sm:mx-4">
+            {isSavingFeeds ? (
+              <div className="py-8 text-center">
+                <Loader2 className="w-6 h-6 text-gray-400 animate-spin mx-auto mb-3" />
+                <p className="text-gray-600">
+                  Backing up, this might take a minute{loadingDots}
+                </p>
               </div>
+            ) : (
+              <>
+                <div className="flex justify-between items-center mb-2">
+                  <div>
+                    <h2 className="text-xl font-bold">Add your projects</h2>
+                  </div>
+                  <Button
+                    onClick={() => setShowFeedEditor(false)}
+                    variant="ghost"
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </Button>
+                </div>
+                {feedEditorError && (
+                  <div className="mb-3 p-2 bg-red-100 border border-red-300 text-red-700 rounded">
+                    {feedEditorError}
+                  </div>
+                )}
+                <FeedEditor
+                  initialFeeds={feeds}
+                  onContinue={handleFeedEditorContinue}
+                />
+              </>
             )}
-            <FeedEditor
-              initialFeeds={feeds}
-              onContinue={handleFeedEditorContinue}
-            />
           </div>
         </div>
       )}

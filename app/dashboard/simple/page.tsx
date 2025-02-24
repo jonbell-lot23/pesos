@@ -242,10 +242,6 @@ export default function SimpleDashboard() {
                   To get started, let's add a project and see if it has an RSS
                   feed we can reach.
                 </p>
-                <p className="text-xl md:text-2xl leading-snug text-white font-medium opacity-75">
-                  Note: New feeds will be checked within the next hour as part
-                  of our regular updates.
-                </p>
               </div>
             </div>
           </div>

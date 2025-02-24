@@ -137,17 +137,17 @@ export default function FeedEditor({
   };
 
   return (
-    <div className="space-y-4 p-4">
+    <div className="space-y-3">
       {feeds.map((feed, index) => (
-        <div key={feed.id} className="relative flex items-center gap-4">
+        <div key={feed.id} className="relative flex items-center">
           <div className="relative flex-grow">
             <Input
               type="url"
-              placeholder="Enter RSS feed URL"
+              placeholder="Add URL to discover RSS"
               value={feed.url}
               onChange={(e) => handleInputChange(feed.id, e.target.value)}
               className={cn(
-                "font-mono pr-24 bg-white",
+                "font-mono pr-24",
                 index !== 0 &&
                   !feeds[index - 1].url &&
                   "opacity-50 cursor-not-allowed",
@@ -160,52 +160,23 @@ export default function FeedEditor({
                 feed.status === "error" ? `error-${feed.id}` : undefined
               }
             />
-            {feed.status === "success" && feed.postCount !== undefined && (
-              <div className="absolute inset-y-0 right-3 flex items-center">
+            <div className="absolute inset-y-0 right-3 flex items-center">
+              {feed.status === "loading" ? (
+                <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />
+              ) : feed.status === "success" && feed.postCount !== undefined ? (
                 <div className="bg-gray-200/90 backdrop-blur-sm text-black dark:bg-gray-700/90 dark:text-white text-[11px] font-sans font-medium px-2 h-[20px] flex items-center rounded-[8px] whitespace-nowrap">
                   {feed.postCount}
                 </div>
-              </div>
-            )}
-            {feed.status === "error" && (
-              <div
-                id={`error-${feed.id}`}
-                className="absolute inset-y-0 right-3 flex items-center text-sm text-red-500"
-                role="alert"
-              >
-                {feed.errorMessage}
-              </div>
-            )}
-          </div>
-          {feed.url && (
-            <div
-              className={cn(
-                "w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-                feed.status === "error"
-                  ? "bg-red-500"
-                  : "bg-black dark:bg-white"
-              )}
-            >
-              {feed.status === "loading" ? (
-                <Loader2 className="w-4 h-4 text-white dark:text-black animate-spin" />
-              ) : feed.status === "success" ? (
-                <Check className="w-4 h-4 text-white dark:text-black" />
               ) : feed.status === "error" ? (
-                <X className="w-4 h-4 text-white" />
-              ) : (
-                <ArrowDown className="w-4 h-4 text-white dark:text-black" />
-              )}
+                <span className="text-sm text-red-500">
+                  {feed.errorMessage}
+                </span>
+              ) : null}
             </div>
-          )}
+          </div>
         </div>
       ))}
-      <div className="flex gap-2">
-        <Button
-          onClick={handleAddFeed}
-          className="w-full bg-blue-500 text-white hover:bg-blue-600"
-        >
-          Add RSS
-        </Button>
+      <div>
         <Button
           onClick={handleContinue}
           className="w-full bg-black text-white hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-gray-700"
