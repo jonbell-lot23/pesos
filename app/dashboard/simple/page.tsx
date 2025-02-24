@@ -164,7 +164,7 @@ export default function SimpleDashboard() {
                 <p className="text-xl md:text-2xl leading-snug text-white font-medium">
                   <Link
                     href="/dashboard/all_posts"
-                    className="font-extrabold text-white no-underline hover:underline visited:text-white active:text-white"
+                    className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
                   >
                     Switch to advanced mode
                   </Link>

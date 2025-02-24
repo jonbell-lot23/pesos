@@ -258,45 +258,49 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                   >
                     About
                   </Link>
-                  <button
-                    onClick={() => handleEditFeeds()}
-                    className="bg-black text-white p-2 rounded-full hover:opacity-80 transition-opacity"
-                  >
-                    <Settings className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch("/api/export");
-                        if (!response.ok) {
-                          const errorData = await response.json();
-                          throw new Error(
-                            errorData.error || "Failed to download backup"
-                          );
-                        }
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const a = document.createElement("a");
-                        a.href = url;
-                        a.download = "backup.json";
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        document.body.removeChild(a);
-                      } catch (error) {
-                        console.error("Download error:", error);
-                        alert(
-                          "Failed to download backup: " +
-                            (error instanceof Error
-                              ? error.message
-                              : "Unknown error")
-                        );
-                      }
-                    }}
-                    className="bg-black text-white p-2 rounded-full hover:opacity-80 transition-opacity"
-                  >
-                    <Download className="w-4 h-4" />
-                  </button>
+                  {pathname !== "/dashboard/all_posts" && (
+                    <>
+                      <button
+                        onClick={() => handleEditFeeds()}
+                        className="hidden md:block bg-black text-white p-2 rounded-full hover:opacity-80 transition-opacity"
+                      >
+                        <Settings className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch("/api/export");
+                            if (!response.ok) {
+                              const errorData = await response.json();
+                              throw new Error(
+                                errorData.error || "Failed to download backup"
+                              );
+                            }
+                            const blob = await response.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = "backup.json";
+                            document.body.appendChild(a);
+                            a.click();
+                            window.URL.revokeObjectURL(url);
+                            document.body.removeChild(a);
+                          } catch (error) {
+                            console.error("Download error:", error);
+                            alert(
+                              "Failed to download backup: " +
+                                (error instanceof Error
+                                  ? error.message
+                                  : "Unknown error")
+                            );
+                          }
+                        }}
+                        className="hidden md:block bg-black text-white p-2 rounded-full hover:opacity-80 transition-opacity"
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </>
+                  )}
                   <UserButton afterSignOutUrl="/" />
                 </SignedIn>
                 <SignedOut>
