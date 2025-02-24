@@ -120,7 +120,7 @@ export default function SimpleDashboard() {
           }
         }
       `}</style>
-      <div className="fixed left-0 right-0 bottom-0 top-[64px] bg-black">
+      <div className="fixed left-0 right-0 bottom-0 top-[64px] bg-black overflow-hidden">
         <div
           className="absolute inset-0 bg-image opacity-70"
           style={{
@@ -130,7 +130,7 @@ export default function SimpleDashboard() {
         />
 
         {/* Content Overlay */}
-        <div className="relative min-h-screen">
+        <div className="relative h-full overflow-hidden">
           <div className="w-full px-4 md:px-8 md:max-w-2xl md:mx-auto pt-6 md:pt-12">
             <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-12 text-white tracking-tight">
               {latestPost ? "All good!" : "Nice to meet you!"}
