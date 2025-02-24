@@ -106,6 +106,8 @@ export default function SimpleDashboard() {
         body {
           margin: 0;
           padding: 0;
+          overflow: hidden;
+          height: 100vh;
         }
       `}</style>
       <style jsx>{`
@@ -169,7 +171,7 @@ export default function SimpleDashboard() {
                       href="/dashboard/all_posts"
                       className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
                     >
-                      Switch to advanced mode {">"}
+                      Switch to advanced mode {"->"}
                     </Link>
                   </p>
                 </div>
