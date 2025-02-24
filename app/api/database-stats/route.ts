@@ -4,7 +4,8 @@ import prisma from "@/lib/prismadb";
 import { statsCache, STATS_CACHE_DURATION } from "@/lib/cache";
 import { withRetry } from "@/lib/dbPool";
 
-export const dynamic = "force-dynamic";
+// Remove force-dynamic and add proper caching
+export const revalidate = STATS_CACHE_DURATION;
 
 // Helper function to retry database operations
 async function retryOperation<T>(operation: () => Promise<T>): Promise<T> {
@@ -49,7 +50,12 @@ export async function GET() {
         "[database-stats/GET] Returning cached data for user:",
         userId
       );
-      return NextResponse.json(cached.data);
+      const response = NextResponse.json(cached.data);
+      response.headers.set(
+        "Cache-Control",
+        `s-maxage=${STATS_CACHE_DURATION}, stale-while-revalidate`
+      );
+      return response;
     }
 
     // Get the local user with retry

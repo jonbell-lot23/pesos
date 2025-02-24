@@ -104,39 +104,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         }
       }
 
-      // After saving all feeds, trigger the backup process
-      const backupResponse = await fetch("/api/backup", { method: "POST" });
-      if (!backupResponse.ok) {
-        const errorData = await backupResponse.json();
-        throw new Error(errorData.error || "Failed to start backup process");
-      }
-
       setShowFeedEditor(false);
-
-      // Poll the backup status every 5 seconds
-      const pollBackup = async () => {
-        try {
-          const statusResponse = await fetch("/api/backup/status");
-          if (!statusResponse.ok) {
-            throw new Error("Failed to check backup status");
-          }
-
-          const statusData = await statusResponse.json();
-
-          if (statusData.status === "completed") {
-            window.location.reload();
-          } else if (statusData.status === "failed") {
-            setFeedEditorError("Backup failed");
-          } else if (statusData.status === "running") {
-            setTimeout(pollBackup, 5000);
-          }
-        } catch (error) {
-          console.error("Error checking backup status:", error);
-          setFeedEditorError("Failed to check backup status");
-        }
-      };
-
-      setTimeout(pollBackup, 5000);
+      window.location.reload(); // Refresh to show the new feeds in the UI
     } catch (error) {
       console.error("Error saving feeds:", error);
       setFeedEditorError(

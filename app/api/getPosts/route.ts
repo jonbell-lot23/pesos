@@ -7,7 +7,8 @@ import {
   getPostsCacheKey,
 } from "@/lib/cache";
 
-export const dynamic = "force-dynamic";
+// Remove force-dynamic and add proper caching
+export const revalidate = POSTS_CACHE_DURATION;
 
 export async function GET(request: Request) {
   try {
@@ -31,7 +32,12 @@ export async function GET(request: Request) {
     const now = Date.now();
     if (cached && now - cached.timestamp < POSTS_CACHE_DURATION * 1000) {
       console.log("[getPosts/GET] Returning cached data for key:", cacheKey);
-      return NextResponse.json(cached.data);
+      const response = NextResponse.json(cached.data);
+      response.headers.set(
+        "Cache-Control",
+        `s-maxage=${POSTS_CACHE_DURATION}, stale-while-revalidate`
+      );
+      return response;
     }
 
     // Get the local user

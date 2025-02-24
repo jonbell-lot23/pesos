@@ -1,8 +1,8 @@
 import { revalidatePath } from "next/cache";
 
 // Cache durations in seconds
-export const STATS_CACHE_DURATION = 60; // 1 minute
-export const POSTS_CACHE_DURATION = 30; // 30 seconds
+export const STATS_CACHE_DURATION = 300; // 5 minutes
+export const POSTS_CACHE_DURATION = 120; // 2 minutes
 
 // In-memory caches
 export const statsCache = new Map<string, { data: any; timestamp: number }>();
