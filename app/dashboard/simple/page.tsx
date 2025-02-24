@@ -153,7 +153,7 @@ export default function SimpleDashboard() {
                     >
                       {latestPost.title}
                     </a>{" "}
-                    which was backed up{" "}
+                    which was posted{" "}
                     <span className="font-extrabold">
                       {formatDate(latestPost.postdate)}
                     </span>
