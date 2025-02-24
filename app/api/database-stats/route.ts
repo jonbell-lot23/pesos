@@ -87,6 +87,18 @@ export async function GET() {
       });
     });
 
+    // Get the last backup time
+    const lastBackup = await retryOperation(async () => {
+      return await prisma.backup.findFirst({
+        orderBy: {
+          timestamp: "desc",
+        },
+        select: {
+          timestamp: true,
+        },
+      });
+    });
+
     if (!posts || posts.length === 0) {
       const emptyStats = {
         stats: {
@@ -96,6 +108,7 @@ export async function GET() {
           medianTimeBetweenPosts: 0,
           averagePostLength: 0,
         },
+        lastBackupTime: lastBackup?.timestamp || null,
       };
 
       statsCache.set(userId, {
@@ -109,35 +122,35 @@ export async function GET() {
     // Calculate statistics
     const totalPosts = posts.length;
     const lastPostDate = new Date(posts[0].postdate);
-    const nowDate = new Date();
     const daysSinceLastPost = Math.floor(
-      (nowDate.getTime() - lastPostDate.getTime()) / (1000 * 60 * 60 * 24)
+      (Date.now() - lastPostDate.getTime()) / (1000 * 60 * 60 * 24)
     );
 
-    let totalTimeBetween = 0;
-    let timeDiffs = [];
-    for (let i = 0; i < posts.length - 1; i++) {
-      const timeDiff =
-        new Date(posts[i].postdate).getTime() -
-        new Date(posts[i + 1].postdate).getTime();
-      totalTimeBetween += timeDiff;
-      timeDiffs.push(timeDiff);
-    }
+    // Calculate time between posts
+    const timeBetweenPosts = posts.slice(0, -1).map((post, i) => {
+      const currentDate = new Date(post.postdate);
+      const nextDate = new Date(posts[i + 1].postdate);
+      return Math.abs(currentDate.getTime() - nextDate.getTime());
+    });
 
-    const averageTimeBetweenPosts = Math.floor(
-      totalTimeBetween / (posts.length - 1) / (1000 * 60 * 60 * 24)
-    );
+    const averageTimeBetweenPosts =
+      timeBetweenPosts.length > 0
+        ? timeBetweenPosts.reduce((a, b) => a + b, 0) / timeBetweenPosts.length
+        : 0;
 
-    timeDiffs.sort((a, b) => a - b);
-    const medianTimeBetweenPosts = Math.floor(
-      timeDiffs[Math.floor(timeDiffs.length / 2)] / (1000 * 60 * 60)
-    );
+    // Calculate median time between posts
+    const sortedTimes = [...timeBetweenPosts].sort((a, b) => a - b);
+    const medianTimeBetweenPosts =
+      sortedTimes.length > 0
+        ? sortedTimes[Math.floor(sortedTimes.length / 2)]
+        : 0;
 
+    // Calculate average post length
     const totalLength = posts.reduce(
       (sum, post) => sum + (post.description?.length || 0),
       0
     );
-    const averagePostLength = totalLength / posts.length;
+    const averagePostLength = totalLength / totalPosts;
 
     const response = {
       stats: {
@@ -147,6 +160,7 @@ export async function GET() {
         medianTimeBetweenPosts,
         averagePostLength,
       },
+      lastBackupTime: lastBackup?.timestamp || null,
     };
 
     statsCache.set(userId, {

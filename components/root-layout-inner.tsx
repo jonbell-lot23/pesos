@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Button } from "./ui/button";
 import {
@@ -14,6 +14,14 @@ import { NextFont } from "next/dist/compiled/@next/font";
 import { usePathname } from "next/navigation";
 import UsernameModal from "./username-modal";
 import DBErrorScreen from "./db-error-screen";
+import { Settings, Download } from "lucide-react";
+import FeedEditor from "@/components/FeedEditor";
+
+interface FeedEntry {
+  id: string;
+  url: string;
+  status: "success" | "error" | "loading" | "idle";
+}
 
 interface RootLayoutInnerProps {
   children: React.ReactNode;
@@ -27,6 +35,9 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const [isCheckingUser, setIsCheckingUser] = useState(true);
   const [hideHeader, setHideHeader] = useState(false);
   const [dbError, setDbError] = useState(false);
+  const [showFeedEditor, setShowFeedEditor] = useState(false);
+  const [feeds, setFeeds] = useState<FeedEntry[]>([]);
+  const [feedEditorError, setFeedEditorError] = useState<string | null>(null);
 
   // Determine if we're on the landing page
   const isLandingPage = pathname === "/";
@@ -52,6 +63,87 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
   const username = computedUsername.toLowerCase();
 
   const [localUser, setLocalUser] = useState<any>(null);
+
+  // Load feeds function
+  const loadFeeds = useCallback(async () => {
+    try {
+      const response = await fetch("/api/sources");
+      if (!response.ok) throw new Error("Failed to load feeds");
+      const data = await response.json();
+      const existingFeeds: FeedEntry[] = data.sources.map((source: any) => ({
+        id: source.id.toString(),
+        url: source.url,
+        status: "success" as const,
+      }));
+      setFeeds(existingFeeds);
+    } catch (error) {
+      console.error("Error loading feeds:", error);
+    }
+  }, []);
+
+  const handleEditFeeds = async () => {
+    await loadFeeds();
+    setShowFeedEditor(true);
+  };
+
+  const handleFeedEditorContinue = async (newFeeds: FeedEntry[]) => {
+    setFeedEditorError(null);
+    try {
+      for (const feed of newFeeds) {
+        const response = await fetch("/api/sources", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: feed.url }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || `Failed to save feed: ${feed.url}`
+          );
+        }
+      }
+
+      // After saving all feeds, trigger the backup process
+      const backupResponse = await fetch("/api/backup", { method: "POST" });
+      if (!backupResponse.ok) {
+        const errorData = await backupResponse.json();
+        throw new Error(errorData.error || "Failed to start backup process");
+      }
+
+      setShowFeedEditor(false);
+
+      // Poll the backup status every 5 seconds
+      const pollBackup = async () => {
+        try {
+          const statusResponse = await fetch("/api/backup/status");
+          if (!statusResponse.ok) {
+            throw new Error("Failed to check backup status");
+          }
+
+          const statusData = await statusResponse.json();
+
+          if (statusData.status === "completed") {
+            window.location.reload();
+          } else if (statusData.status === "failed") {
+            setFeedEditorError("Backup failed");
+          } else if (statusData.status === "running") {
+            setTimeout(pollBackup, 5000);
+          }
+        } catch (error) {
+          console.error("Error checking backup status:", error);
+          setFeedEditorError("Failed to check backup status");
+        }
+      };
+
+      setTimeout(pollBackup, 5000);
+    } catch (error) {
+      console.error("Error saving feeds:", error);
+      setFeedEditorError(
+        error instanceof Error ? error.message : "Failed to save feeds"
+      );
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -162,10 +254,49 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                 <SignedIn>
                   <Link
                     href="/about"
-                    className="text-gray-600 hover:text-gray-900"
+                    className="text-gray-600 no-underline hover:underline"
                   >
                     About
                   </Link>
+                  <button
+                    onClick={() => handleEditFeeds()}
+                    className="bg-black text-white p-2 rounded-full hover:opacity-80 transition-opacity"
+                  >
+                    <Settings className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch("/api/export");
+                        if (!response.ok) {
+                          const errorData = await response.json();
+                          throw new Error(
+                            errorData.error || "Failed to download backup"
+                          );
+                        }
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = url;
+                        a.download = "backup.json";
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        document.body.removeChild(a);
+                      } catch (error) {
+                        console.error("Download error:", error);
+                        alert(
+                          "Failed to download backup: " +
+                            (error instanceof Error
+                              ? error.message
+                              : "Unknown error")
+                        );
+                      }
+                    }}
+                    className="bg-black text-white p-2 rounded-full hover:opacity-80 transition-opacity"
+                  >
+                    <Download className="w-4 h-4" />
+                  </button>
                   <UserButton afterSignOutUrl="/" />
                 </SignedIn>
                 <SignedOut>
@@ -190,6 +321,31 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         </div>
       </main>
       {shouldShowUsernameModal && <UsernameModal />}
+      {showFeedEditor && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Edit RSS Feeds</h2>
+              <Button
+                onClick={() => setShowFeedEditor(false)}
+                variant="ghost"
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+            {feedEditorError && (
+              <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded">
+                {feedEditorError}
+              </div>
+            )}
+            <FeedEditor
+              initialFeeds={feeds}
+              onContinue={handleFeedEditorContinue}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

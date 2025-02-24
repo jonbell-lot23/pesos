@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
 import Parser from "rss-parser";
+import { clearStatsCache } from "@/lib/cache";
 
 const parser = new Parser();
 
@@ -161,6 +162,9 @@ export async function POST(request: Request) {
           storyCount: totalNewItems,
         },
       });
+
+      // Clear stats cache to ensure fresh data
+      clearStatsCache(userId);
 
       if (global.backupStatus) {
         global.backupStatus.isRunning = false;
