@@ -173,20 +173,22 @@ export default function LandingPageWithUsername() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center p-8 relative">
+    <div className="flex min-h-screen flex-col">
       {/* Hero Section */}
-      <div className="w-full max-w-6xl mx-auto text-center mb-16">
-        {/* Illustration Space */}
+      <div className="w-full h-[50vh]">
         <div
-          className="w-full h-96 mb-16 rounded-xl flex items-center justify-center bg-cover bg-center"
+          className="w-full h-full bg-cover bg-center"
           style={{ backgroundImage: "url('/couch.jpg')" }}
         ></div>
+      </div>
 
+      {/* Content Section */}
+      <div className="px-0 md:max-w-7xl md:mx-auto md:px-4 md:sm:px-6 md:lg:px-8 md:py-4">
         {/* Description and Sign In Sections */}
-        <div className="grid md:grid-cols-2 gap-8 mb-16">
-          <div className="space-y-4 p-0 rounded-xl text-left">
-            <h2 className="text-2xl font-bold text-black">What is PESOS?</h2>
-            <p className="text-gray-700 leading-relaxed mr-12">
+        <div className="grid md:grid-cols-2 gap-8 bg-white md:p-8 md:shadow-lg">
+          <div className="pt-4 md:pt-0 text-left">
+            <h2 className="text-2xl font-normal text-black mb-2">About</h2>
+            <p className="text-gray-700 leading-relaxed md:mr-12">
               <a
                 href="https://indieweb.org/PESOS"
                 className="underline hover:text-blue-600"
@@ -201,8 +203,8 @@ export default function LandingPageWithUsername() {
           </div>
 
           {/* Username Section */}
-          <div className="space-y-4 bg-white rounded-lg">
-            <h2 className="text-2xl font-bold text-left mb-6">Get started</h2>
+          <div className="space-y-4 bg-white">
+            <h2 className="text-2xl font-normal text-left mb-2">Get started</h2>
             <div className="flex gap-2">
               <div className="relative flex-1">
                 <input
@@ -234,7 +236,7 @@ export default function LandingPageWithUsername() {
 
               {!isLoaded || !user ? (
                 <SignInButton mode="modal">
-                  <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                  <button className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
                     {"->"}
                   </button>
                 </SignInButton>
@@ -242,11 +244,15 @@ export default function LandingPageWithUsername() {
                 <button
                   onClick={() => handleSubmitUsername(username)}
                   disabled={loading}
-                  className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                  className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   {loading ? "Creating..." : "Get started"}
                 </button>
               )}
+            </div>
+
+            <div className="text-sm text-gray-500">
+              Bonus: I don't see your email, so I couldn't spam you if I tried!
             </div>
 
             {validationError && (
