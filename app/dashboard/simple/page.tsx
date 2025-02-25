@@ -112,6 +112,46 @@ export default function SimpleDashboard() {
 
   const formatDate = (date: Date) => {
     try {
+      // Check if the time is 00:00:00
+      if (
+        date.getHours() === 0 &&
+        date.getMinutes() === 0 &&
+        date.getSeconds() === 0
+      ) {
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        // Compare dates without time
+        const dateWithoutTime = new Date(
+          date.getFullYear(),
+          date.getMonth(),
+          date.getDate()
+        );
+        const todayWithoutTime = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate()
+        );
+        const yesterdayWithoutTime = new Date(
+          yesterday.getFullYear(),
+          yesterday.getMonth(),
+          yesterday.getDate()
+        );
+
+        if (dateWithoutTime.getTime() === todayWithoutTime.getTime()) {
+          return "today";
+        } else if (
+          dateWithoutTime.getTime() === yesterdayWithoutTime.getTime()
+        ) {
+          return "yesterday";
+        } else {
+          // For older dates, just show the date
+          return date.toLocaleDateString();
+        }
+      }
+
+      // For timestamps with actual times, use formatDistanceToNow
       return formatDistanceToNow(date, { addSuffix: true });
     } catch (error) {
       console.error("Error formatting date:", date, error);

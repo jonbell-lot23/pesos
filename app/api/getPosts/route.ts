@@ -72,9 +72,14 @@ export async function GET(request: Request) {
           },
         },
       },
-      orderBy: {
-        postdate: "desc",
-      },
+      orderBy: [
+        {
+          postdate: "desc",
+        },
+        {
+          id: "desc",
+        },
+      ],
       ...(getAll ? {} : { skip: offset, take: limit }),
     });
 
