@@ -66,6 +66,7 @@ model pesos_User {
 model pesos_Sources {
   id          Int                 @id @default(autoincrement())
   url         String              @unique
+  active      String              @default("Y")
   users       pesos_UserSources[]
   pesos_items pesos_items[]
 }
