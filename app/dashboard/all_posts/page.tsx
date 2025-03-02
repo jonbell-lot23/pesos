@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import UpdateFeedsButton from "@/components/UpdateFeedsButton";
 import { Settings, Download } from "lucide-react";
 import Link from "next/link";
+import DisabledFeedsBanner from "@/components/DisabledFeedsBanner";
 
 interface Post {
   id: number;
@@ -43,6 +44,8 @@ export default function StatsPage() {
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [feedEditorError, setFeedEditorError] = useState<string | null>(null);
   const showManualUpdate = searchParams?.get("manual") === "true";
+  const [hasDisabledSources, setHasDisabledSources] = useState(false);
+  const [disabledSources, setDisabledSources] = useState<string[]>([]);
 
   useEffect(() => {
     if (searchParams) {
@@ -111,6 +114,14 @@ export default function StatsPage() {
         status: "success" as const,
       }));
       setFeeds(existingFeeds);
+
+      // Check if any sources are disabled
+      if (data.hasDisabledSources) {
+        setHasDisabledSources(true);
+        if (data.disabledSources) {
+          setDisabledSources(data.disabledSources);
+        }
+      }
 
       // Auto-show feed editor if no feeds exist
       if (existingFeeds.length === 0) {
@@ -192,8 +203,13 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="container mx-auto px-0 md:px-4 py-4 md:py-8">
-      <div className="flex justify-between items-center mb-4 md:mb-8 px-4 md:px-0">
+    <div className="container mx-auto p-4 max-w-6xl">
+      <DisabledFeedsBanner
+        visible={hasDisabledSources}
+        disabledSources={disabledSources}
+      />
+
+      <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Backups</h1>
         <div className="flex gap-4 items-center">
           <Link

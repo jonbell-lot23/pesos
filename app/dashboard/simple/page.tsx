@@ -5,6 +5,7 @@ import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import useSWR from "swr";
+import DisabledFeedsBanner from "@/components/DisabledFeedsBanner";
 
 interface Post {
   title: string;
@@ -40,6 +41,8 @@ const fetcher = async (url: string) => {
 
 export default function SimpleDashboard() {
   const [showFeedEditor, setShowFeedEditor] = useState(false);
+  const [hasDisabledSources, setHasDisabledSources] = useState(false);
+  const [disabledSources, setDisabledSources] = useState<string[]>([]);
 
   const {
     data: postsData,
@@ -61,8 +64,26 @@ export default function SimpleDashboard() {
     refreshInterval: 300000, // Refresh every 5 minutes
   });
 
-  const isLoading = postsLoading || statsLoading;
-  const error = postsError || statsError;
+  const {
+    data: sourcesData,
+    error: sourcesError,
+    isLoading: sourcesLoading,
+  } = useSWR("/api/sources", fetcher, {
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
+
+  useEffect(() => {
+    if (sourcesData?.hasDisabledSources) {
+      setHasDisabledSources(true);
+      if (sourcesData.disabledSources) {
+        setDisabledSources(sourcesData.disabledSources);
+      }
+    }
+  }, [sourcesData]);
+
+  const isLoading = postsLoading || statsLoading || sourcesLoading;
+  const error = postsError || statsError || sourcesError;
 
   const latestPost = postsData?.posts?.[0]
     ? {
@@ -194,6 +215,11 @@ export default function SimpleDashboard() {
           {/* Content Overlay */}
           <div className="relative h-full overflow-hidden">
             <div className="w-full px-4 md:px-8 md:max-w-2xl md:mx-auto pt-6 md:pt-12">
+              <DisabledFeedsBanner
+                visible={hasDisabledSources}
+                disabledSources={disabledSources}
+              />
+
               <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-12 text-white tracking-tight">
                 {latestPost ? "All good!" : "Nice to meet you!"}
               </h1>
@@ -273,6 +299,11 @@ export default function SimpleDashboard() {
           {/* Content Overlay */}
           <div className="relative h-full overflow-hidden">
             <div className="w-full px-4 md:px-8 md:max-w-2xl md:mx-auto pt-6 md:pt-12">
+              <DisabledFeedsBanner
+                visible={hasDisabledSources}
+                disabledSources={disabledSources}
+              />
+
               <h1 className="text-3xl md:text-4xl font-extrabold mb-6 md:mb-12 text-white tracking-tight">
                 Nice to meet you!
               </h1>

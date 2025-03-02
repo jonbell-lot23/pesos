@@ -53,10 +53,11 @@ async function updateFeeds() {
       SELECT s.*, array_agg(us."userId") as user_ids 
       FROM "pesos_Sources" s 
       LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" 
+      WHERE s.active = 'Y'
       GROUP BY s.id
     `);
     const sources = sourcesResult.rows;
-    console.log(`[Feed Update] Found ${sources.length} sources`);
+    console.log(`[Feed Update] Found ${sources.length} active sources`);
 
     // Process sources in batches
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {

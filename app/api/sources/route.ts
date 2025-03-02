@@ -21,8 +21,20 @@ export async function GET(request: Request) {
       },
     });
 
+    // Check if any sources are disabled (active="N")
+    const hasDisabledSources = userSources.some(
+      (us) => us.source.active === "N"
+    );
+
+    // Get the URLs of disabled sources
+    const disabledSources = userSources
+      .filter((us) => us.source.active === "N")
+      .map((us) => us.source.url);
+
     return NextResponse.json({
       sources: userSources.map((us) => us.source),
+      hasDisabledSources,
+      disabledSources,
     });
   } catch (error) {
     console.error("[sources/GET] Error details:", {
