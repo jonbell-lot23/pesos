@@ -47,8 +47,8 @@ export async function GET(request: Request) {
   }
 
   try {
-    const user = await prisma.user.findUnique({
-      where: { name: trimmed },
+    const user = await prisma.pesos_User.findUnique({
+      where: { username: trimmed },
     });
     if (user) {
       return NextResponse.json({ available: false });
