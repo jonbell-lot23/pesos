@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     });
     if (!localUser && chosenUsername) {
       localUser = await prisma.pesos_User.findUnique({
-        where: { username: chosenUsername },
+        where: { username: chosenUsername.toLowerCase() },
       });
     }
     return NextResponse.json({ localUser });

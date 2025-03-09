@@ -42,7 +42,9 @@ export async function POST(req: Request) {
     );
 
     // Use the chosen username from publicMetadata if available, otherwise the provided username
-    const finalUsername = clerkUser.publicMetadata?.chosenUsername || username;
+    const finalUsername = (
+      clerkUser.publicMetadata?.chosenUsername || username
+    ).toLowerCase();
     console.log("[createUser] Final username chosen:", finalUsername, {
       clerkUserPublicMetadata: clerkUser.publicMetadata,
     });
