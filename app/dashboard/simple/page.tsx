@@ -245,7 +245,7 @@ export default function SimpleDashboard() {
                 </p>
 
                 <p className="text-xl md:text-2xl leading-snug text-white font-medium">
-                  Right now we're checking feeds once an hour.
+                  Right now we're checking feeds every three hours.
                 </p>
               </div>
 
