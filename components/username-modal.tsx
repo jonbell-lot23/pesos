@@ -89,7 +89,7 @@ export default function UsernameModal() {
   if (!isSignedIn) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-        <div className="bg-white p-6 rounded-lg">
+        <div className="bg-white p-6 rounded-lg modal-content">
           <h2 className="text-xl font-semibold mb-4">Please Sign In</h2>
           <p className="mb-4">You need to sign in to continue.</p>
           <SignInButton mode="modal">
@@ -214,7 +214,7 @@ export default function UsernameModal() {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-md">
+      <div className="bg-white p-6 rounded-lg w-full max-w-md modal-content">
         <h2 className="text-xl font-semibold mb-4">Choose your username</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex flex-col space-y-2">

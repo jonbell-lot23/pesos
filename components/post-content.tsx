@@ -24,7 +24,7 @@ export function PostContent({ post }: PostContentProps) {
 
         {/* About Screen */}
         {showAbout && (
-          <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 animate-slide-down">
+          <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 animate-slide-down modal-content">
             <p className="text-gray-800 text-center max-w-md">
               PESOS (Publish Elsewhere, Syndicate on Own Site) is a way to own
               your content while still participating in other platforms.
