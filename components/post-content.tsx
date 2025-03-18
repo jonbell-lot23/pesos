@@ -30,6 +30,7 @@ export function PostContent({ post }: PostContentProps) {
               your content while still participating in other platforms. Learn
               more{" "}
               <a
+                className="underline"
                 href="https://pesos.site/"
                 target="_blank"
                 rel="noopener noreferrer"
