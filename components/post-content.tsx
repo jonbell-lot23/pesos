@@ -27,7 +27,16 @@ export function PostContent({ post }: PostContentProps) {
           <div className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center p-6 animate-slide-down modal-content">
             <p className="text-gray-800 text-center max-w-md">
               PESOS (Publish Elsewhere, Syndicate on Own Site) is a way to own
-              your content while still participating in other platforms.
+              your content while still participating in other platforms. Learn
+              more{" "}
+              <a
+                href="https://pesos.site/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                here
+              </a>
+              .
             </p>
             <button
               onClick={() => setShowAbout(false)}
@@ -52,13 +61,13 @@ export function PostContent({ post }: PostContentProps) {
                       "MMMM d, yyyy 'at' h:mm a"
                     )}
                   </time>
-                  <h1 className="mt-2 text-5xl font-black tracking-tight text-gray-900">
+                  <h1 className="mt-2 text-3xl font-black tracking-tight text-gray-900">
                     {post.title}
                   </h1>
                 </header>
                 <div className="mt-8">
                   <div
-                    className="prose prose-slate prose-lg lg:prose-xl max-w-none !space-y-6 [&>p+p]:mt-10 [&>h2]:mt-16 [&>h3]:mt-16 [&>h4]:mt-16 [&>h2+p]:mt-6 [&>h3+p]:mt-6 [&>h4+p]:mt-6 [&>ul]:mt-8 [&>ol]:mt-8 [&>blockquote]:mt-10 [&>pre]:mt-10 [&>*]:bg-white"
+                    className="prose prose-slate max-w-none !space-y-6 [&>p+p]:mt-10 [&>h2]:mt-16 [&>h3]:mt-16 [&>h4]:mt-16 [&>h2+p]:mt-6 [&>h3+p]:mt-6 [&>h4+p]:mt-6 [&>ul]:mt-8 [&>ol]:mt-8 [&>blockquote]:mt-10 [&>pre]:mt-10 [&>*]:bg-white"
                     dangerouslySetInnerHTML={{ __html: post.description || "" }}
                   />
                 </div>

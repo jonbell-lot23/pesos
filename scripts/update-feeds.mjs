@@ -33,9 +33,10 @@ const BATCH_SIZE = 5;
 // Create a new client
 const client = new Client({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl:
+    process.env.NODE_ENV === "production"
+      ? { rejectUnauthorized: false }
+      : false,
 });
 
 async function updateFeeds() {
