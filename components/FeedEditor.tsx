@@ -33,7 +33,10 @@ export default function FeedEditor({
 }: FeedEditorProps) {
   const [feeds, setFeeds] = useState<FeedEntry[]>(
     initialFeeds && initialFeeds.length > 0
-      ? initialFeeds
+      ? [
+          ...initialFeeds,
+          { id: String(initialFeeds.length + 1), url: "", status: "idle" },
+        ]
       : [{ id: "1", url: "", status: "idle" }]
   );
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -75,7 +78,6 @@ export default function FeedEditor({
       const result = await validateRSSFeed(value);
       if (result.success) {
         setFeeds((current) => {
-          const isLast = current[current.length - 1].id === id;
           const updatedFeed: FeedEntry = {
             ...current.find((f) => f.id === id)!,
             status: "success",
@@ -83,17 +85,20 @@ export default function FeedEditor({
             postCount: result.postCount,
           };
 
-          // If this is the last feed, add a new blank feed entry
+          // Check if we need to add a new empty field
+          const needsNewField = current[current.length - 1].id === id;
+
           let newFeeds = current.map((feed) =>
             feed.id === id ? updatedFeed : feed
           );
-          if (isLast) {
-            newFeeds.push({
-              id: String(current.length + 1),
-              url: "",
-              status: "idle",
-            });
+
+          if (needsNewField) {
+            newFeeds = [
+              ...newFeeds,
+              { id: String(current.length + 1), url: "", status: "idle" },
+            ];
           }
+
           return newFeeds;
         });
       } else {
@@ -128,14 +133,6 @@ export default function FeedEditor({
     onContinue(validFeeds);
   };
 
-  // New handler to add a blank feed entry
-  const handleAddFeed = () => {
-    setFeeds((current) => [
-      ...current,
-      { id: String(current.length + 1), url: "", status: "idle" },
-    ]);
-  };
-
   return (
     <div className="space-y-3">
       {feeds.map((feed, index) => (
@@ -143,18 +140,14 @@ export default function FeedEditor({
           <div className="relative flex-grow">
             <Input
               type="url"
-              placeholder="Add URL to discover RSS"
+              placeholder="Add a project"
               value={feed.url}
               onChange={(e) => handleInputChange(feed.id, e.target.value)}
               className={cn(
                 "font-mono pr-24",
-                index !== 0 &&
-                  !feeds[index - 1].url &&
-                  "opacity-50 cursor-not-allowed",
                 feed.status === "error" &&
                   "border-red-500 focus-visible:ring-red-500 text-red-500"
               )}
-              disabled={index !== 0 && !feeds[index - 1].url}
               aria-invalid={feed.status === "error"}
               aria-errormessage={
                 feed.status === "error" ? `error-${feed.id}` : undefined
