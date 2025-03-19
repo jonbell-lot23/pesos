@@ -1,3 +1,4 @@
+import "dotenv/config";
 import RssParser from "rss-parser";
 import pg from "pg";
 const { Client } = pg;
@@ -223,18 +224,125 @@ async function updateFeeds() {
   }
 }
 
+// Insert forcedUpdate function before running the update
+async function forcedUpdate(forceSlug) {
+  console.log(`[Feed Update] Forcing update for post with slug ${forceSlug}`);
+
+  // Fetch the post by slug
+  const itemResult = await client.query(
+    `SELECT * FROM "pesos_items" WHERE slug = $1`,
+    [forceSlug]
+  );
+  if (itemResult.rows.length === 0) {
+    console.error(`[Feed Update] No item found with slug ${forceSlug}.`);
+    return;
+  }
+  const item = itemResult.rows[0];
+  console.log(
+    `[Feed Update] Found post. URL: ${item.url}, sourceId: ${item.sourceId}`
+  );
+
+  // Fetch source info
+  const sourceResult = await client.query(
+    `SELECT * FROM "pesos_Sources" WHERE id = $1 AND active = 'Y'`,
+    [item.sourceId]
+  );
+  if (sourceResult.rows.length === 0) {
+    console.error(
+      `[Feed Update] Active source not found for id ${item.sourceId}.`
+    );
+    return;
+  }
+  const source = sourceResult.rows[0];
+  console.log(`[Feed Update] Fetching feed from source: ${source.url}`);
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  const response = await fetch(source.url, {
+    signal: controller.signal,
+    headers: { "User-Agent": "PESOS RSS Aggregator/1.0" },
+  });
+  clearTimeout(timeout);
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  const rssString = await response.text();
+  const parsedFeed = await parser.parseString(rssString);
+  console.log(
+    `[Feed Update] Feed fetched. ${parsedFeed.items.length} items found.`
+  );
+
+  // Find the matching feed item based on the original post's URL
+  const matchingItem = parsedFeed.items.find(
+    (feedItem) => feedItem.link === item.url
+  );
+  if (!matchingItem) {
+    console.error(
+      `[Feed Update] Could not find matching feed item for URL ${item.url}. Unable to force update.`
+    );
+    return;
+  }
+
+  const updatedTitle = matchingItem.title || "•";
+  const updatedUrl = matchingItem.link;
+  const updatedDescription =
+    matchingItem["content:encoded"] || matchingItem.content || "";
+  const updatedPostdate = new Date(matchingItem.pubDate || matchingItem.date);
+
+  console.log(`[Feed Update] Updating the post with new values.`);
+  await client.query(
+    `
+    UPDATE "pesos_items"
+    SET "title" = $1,
+        "url" = $2,
+        "description" = $3,
+        "postdate" = $4
+    WHERE slug = $5
+  `,
+    [
+      updatedTitle,
+      updatedUrl,
+      updatedDescription,
+      updatedPostdate.toISOString(),
+      forceSlug,
+    ]
+  );
+
+  console.log(`[Feed Update] Successfully forced update for slug ${forceSlug}`);
+}
+
 // Run the update
 console.log("[Feed Update] Script started");
 
-// Make sure we properly handle the promise and keep the process alive
+// Updated run function to support forced updates
 const run = async () => {
-  try {
-    await updateFeeds();
-    console.log("[Feed Update] Script finished successfully");
-    process.exit(0);
-  } catch (error) {
-    console.error("[Feed Update] Script failed:", error);
-    process.exit(1);
+  const forceSlugArg = process.argv.find((arg) => arg.startsWith("--force="));
+  if (forceSlugArg) {
+    const forceSlug = forceSlugArg.split("=")[1];
+    console.log("[Feed Update] Running forced update for slug:", forceSlug);
+    try {
+      console.log("[Feed Update] Connecting to database...");
+      await client.connect();
+      await forcedUpdate(forceSlug);
+      console.log("[Feed Update] Forced update complete");
+      process.exit(0);
+    } catch (error) {
+      console.error("[Feed Update] Forced update failed:", error);
+      process.exit(1);
+    } finally {
+      console.log("[Feed Update] Disconnecting from database...");
+      await client.end();
+      console.log("[Feed Update] Successfully disconnected from database");
+    }
+  } else {
+    try {
+      await updateFeeds();
+    } catch (error) {
+      console.error("[Feed Update] Script failed:", error);
+      process.exit(1);
+    }
   }
 };
 
