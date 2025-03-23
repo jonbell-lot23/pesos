@@ -166,17 +166,37 @@ async function updateFeeds() {
 
                 // Insert new items
                 const values = newItems
-                  .map(
-                    (item) => `(
+                  .map((item) => {
+                    // Validate the date before using toISOString to prevent RangeError
+                    let dateString = "";
+                    try {
+                      // Check if date is valid
+                      if (!isNaN(item.postdate.getTime())) {
+                        dateString = item.postdate.toISOString();
+                      } else {
+                        // Use current date as fallback
+                        console.log(
+                          `[Feed Update] Invalid date detected, using current date as fallback`
+                        );
+                        dateString = new Date().toISOString();
+                      }
+                    } catch (e) {
+                      console.log(
+                        `[Feed Update] Error processing date: ${e.message}, using current date`
+                      );
+                      dateString = new Date().toISOString();
+                    }
+
+                    return `(
                     '${item.title.replace(/'/g, "''")}',
                     '${item.url.replace(/'/g, "''")}',
                     '${item.description.replace(/'/g, "''")}',
-                    '${item.postdate.toISOString()}',
+                    '${dateString}',
                     '${item.slug}',
                     '${item.userId}',
                     '${item.sourceId}'
-                  )`
-                  )
+                  )`;
+                  })
                   .join(",");
 
                 await client.query(`
@@ -291,6 +311,23 @@ async function forcedUpdate(forceSlug) {
     matchingItem["content:encoded"] || matchingItem.content || "";
   const updatedPostdate = new Date(matchingItem.pubDate || matchingItem.date);
 
+  let dateString;
+  try {
+    if (!isNaN(updatedPostdate.getTime())) {
+      dateString = updatedPostdate.toISOString();
+    } else {
+      console.log(
+        `[Feed Update] Invalid date in forced update, using current date`
+      );
+      dateString = new Date().toISOString();
+    }
+  } catch (e) {
+    console.log(
+      `[Feed Update] Error processing date in forced update: ${e.message}`
+    );
+    dateString = new Date().toISOString();
+  }
+
   console.log(`[Feed Update] Updating the post with new values.`);
   await client.query(
     `
@@ -301,13 +338,7 @@ async function forcedUpdate(forceSlug) {
         "postdate" = $4
     WHERE slug = $5
   `,
-    [
-      updatedTitle,
-      updatedUrl,
-      updatedDescription,
-      updatedPostdate.toISOString(),
-      forceSlug,
-    ]
+    [updatedTitle, updatedUrl, updatedDescription, dateString, forceSlug]
   );
 
   console.log(`[Feed Update] Successfully forced update for slug ${forceSlug}`);
