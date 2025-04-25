@@ -75,7 +75,7 @@ export async function GET(request: Request) {
     `;
 
     // Format the data for easier consumption
-    const formattedSources = prolificSources.map((source: any) => ({
+    const formattedSources = (prolificSources as any[]).map((source) => ({
       id: source.id,
       url: source.url,
       active: source.active,

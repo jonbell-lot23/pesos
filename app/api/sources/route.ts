@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "../../../lib/prismadb";
 
+// Admin user ID for special permissions
+const ADMIN_ID = "user_2XCDGHKZPXhqtZxAYXI5YMnEF1H";
+
 export async function GET(request: Request) {
   try {
     const { userId } = auth();

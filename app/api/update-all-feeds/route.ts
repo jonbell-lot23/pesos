@@ -10,6 +10,7 @@ type UpdateStatus = {
   lastError: string | null;
   lastRun: Date | null;
   logs: string[];
+  failedFeeds: Record<string, { url: string, failedAt: Date, error: string }>;
 };
 
 declare global {
@@ -24,6 +25,7 @@ if (!global.updateStatus) {
     lastError: null,
     lastRun: null,
     logs: [],
+    failedFeeds: {},
   };
 }
 
@@ -57,7 +59,17 @@ function addLog(message: string) {
   console.log(message);
 }
 
-export async function GET() {
+export async function GET(request: Request) {
+  // Get the clearFailedFeeds parameter if present
+  const { searchParams } = new URL(request.url);
+  const shouldClearFailedFeeds = searchParams.get("clearFailedFeeds") === "true";
+  
+  // Clear failed feeds if requested
+  if (shouldClearFailedFeeds && global.updateStatus) {
+    addLog("Clearing all failed feeds");
+    global.updateStatus.failedFeeds = {};
+  }
+  
   // Check if another update is already running
   if (global.updateStatus?.isRunning) {
     return NextResponse.json(
@@ -103,16 +115,20 @@ export async function GET() {
     addLog("Connected successfully!");
 
     // Get all sources with their users
-    addLog("Fetching sources from database...");
+    addLog("Fetching active sources from database...");
     const sourcesResult = await client.query(`
       SELECT s.*, array_agg(us."userId") as user_ids 
       FROM "pesos_Sources" s 
       LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" 
+      WHERE s.active = 'Y'
       GROUP BY s.id
     `);
     const sources = sourcesResult.rows;
     addLog(`Found ${sources.length} sources to process`);
 
+    // Track which failed feeds we're skipping in this run
+    const skippedFailedFeeds: string[] = [];
+    
     // Process sources in batches
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {
       const batch = sources.slice(i, i + BATCH_SIZE);
@@ -130,6 +146,24 @@ export async function GET() {
             addLog(`Skipping ${source.url} - no users associated`);
             stats.skippedFeeds.push(source.url);
             return;
+          }
+          
+          // Skip sources that failed in the last 24 hours
+          if (global.updateStatus?.failedFeeds[source.url]) {
+            const failedInfo = global.updateStatus.failedFeeds[source.url];
+            const failedAt = new Date(failedInfo.failedAt);
+            const hoursSinceFail = (new Date().getTime() - failedAt.getTime()) / (1000 * 60 * 60);
+            
+            if (hoursSinceFail < 24) {
+              addLog(`Skipping ${source.url} - failed ${Math.floor(hoursSinceFail)} hour(s) ago with error: ${failedInfo.error}`);
+              stats.skippedFeeds.push(source.url);
+              skippedFailedFeeds.push(source.url);
+              return;
+            } else {
+              // Failed more than 24 hours ago, let's try again and remove from failed feeds
+              delete global.updateStatus.failedFeeds[source.url];
+              addLog(`Retrying ${source.url} after previous failure (>24h ago)`);
+            }
           }
 
           addLog(`Processing ${source.url} (${userIds.length} users)`);
@@ -246,8 +280,14 @@ export async function GET() {
             });
             stats.totalErrors++;
 
+            // Record this feed as failed so we can skip it next time
             if (global.updateStatus) {
               global.updateStatus.lastError = errorMessage;
+              global.updateStatus.failedFeeds[source.url] = {
+                url: source.url,
+                failedAt: new Date(),
+                error: errorMessage
+              };
             }
           }
         })
@@ -296,12 +336,34 @@ export async function GET() {
     if (successfulWithoutNewItems > 0) {
       message += `${successfulWithoutNewItems} other feeds checked (no new items or problems)\n\n`;
     }
+    
+    // Check how many feeds are inactive
+    let inactiveCount = 0;
+    try {
+      const inactiveResult = await client.query(`
+        SELECT COUNT(*) as count FROM "pesos_Sources" WHERE active = 'N'
+      `);
+      inactiveCount = parseInt(inactiveResult.rows[0].count, 10) || 0;
+      addLog(`Found ${inactiveCount} inactive sources that were skipped`);
+    } catch (error) {
+      addLog(`Error checking inactive feeds: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    // Count feeds skipped due to previous failures
+    const skippedDueToFailures = skippedFailedFeeds ? skippedFailedFeeds.length : 0;
+    const skippedNoUsers = stats.skippedFeeds.length - skippedDueToFailures;
 
     message += `Summary:\n`;
     message += `• Total new items: ${stats.totalNewItems}\n`;
     message += `• Total feeds processed: ${stats.totalFeedsProcessed}\n`;
     message += `• Failed feeds: ${stats.totalErrors}\n`;
-    message += `• Skipped feeds: ${stats.skippedFeeds.length}\n`;
+    message += `• Skipped feeds (no users): ${skippedNoUsers}\n`;
+    if (skippedDueToFailures > 0) {
+      message += `• Skipped feeds (previous failures): ${skippedDueToFailures}\n`;
+    }
+    if (inactiveCount > 0) {
+      message += `• Skipped feeds (inactive): ${inactiveCount}\n`;
+    }
     message += `• Execution time: ${(stats.executionTimeMs / 1000).toFixed(
       2
     )}s\n`;

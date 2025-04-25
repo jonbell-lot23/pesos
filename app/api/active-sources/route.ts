@@ -1,0 +1,47 @@
+import { NextResponse } from "next/server";
+import prisma from "@/lib/prismadb";
+import { auth } from "@clerk/nextjs";
+
+export async function GET() {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
+    }
+
+    // Get all active sources with their latest post date
+    const sources = await prisma.$queryRaw`
+      WITH latest_posts AS (
+        SELECT 
+          "sourceId",
+          MAX("postdate") as latest_post_date
+        FROM "pesos_items"
+        GROUP BY "sourceId"
+      )
+      SELECT 
+        s.id,
+        s.url,
+        lp.latest_post_date as "lastPost",
+        CASE 
+          WHEN us."userId" IS NOT NULL THEN true
+          ELSE false
+        END as "isUserSource"
+      FROM "pesos_Sources" s
+      LEFT JOIN latest_posts lp ON s.id = lp."sourceId"
+      LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" AND us."userId" = ${userId}
+      WHERE s.active = 'Y'
+      ORDER BY lp.latest_post_date DESC NULLS LAST
+    `;
+
+    return NextResponse.json({ sources });
+  } catch (error) {
+    console.error("Error fetching active sources:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch active sources" },
+      { status: 500 }
+    );
+  }
+}

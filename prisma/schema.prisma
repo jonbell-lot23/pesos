@@ -86,3 +86,14 @@ model Backup {
   timestamp  DateTime @default(now())
   storyCount Int      @default(0)
 }
+
+model SystemStatus {
+  id              Int       @id @default(autoincrement())
+  key             String    @unique
+  lastRun         DateTime?
+  status          String    @default("idle")
+  lastError       String?
+  newItemsCount   Int       @default(0)
+  processedFeeds  Int       @default(0)
+  executionTimeMs Int       @default(0)
+}
