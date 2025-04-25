@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, MouseEvent } from "react";
 import Link from "next/link";
 
 interface FailedFeed {
@@ -136,7 +136,7 @@ export default function ServerStatsPage() {
   };
 
   // Format the last sync time
-  const formatLastSync = (timestamp: string | null) => {
+  const formatLastSync = (timestamp: string | null | undefined) => {
     // Try to get last sync time from localStorage if server doesn't have it
     let timeToUse = timestamp;
     if (!timeToUse) {
@@ -169,7 +169,7 @@ export default function ServerStatsPage() {
   };
 
   // Start a manual update
-  const startUpdate = async (clearFailedFeeds = false) => {
+  const startUpdate = async (clearFailedFeeds: boolean | MouseEvent<HTMLButtonElement> = false) => {
     try {
       setIsUpdating(true);
       setLogs(['Starting feed sync...']);
@@ -181,7 +181,8 @@ export default function ServerStatsPage() {
       const timeoutId = setTimeout(() => controller.abort(), 60000);
       
       // Add the clearFailedFeeds parameter if requested
-      const url = clearFailedFeeds 
+      const shouldClearFailedFeeds = typeof clearFailedFeeds === 'boolean' ? clearFailedFeeds : false;
+      const url = shouldClearFailedFeeds 
         ? "/api/update-all-feeds?clearFailedFeeds=true" 
         : "/api/update-all-feeds";
         
@@ -464,7 +465,7 @@ export default function ServerStatsPage() {
             {/* Feed Status Section */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               {/* Inactive Feeds Count */}
-              {stats?.inactiveSourcesCount > 0 && (
+              {stats?.inactiveSourcesCount && stats.inactiveSourcesCount > 0 && (
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                   <h3 className="font-semibold text-gray-800 mb-4">Blocked Feeds</h3>
                   <div className="flex items-center">
@@ -487,7 +488,7 @@ export default function ServerStatsPage() {
               )}
 
               {/* Failed Feeds Count */}
-              {stats?.failedFeedsCount > 0 && (
+              {stats?.failedFeedsCount && stats.failedFeedsCount > 0 && (
                 <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                   <h3 className="font-semibold text-gray-800 mb-4">Temporarily Failing Feeds</h3>
                   <div className="flex items-center">

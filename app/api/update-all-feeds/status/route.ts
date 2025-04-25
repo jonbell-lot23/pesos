@@ -8,6 +8,7 @@ type UpdateStatus = {
   lastError: string | null;
   lastRun: Date | null;
   logs: string[];
+  failedFeeds: Record<string, { url: string, failedAt: Date, error: string }>;
 };
 
 // This will be updated by the main update endpoint
@@ -23,6 +24,7 @@ if (!global.updateStatus) {
     lastError: null,
     lastRun: null,
     logs: [],
+    failedFeeds: {},
   };
 }
 
@@ -51,6 +53,7 @@ export async function GET(request: Request) {
       lastError: null,
       lastRun: null,
       logs: [],
+      failedFeeds: {},
     }
   );
 }
