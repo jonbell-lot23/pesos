@@ -14,6 +14,7 @@ type UpdateStatus = {
   lastError: string | null;
   lastRun: Date | null;
   logs: string[];
+  failedFeeds: Record<string, { url: string, failedAt: Date, error: string }>;
 };
 
 // This will be updated by the update endpoint
