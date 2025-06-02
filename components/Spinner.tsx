@@ -2,7 +2,11 @@
 
 import React, { useEffect, useRef } from "react";
 
-export default function Spinner() {
+interface SpinnerProps {
+  size?: "small" | "large";
+}
+
+export default function Spinner({ size = "large" }: SpinnerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<any>(null);
 
@@ -39,9 +43,11 @@ export default function Spinner() {
     };
   }, []);
 
+  const sizeClass = size === "small" ? "w-8 h-8" : "w-32 h-32";
+
   return (
     <div className="flex justify-center items-center py-4">
-      <div ref={containerRef} className="w-32 h-32"></div>
+      <div ref={containerRef} className={sizeClass}></div>
     </div>
   );
 }
