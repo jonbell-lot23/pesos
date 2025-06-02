@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import prisma from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 
 // Define the type to match the one in the main backup endpoint

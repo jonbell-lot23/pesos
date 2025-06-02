@@ -27,6 +27,8 @@ if (!global.backupStatus) {
 
 const BATCH_SIZE = 5; // Process sources in batches of 5
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const { userId } = auth();
