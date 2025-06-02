@@ -6,12 +6,19 @@ interface Feed {
   url: string;
 }
 
+interface RequestData {
+  feeds: Feed[];
+  userId: string;
+}
+
 export async function POST(request: Request) {
   try {
-    const { feeds, userId } = await request.json();
-    if (!userId || !feeds) {
+    const body = await request.json();
+    const { feeds, userId } = body as RequestData;
+
+    if (!userId || !feeds || !Array.isArray(feeds)) {
       return NextResponse.json(
-        { success: false, error: "Missing parameters" },
+        { success: false, error: "Missing or invalid parameters" },
         { status: 400 }
       );
     }
@@ -26,7 +33,7 @@ export async function POST(request: Request) {
       // Process each batch in parallel with transaction protection
       const batchResults = await Promise.all(
         batch.map(async (feed: Feed) => {
-          const url = feed.url.trim();
+          const url = feed.url?.trim();
           if (!url) return null;
 
           try {
