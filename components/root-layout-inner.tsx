@@ -15,6 +15,7 @@ import { usePathname } from "next/navigation";
 import UsernameModal from "./username-modal";
 import DBErrorScreen from "./db-error-screen";
 import { Settings, Download, Loader2 } from "lucide-react";
+import NavBar from "./NavBar";
 import FeedEditor from "@/components/FeedEditor";
 
 interface FeedEntry {
@@ -255,13 +256,8 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                 </SignedOut>
               </div>
               <div className="flex items-center space-x-4">
+                <NavBar />
                 <SignedIn>
-                  <Link
-                    href="/about"
-                    className="text-gray-600 no-underline hover:underline"
-                  >
-                    About
-                  </Link>
                   {pathname !== "/dashboard/all_posts" && (
                     <>
                       <button
@@ -328,6 +324,16 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           </p>
         </div>
       </main>
+      <footer className="bg-white border-t">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
+          <p className="text-sm text-gray-600">
+            Need help?{' '}
+            <a href="mailto:support@pesos.site" className="underline">
+              support@pesos.site
+            </a>
+          </p>
+        </div>
+      </footer>
       {shouldShowUsernameModal && <UsernameModal />}
       {showFeedEditor && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
