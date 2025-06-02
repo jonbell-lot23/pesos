@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
+import prisma from "@/lib/prismadb";
 
 // This route should only run during runtime, not during build
 export const dynamic = "force-dynamic";
