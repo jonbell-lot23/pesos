@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: Request) {
   try {
     // Get user ID from auth
@@ -59,14 +61,14 @@ export async function GET(request: Request) {
     });
 
     // Add a flag to indicate if each post belongs to the current user
-    const postsWithOwnership = posts.map(post => ({
+    const postsWithOwnership = posts.map((post) => ({
       ...post,
-      isUserPost: post.userId === userId
+      isUserPost: post.userId === userId,
     }));
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       posts: postsWithOwnership,
-      isUserSubscribed: !!userSource
+      isUserSubscribed: !!userSource,
     });
   } catch (error) {
     console.error("Error fetching posts:", error);

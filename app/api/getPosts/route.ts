@@ -7,6 +7,8 @@ import {
   getPostsCacheKey,
 } from "@/lib/cache";
 
+export const dynamic = "force-dynamic";
+
 // Remove force-dynamic and add proper caching
 export const revalidate = POSTS_CACHE_DURATION;
 

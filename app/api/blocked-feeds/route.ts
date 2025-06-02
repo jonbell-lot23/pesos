@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "../../../lib/prismadb";
 
+export const dynamic = "force-dynamic";
+
 // Admin user ID for special permissions
 const ADMIN_ID = "user_2XCDGHKZPXhqtZxAYXI5YMnEF1H";
 
@@ -9,25 +11,22 @@ export async function GET(request: Request) {
   try {
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { error: "Not Found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Not Found" }, { status: 404 });
     }
-    
+
     // Only authenticated users can see the list of blocked feeds
     const blockedFeeds = await prisma.pesos_Sources.findMany({
       where: {
-        active: "N"
+        active: "N",
       },
       orderBy: {
-        id: "asc"
-      }
+        id: "asc",
+      },
     });
 
     return NextResponse.json({
       blockedFeeds,
-      isAdmin: userId === ADMIN_ID
+      isAdmin: userId === ADMIN_ID,
     });
   } catch (error) {
     console.error("Error fetching blocked feeds:", error);
@@ -44,14 +43,11 @@ export async function PATCH(request: Request) {
     // Check if user is authenticated
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { error: "Not Found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Not Found" }, { status: 404 });
     }
-    
+
     console.log(`Blocked feeds managed by user: ${userId}`);
-    
+
     // Commenting out the admin check since we're not sure about the correct ID
     // if (userId !== ADMIN_ID) {
     //   return NextResponse.json(
@@ -71,23 +67,23 @@ export async function PATCH(request: Request) {
     // Update the source active status
     const updatedSource = await prisma.pesos_Sources.update({
       where: {
-        id: sourceId
+        id: sourceId,
       },
       data: {
-        active: block ? "N" : "Y"
-      }
+        active: block ? "N" : "Y",
+      },
     });
 
     return NextResponse.json({
       success: true,
-      source: updatedSource
+      source: updatedSource,
     });
   } catch (error) {
     console.error("Error updating blocked feed status:", error);
     return NextResponse.json(
-      { 
+      {
         error: "Failed to update feed status",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );

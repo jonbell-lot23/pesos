@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
+import { auth } from "@clerk/nextjs";
+
+export const dynamic = "force-dynamic";
 
 interface Feed {
   url: string;

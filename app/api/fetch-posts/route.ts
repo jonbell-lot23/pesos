@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import pool from "@/lib/dbPool";
+import prisma from "@/lib/prismadb";
+import { auth } from "@clerk/nextjs";
+
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

@@ -5,6 +5,8 @@ import { formatDistanceToNow, subDays } from "date-fns";
 import { cookies } from "next/headers";
 import OpenAI from "openai";
 
+export const dynamic = "force-dynamic";
+
 // One day in milliseconds
 const ONE_DAY = 24 * 60 * 60 * 1000;
 

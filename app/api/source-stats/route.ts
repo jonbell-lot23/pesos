@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
 
+export const dynamic = "force-dynamic";
+
 // Admin user ID for special permissions
 const ADMIN_ID = "user_2XCDGHKZPXhqtZxAYXI5YMnEF1H";
 
@@ -10,14 +12,11 @@ export async function GET(request: Request) {
     // Check if user is authenticated
     const { userId } = auth();
     if (!userId) {
-      return NextResponse.json(
-        { error: "Not Found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Not Found" }, { status: 404 });
     }
-    
+
     console.log(`Source stats accessed by user: ${userId}`);
-    
+
     // Commenting out the admin check since we're not sure about the correct ID
     // if (userId !== ADMIN_ID) {
     //   return NextResponse.json(
@@ -83,27 +82,30 @@ export async function GET(request: Request) {
       userCount: parseInt(source.user_count),
       oldestPost: source.oldest_post,
       newestPost: source.newest_post,
-      avgHoursBetweenPosts: source.avg_hours_between_posts !== null 
-        ? parseFloat(source.avg_hours_between_posts).toFixed(2) 
-        : null,
-      postsPerDay: source.avg_hours_between_posts !== null && source.avg_hours_between_posts > 0
-        ? (24 / parseFloat(source.avg_hours_between_posts)).toFixed(1)
-        : null
+      avgHoursBetweenPosts:
+        source.avg_hours_between_posts !== null
+          ? parseFloat(source.avg_hours_between_posts).toFixed(2)
+          : null,
+      postsPerDay:
+        source.avg_hours_between_posts !== null &&
+        source.avg_hours_between_posts > 0
+          ? (24 / parseFloat(source.avg_hours_between_posts)).toFixed(1)
+          : null,
     }));
 
     return NextResponse.json({
       prolificSources: formattedSources,
       filters: {
         minItems,
-        days
-      }
+        days,
+      },
     });
   } catch (error) {
     console.error("Error analyzing source stats:", error);
     return NextResponse.json(
-      { 
+      {
         error: "Failed to analyze sources",
-        details: error instanceof Error ? error.message : "Unknown error"
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
