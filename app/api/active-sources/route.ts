@@ -12,7 +12,7 @@ export async function GET() {
       );
     }
 
-    // Get all active sources with their latest post date
+    // Get all active sources with their latest post date using parameterized query
     const sources = await prisma.$queryRaw`
       WITH latest_posts AS (
         SELECT 
@@ -31,7 +31,7 @@ export async function GET() {
         END as "isUserSource"
       FROM "pesos_Sources" s
       LEFT JOIN latest_posts lp ON s.id = lp."sourceId"
-      LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" AND us."userId" = ${userId}
+      LEFT JOIN "pesos_UserSources" us ON s.id = us."sourceId" AND us."userId" = ${userId}::text
       WHERE s.active = 'Y'
       ORDER BY lp.latest_post_date DESC NULLS LAST
     `;
