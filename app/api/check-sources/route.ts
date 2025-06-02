@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "../../../lib/prismadb";
 import RssParser from "rss-parser";
+import { auth } from "@clerk/nextjs";
 
 const parser = new RssParser();
 
@@ -11,6 +12,8 @@ const generateSlug = () => {
     Math.random().toString(36).substr(2, 6)
   );
 };
+
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {

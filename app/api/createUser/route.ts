@@ -5,6 +5,9 @@ import prisma from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs";
+
+export const dynamic = "force-dynamic";
 
 // Modify the regex to accept both "clrk_" and "user_" prefixes.
 const createUserSchema = z.object({

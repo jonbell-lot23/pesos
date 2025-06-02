@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import pool, { withRetry } from "@/lib/dbPool";
 
+export const dynamic = "force-dynamic";
+
 // Keep track of recent errors
 const errorHistory = {
   lastError: null as string | null,
