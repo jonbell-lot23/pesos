@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import { PrismaClient } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   try {
     // First disconnect the main client

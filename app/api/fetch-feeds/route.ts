@@ -5,6 +5,8 @@ import prisma from "@/lib/prismadb";
 
 const parseXml = promisify(parseString);
 
+export const dynamic = "force-dynamic";
+
 async function fetchFeed(url: string) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 20000);

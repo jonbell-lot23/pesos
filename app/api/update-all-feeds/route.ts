@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 import pg from "pg";
 import RssParser from "rss-parser";
+import prisma from "@/lib/prismadb";
 
 const parser = new RssParser();
+
+export const dynamic = "force-dynamic";
 
 type UpdateStatus = {
   isRunning: boolean;
@@ -10,7 +13,7 @@ type UpdateStatus = {
   lastError: string | null;
   lastRun: Date | null;
   logs: string[];
-  failedFeeds: Record<string, { url: string, failedAt: Date, error: string }>;
+  failedFeeds: Record<string, { url: string; failedAt: Date; error: string }>;
 };
 
 declare global {
@@ -62,14 +65,15 @@ function addLog(message: string) {
 export async function GET(request: Request) {
   // Get the clearFailedFeeds parameter if present
   const { searchParams } = new URL(request.url);
-  const shouldClearFailedFeeds = searchParams.get("clearFailedFeeds") === "true";
-  
+  const shouldClearFailedFeeds =
+    searchParams.get("clearFailedFeeds") === "true";
+
   // Clear failed feeds if requested
   if (shouldClearFailedFeeds && global.updateStatus) {
     addLog("Clearing all failed feeds");
     global.updateStatus.failedFeeds = {};
   }
-  
+
   // Check if another update is already running
   if (global.updateStatus?.isRunning) {
     return NextResponse.json(
@@ -128,7 +132,7 @@ export async function GET(request: Request) {
 
     // Track which failed feeds we're skipping in this run
     const skippedFailedFeeds: string[] = [];
-    
+
     // Process sources in batches
     for (let i = 0; i < sources.length; i += BATCH_SIZE) {
       const batch = sources.slice(i, i + BATCH_SIZE);
@@ -147,22 +151,29 @@ export async function GET(request: Request) {
             stats.skippedFeeds.push(source.url);
             return;
           }
-          
+
           // Skip sources that failed in the last 24 hours
           if (global.updateStatus?.failedFeeds[source.url]) {
             const failedInfo = global.updateStatus.failedFeeds[source.url];
             const failedAt = new Date(failedInfo.failedAt);
-            const hoursSinceFail = (new Date().getTime() - failedAt.getTime()) / (1000 * 60 * 60);
-            
+            const hoursSinceFail =
+              (new Date().getTime() - failedAt.getTime()) / (1000 * 60 * 60);
+
             if (hoursSinceFail < 24) {
-              addLog(`Skipping ${source.url} - failed ${Math.floor(hoursSinceFail)} hour(s) ago with error: ${failedInfo.error}`);
+              addLog(
+                `Skipping ${source.url} - failed ${Math.floor(
+                  hoursSinceFail
+                )} hour(s) ago with error: ${failedInfo.error}`
+              );
               stats.skippedFeeds.push(source.url);
               skippedFailedFeeds.push(source.url);
               return;
             } else {
               // Failed more than 24 hours ago, let's try again and remove from failed feeds
               delete global.updateStatus.failedFeeds[source.url];
-              addLog(`Retrying ${source.url} after previous failure (>24h ago)`);
+              addLog(
+                `Retrying ${source.url} after previous failure (>24h ago)`
+              );
             }
           }
 
@@ -286,7 +297,7 @@ export async function GET(request: Request) {
               global.updateStatus.failedFeeds[source.url] = {
                 url: source.url,
                 failedAt: new Date(),
-                error: errorMessage
+                error: errorMessage,
               };
             }
           }
@@ -336,7 +347,7 @@ export async function GET(request: Request) {
     if (successfulWithoutNewItems > 0) {
       message += `${successfulWithoutNewItems} other feeds checked (no new items or problems)\n\n`;
     }
-    
+
     // Check how many feeds are inactive
     let inactiveCount = 0;
     try {
@@ -346,11 +357,17 @@ export async function GET(request: Request) {
       inactiveCount = parseInt(inactiveResult.rows[0].count, 10) || 0;
       addLog(`Found ${inactiveCount} inactive sources that were skipped`);
     } catch (error) {
-      addLog(`Error checking inactive feeds: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      addLog(
+        `Error checking inactive feeds: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
     }
 
     // Count feeds skipped due to previous failures
-    const skippedDueToFailures = skippedFailedFeeds ? skippedFailedFeeds.length : 0;
+    const skippedDueToFailures = skippedFailedFeeds
+      ? skippedFailedFeeds.length
+      : 0;
     const skippedNoUsers = stats.skippedFeeds.length - skippedDueToFailures;
 
     message += `Summary:\n`;

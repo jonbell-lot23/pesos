@@ -3,6 +3,8 @@ import { auth } from "@clerk/nextjs";
 import prisma from "@/lib/prismadb";
 import { Prisma } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
   try {
     const { userId } = auth();

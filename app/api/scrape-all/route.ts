@@ -32,6 +32,8 @@ async function fetchWithTimeout(url: string, timeout = 30000) {
   }
 }
 
+export const dynamic = "force-dynamic";
+
 export async function POST() {
   try {
     const { userId } = auth();
