@@ -3,10 +3,11 @@ import prisma from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    // Check if we're in a build context
+    // During build time, return empty data
     if (process.env.NEXT_PHASE === "phase-production-build") {
       return NextResponse.json({ sources: [] });
     }

@@ -4,6 +4,7 @@ import { postsCache, POSTS_CACHE_DURATION } from "@/lib/cache";
 import { formatDistanceToNow, subDays } from "date-fns";
 import { cookies } from "next/headers";
 import OpenAI from "openai";
+import { isBuildTime, handleBuildTimeResponse } from "@/lib/build-utils";
 
 export const dynamic = "force-dynamic";
 
@@ -203,6 +204,14 @@ const generateFallbackSummary = (title: string, content: string): string => {
 // Main GET handler
 export async function GET(request: Request) {
   try {
+    // Handle build time
+    const buildResponse = handleBuildTimeResponse();
+    if (buildResponse) {
+      return NextResponse.json(buildResponse.body, {
+        status: buildResponse.status,
+      });
+    }
+
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const daysParam = searchParams.get("days") || "7";
