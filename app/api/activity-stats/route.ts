@@ -3,7 +3,18 @@ import { NextResponse } from "next/server";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  // Simple build detection - just return empty data if any error occurs
+  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ activity: [] });
+  }
+
+  // Only proceed if we're definitely in runtime (not build)
   try {
     const { auth, currentUser } = await import("@clerk/nextjs");
     const prisma = (await import("@/lib/prismadb")).default;
@@ -112,7 +123,7 @@ export async function GET() {
 
     return NextResponse.json({ activity });
   } catch (error) {
-    // If anything fails (including during build), just return empty activity data
+    // If anything fails, just return empty activity data
     return NextResponse.json({ activity: [] });
   }
 }
