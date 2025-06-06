@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "../../../lib/prismadb";
-import RssParser from "rss-parser";
-import { auth } from "@clerk/nextjs";
 
-const parser = new RssParser();
+export const dynamic = "force-dynamic";
 
 const generateSlug = () => {
   return (
@@ -13,10 +10,23 @@ const generateSlug = () => {
   );
 };
 
-export const dynamic = "force-dynamic";
-
 export async function POST(req: NextRequest) {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ newItems: [] });
+  }
+
   try {
+    const prisma = (await import("../../../lib/prismadb")).default;
+    const RssParser = (await import("rss-parser")).default;
+    const parser = new RssParser();
+
     const { sourceId } = await req.json();
 
     // Use more efficient query with index
