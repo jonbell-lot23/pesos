@@ -1,11 +1,8 @@
 // Removed NextResponse import since we're using the native Response directly.
 // Import your database client or user-creation module.
 // For example, if you're using Prisma:
-import prisma from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { clerkClient } from "@clerk/nextjs/server";
-import { auth } from "@clerk/nextjs";
 import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -18,8 +15,8 @@ const createUserSchema = z.object({
     .regex(/^(clrk_|user_)[0-9a-zA-Z]+$/, "Invalid clerkId format"),
 });
 
-export async function POST(req: NextRequest) {
-  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+export async function POST(request: Request) {
+  // More targeted build detection
   if (
     process.env.NEXT_PHASE === "phase-production-build" ||
     process.env.BUILDING === "true" ||
@@ -27,23 +24,24 @@ export async function POST(req: NextRequest) {
       !process.env.VERCEL_URL &&
       !process.env.DATABASE_URL)
   ) {
-    return NextResponse.json({
-      created: false,
-      message: "Not available during build",
-    });
+    return NextResponse.json(
+      { message: "Not available during build" },
+      { status: 503 }
+    );
   }
 
   try {
     const { auth } = await import("@clerk/nextjs");
+    const { clerkClient } = await import("@clerk/nextjs/server");
     const prisma = (await import("@/lib/prismadb")).default;
 
     const { userId } = auth();
+
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await req.json();
-    const { username } = body;
+    const { username } = await request.json();
 
     if (!username) {
       return NextResponse.json(
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
     const newUser = await prisma.pesos_User.create({
       data: {
         id: userId,
-        username: username,
+        username: username.toLowerCase(),
       },
     });
 
@@ -81,10 +79,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Error creating user:", error);
     return NextResponse.json(
-      {
-        created: false,
-        message: "Failed to create user",
-      },
+      { error: "Failed to create user" },
       { status: 500 }
     );
   }

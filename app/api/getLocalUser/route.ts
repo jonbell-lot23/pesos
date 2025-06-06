@@ -1,57 +1,36 @@
-import prisma from "@/lib/prismadb";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(req: Request) {
+export async function GET() {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ user: null });
+  }
+
   try {
-    const { clerkId, chosenUsername } = await req.json();
-    let localUser = await prisma.pesos_User.findUnique({
-      where: { id: clerkId },
+    const { auth } = await import("@clerk/nextjs");
+    const prisma = (await import("@/lib/prismadb")).default;
+
+    const { userId } = auth();
+
+    if (!userId) {
+      return NextResponse.json({ user: null });
+    }
+
+    const user = await prisma.pesos_User.findUnique({
+      where: { id: userId },
     });
-    if (!localUser && chosenUsername) {
-      localUser = await prisma.pesos_User.findUnique({
-        where: { username: chosenUsername.toLowerCase() },
-      });
-    }
-    return NextResponse.json({ localUser });
-  } catch (error: any) {
-    console.error("Error in getLocalUser:", error);
 
-    // Check if it's a database connection error
-    if (
-      error.name === "PrismaClientInitializationError" ||
-      error.message.includes("Can't reach database server")
-    ) {
-      return NextResponse.json(
-        {
-          error:
-            "Database connection error: Unable to reach the database server. Please try again later.",
-          code: "DATABASE_CONNECTION_ERROR",
-        },
-        { status: 500 }
-      );
-    }
-
-    // Handle other Prisma errors
-    if (error.name?.includes("Prisma")) {
-      return NextResponse.json(
-        {
-          error:
-            "Database error: Something went wrong with the database operation.",
-          code: "DATABASE_ERROR",
-        },
-        { status: 500 }
-      );
-    }
-
-    // Generic error
-    return NextResponse.json(
-      {
-        error: "An unexpected error occurred",
-        code: "UNKNOWN_ERROR",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ user });
+  } catch (error) {
+    console.error("Error fetching local user:", error);
+    return NextResponse.json({ user: null });
   }
 }

@@ -101,3 +101,36 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ newItems: [] }, { status: 200 });
   }
 }
+
+export async function GET() {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ sources: [] });
+  }
+
+  try {
+    const { auth } = await import("@clerk/nextjs");
+    const prisma = (await import("../../../lib/prismadb")).default;
+
+    const { userId } = auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const sources = await prisma.pesos_Sources.findMany({
+      orderBy: { id: "asc" },
+    });
+
+    return NextResponse.json({ sources });
+  } catch (error) {
+    console.error("Error checking sources:", error);
+    return NextResponse.json({ sources: [] });
+  }
+}

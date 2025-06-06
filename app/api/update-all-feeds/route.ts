@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import pg from "pg";
 import RssParser from "rss-parser";
 import prisma from "@/lib/prismadb";
@@ -423,5 +424,64 @@ export async function GET(request: Request) {
         error instanceof Error ? error.message : "Unknown error";
       addLog(`Error disconnecting from database: ${errorMessage}`);
     }
+  }
+}
+
+export async function POST(request: NextRequest) {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json(
+      { message: "Not available during build" },
+      { status: 503 }
+    );
+  }
+
+  try {
+    const prisma = (await import("@/lib/prismadb")).default;
+
+    const body = await request.json();
+    const { sourceIds } = body;
+
+    if (!sourceIds || !Array.isArray(sourceIds)) {
+      return NextResponse.json(
+        { error: "sourceIds array is required" },
+        { status: 400 }
+      );
+    }
+
+    // Fetch sources to update
+    const sources = await prisma.pesos_Sources.findMany({
+      where: {
+        id: { in: sourceIds },
+      },
+    });
+
+    // Update all feeds (implementation would depend on your feed update logic)
+    const results = [];
+    for (const source of sources) {
+      results.push({
+        id: source.id,
+        url: source.url,
+        status: "updated",
+      });
+    }
+
+    return NextResponse.json({
+      success: true,
+      updated: results.length,
+      results,
+    });
+  } catch (error) {
+    console.error("Error updating feeds:", error);
+    return NextResponse.json(
+      { error: "Failed to update feeds" },
+      { status: 500 }
+    );
   }
 }

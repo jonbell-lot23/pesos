@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prismadb";
-import { auth } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +12,7 @@ type UpdateStatus = {
   lastError: string | null;
   lastRun: Date | null;
   logs: string[];
-  failedFeeds: Record<string, { url: string, failedAt: Date, error: string }>;
+  failedFeeds: Record<string, { url: string; failedAt: Date; error: string }>;
 };
 
 // This will be updated by the update endpoint
@@ -23,7 +21,28 @@ declare global {
 }
 
 export async function GET() {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({
+      stats: {
+        totalPosts: 0,
+        totalSources: 0,
+        activeUsers: 0,
+        lastUpdate: new Date().toISOString(),
+      },
+    });
+  }
+
   try {
+    const prisma = (await import("@/lib/prismadb")).default;
+    const { auth } = await import("@clerk/nextjs");
+
     // Check authentication
     const { userId } = auth();
     if (!userId) {
@@ -77,16 +96,16 @@ export async function GET() {
     const lastSyncTime = global.updateStatus?.lastRun || null;
     const syncStatus = global.updateStatus?.status || "idle";
     const isCurrentlySyncing = global.updateStatus?.isRunning || false;
-    
+
     // Get information about failed feeds
     const failedFeeds = global.updateStatus?.failedFeeds || {};
     const failedFeedsCount = Object.keys(failedFeeds).length;
-    
+
     // Count inactive sources
     const inactiveSourcesCount = await prisma.pesos_Sources.count({
       where: {
-        active: "N"
-      }
+        active: "N",
+      },
     });
 
     return NextResponse.json({

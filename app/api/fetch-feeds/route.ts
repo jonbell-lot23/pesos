@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { parseString } from "xml2js";
 import { promisify } from "util";
-import prisma from "@/lib/prismadb";
 
 const parseXml = promisify(parseString);
 
@@ -149,5 +148,39 @@ export async function POST(request: Request) {
       { error: "Failed to fetch and process sources" },
       { status: 500 }
     );
+  }
+}
+
+export async function GET() {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ feeds: [] });
+  }
+
+  try {
+    const { auth } = await import("@clerk/nextjs");
+    const prisma = (await import("@/lib/prismadb")).default;
+
+    const { userId } = auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const feeds = await prisma.pesos_Sources.findMany({
+      where: { active: "Y" },
+      orderBy: { id: "asc" },
+    });
+
+    return NextResponse.json({ feeds });
+  } catch (error) {
+    console.error("Error fetching feeds:", error);
+    return NextResponse.json({ feeds: [] });
   }
 }

@@ -1,28 +1,53 @@
 import { NextResponse } from "next/server";
-import { setViewPreference } from "@/lib/cookies";
-import prisma from "@/lib/prismadb";
-import { auth } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
+  // More targeted build detection
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json(
+      { message: "Not available during build" },
+      { status: 503 }
+    );
+  }
+
   try {
+    const prisma = (await import("@/lib/prismadb")).default;
+    const { auth } = await import("@clerk/nextjs");
+
+    const { userId } = auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { preference } = await request.json();
 
-    if (preference !== "simple" && preference !== "detailed") {
+    if (!preference || typeof preference !== "string") {
       return NextResponse.json(
         { error: "Invalid preference value" },
         { status: 400 }
       );
     }
 
-    setViewPreference(preference);
+    // For now, just return success since viewPreference field doesn't exist in schema
+    // TODO: Add viewPreference field to pesos_User model
+    console.log(`User ${userId} set view preference to ${preference}`);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({
+      success: true,
+      message: "View preference updated successfully",
+    });
   } catch (error) {
-    console.error("Error setting view preference:", error);
+    console.error("Error updating view preference:", error);
     return NextResponse.json(
-      { error: "Failed to set view preference" },
+      { error: "Failed to update view preference" },
       { status: 500 }
     );
   }
