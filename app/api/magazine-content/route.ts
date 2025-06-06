@@ -7,6 +7,7 @@ import OpenAI from "openai";
 import { isBuildTime, handleBuildTimeResponse } from "@/lib/build-utils";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 // One day in milliseconds
 const ONE_DAY = 24 * 60 * 60 * 1000;
@@ -204,6 +205,21 @@ const generateFallbackSummary = (title: string, content: string): string => {
 // Main GET handler
 export async function GET(request: Request) {
   try {
+    // During build time, return empty data
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      return NextResponse.json({
+        publishDate: new Date().toISOString(),
+        timeRange: "Last 7 days",
+        totalPosts: 0,
+        totalSources: 0,
+        totalUsers: 0,
+        featuredPosts: [],
+        editorialSections: [],
+        dayGroups: [],
+        prolificSources: [],
+      });
+    }
+
     // Handle build time
     const buildResponse = handleBuildTimeResponse();
     if (buildResponse) {
