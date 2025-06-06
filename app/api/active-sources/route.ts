@@ -6,6 +6,11 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    // Check if we're in a build context
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      return NextResponse.json({ sources: [] });
+    }
+
     const { userId } = auth();
     if (!userId) {
       return NextResponse.json(
