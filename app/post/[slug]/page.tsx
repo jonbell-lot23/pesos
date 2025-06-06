@@ -34,6 +34,20 @@ export async function generateMetadata({
 }: {
   params: { slug: string };
 }): Promise<Metadata> {
+  // Build detection for metadata generation
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return {
+      title: "Post | PESOS",
+      description: "A post from PESOS.",
+    };
+  }
+
   try {
     const post = await getPost(params.slug);
     if (!post) {
