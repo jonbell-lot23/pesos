@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { format, formatDistanceToNow } from "date-fns";
 import Spinner from "../../../components/Spinner";
+import Image from "next/image";
 
 interface Post {
   id: number;
@@ -84,7 +85,7 @@ export default function FeedPage() {
       setIsLoading(false);
       console.log("[FeedPage] fetchPosts: Completed, isLoading set to false");
     }
-  }, [user?.id, user?.username, routeUsername]);
+  }, [user, routeUsername]);
 
   useEffect(() => {
     console.log(
@@ -118,7 +119,7 @@ export default function FeedPage() {
       );
       setIsLoading(false);
     }
-  }, [isSignedIn, user?.id, user?.username, routeUsername, fetchPosts]);
+  }, [isSignedIn, user, routeUsername, fetchPosts]);
 
   if (!username) {
     return (
@@ -170,12 +171,14 @@ export default function FeedPage() {
           {posts.map((post) => (
             <article key={post.id} className="border-b border-gray-200 pb-4">
               <div className="flex items-center">
-                <img
+                <Image
                   src={`https://www.google.com/s2/favicons?domain=${
                     new URL(post.url).hostname
                   }`}
                   alt="favicon"
-                  className="w-6 h-6 inline mr-2"
+                  width={24}
+                  height={24}
+                  className="inline mr-2"
                 />
                 <a
                   href={`/post/${post.slug}`}

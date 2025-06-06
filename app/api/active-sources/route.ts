@@ -2,16 +2,22 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 import { auth } from "@clerk/nextjs";
 
-export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
+// Remove dynamic and runtime exports
+// export const dynamic = "force-dynamic";
+// export const runtime = 'nodejs';
 
 export async function GET() {
-  try {
-    // During build time, return empty data
-    if (process.env.NEXT_PHASE === "phase-production-build") {
-      return NextResponse.json({ sources: [] });
-    }
+  // During build time, return empty data immediately
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return new Response(JSON.stringify({ sources: [] }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  }
 
+  try {
     const { userId } = auth();
     if (!userId) {
       return NextResponse.json(

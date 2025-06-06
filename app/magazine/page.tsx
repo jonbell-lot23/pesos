@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Spinner from "@/components/Spinner";
 import { Button } from "@/components/ui/button";
 import { formatDistanceToNow } from "date-fns";
+import Image from "next/image";
 
 // Interfaces for our data model
 interface Post {
@@ -76,7 +77,7 @@ export default function MagazinePage() {
   const [error, setError] = useState<string | null>(null);
   const [days, setDays] = useState(7);
 
-  const fetchMagazineContent = async () => {
+  const fetchMagazineContent = useCallback(async () => {
     setLoading(true);
     setError(null);
 
@@ -125,11 +126,11 @@ export default function MagazinePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [days]);
 
   useEffect(() => {
     fetchMagazineContent();
-  }, []);
+  }, [days, fetchMagazineContent]);
 
   // Masonry card component with local storage for summaries
   const MasonryCard = ({ post }: { post: Post }) => {
@@ -141,7 +142,7 @@ export default function MagazinePage() {
     const [fetchAttempted, setFetchAttempted] = useState<boolean>(false);
 
     // Function to fetch summary from the API
-    const fetchSummaryFromAPI = async () => {
+    const fetchSummaryFromAPI = useCallback(async () => {
       if (fetchAttempted) return; // Only try once
 
       try {
@@ -188,7 +189,7 @@ export default function MagazinePage() {
       } finally {
         setSummaryLoading(false);
       }
-    };
+    }, [post.id, post.title, post.excerpt, fetchAttempted]);
 
     // Use effect to check local storage
     useEffect(() => {
@@ -224,7 +225,7 @@ export default function MagazinePage() {
           setSummaryLoading(false);
         }
       }
-    }, [post.id, post.title, post.aiSummary]);
+    }, [post.id, post.title, post.aiSummary, fetchSummaryFromAPI]);
 
     return (
       <div
@@ -243,11 +244,13 @@ export default function MagazinePage() {
 
         {/* Image if available with larger display */}
         {post.imageUrl && (
-          <div className="mb-4 rounded-md overflow-hidden">
-            <img
+          <div className="mb-4 rounded-md overflow-hidden relative aspect-video">
+            <Image
               src={post.imageUrl}
               alt={post.title}
-              className="w-full h-auto max-h-[300px] object-cover hover:scale-105 transition-transform duration-300"
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
         )}

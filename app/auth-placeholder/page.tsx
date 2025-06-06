@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,27 +30,30 @@ export default function AuthPlaceholder() {
   const router = useRouter();
   const buttonRef = useRef<HTMLDivElement>(null);
 
-  const handleCredentialResponse = (response: any) => {
-    // Send the response.credential to your server for verification
-    fetch("/api/auth/google", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ credential: response.credential }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          router.push("/setup-complete");
-        } else {
-          console.error("Authentication failed");
-        }
+  const handleCredentialResponse = useCallback(
+    (response: any) => {
+      // Send the response.credential to your server for verification
+      fetch("/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ credential: response.credential }),
       })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
-  };
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            router.push("/setup-complete");
+          } else {
+            console.error("Authentication failed");
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    },
+    [router]
+  );
 
   useEffect(() => {
     if (typeof window === "undefined" || !buttonRef.current) return;
@@ -83,7 +86,7 @@ export default function AuthPlaceholder() {
         script.removeEventListener("load", initializeGoogle);
       }
     };
-  }, []);
+  }, [handleCredentialResponse]);
 
   return (
     <Card>
