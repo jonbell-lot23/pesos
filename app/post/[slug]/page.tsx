@@ -2,21 +2,30 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PostContent } from "@/components/post-content";
-import prisma from "@/lib/prismadb";
 
 // Force dynamic rendering for this page
 export const dynamic = "force-dynamic";
 
 async function getPost(slug: string) {
+  // Build detection for page components
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return null;
+  }
+
   try {
+    const prisma = (await import("@/lib/prismadb")).default;
     return await prisma.pesos_items.findFirst({
       where: { slug },
     });
   } catch (error) {
     console.error("Database error:", error);
-    throw new Error(
-      "Unable to connect to the database. Please try again later."
-    );
+    return null;
   }
 }
 
