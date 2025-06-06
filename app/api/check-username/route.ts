@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
 
+export const dynamic = "force-dynamic";
+
 // Add reserved usernames
 const RESERVED_USERNAMES = [
   "dashboard",
