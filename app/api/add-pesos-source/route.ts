@@ -1,110 +1,115 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prismadb";
-import { Prisma } from "@prisma/client";
-import { auth } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
 
-interface Feed {
-  url: string;
-}
-
-interface RequestData {
-  feeds: Feed[];
-  userId: string;
-}
-
 export async function POST(request: Request) {
+  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json(
+      { error: "Not available during build" },
+      { status: 503 }
+    );
+  }
+
   try {
-    const body = await request.json();
-    const { feeds, userId } = body as RequestData;
+    const prisma = (await import("@/lib/prismadb")).default;
+    const { Prisma } = await import("@prisma/client");
+    const { auth } = await import("@clerk/nextjs");
 
-    if (!userId || !feeds || !Array.isArray(feeds)) {
-      return NextResponse.json(
-        { success: false, error: "Missing or invalid parameters" },
-        { status: 400 }
-      );
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Process feeds in batches to avoid overwhelming the connection pool
-    const BATCH_SIZE = 5;
-    const results = [];
+    const { url } = await request.json();
 
-    for (let i = 0; i < feeds.length; i += BATCH_SIZE) {
-      const batch = feeds.slice(i, i + BATCH_SIZE);
+    if (!url) {
+      return NextResponse.json({ error: "URL is required" }, { status: 400 });
+    }
 
-      // Process each batch in parallel with transaction protection
-      const batchResults = await Promise.all(
-        batch.map(async (feed: Feed) => {
-          const url = feed.url?.trim();
-          if (!url) return null;
+    try {
+      // Check if source already exists
+      const existingSource = await prisma.pesos_Sources.findFirst({
+        where: { url },
+      });
 
-          try {
-            // Use transaction to ensure atomicity
-            return await prisma.$transaction(
-              async (tx) => {
-                // Upsert into pesos_Sources using the feed URL
-                const source = await tx.pesos_Sources.upsert({
-                  where: { url },
-                  update: {},
-                  create: { url },
-                });
+      if (existingSource) {
+        // Check if user already has this source
+        const userSource = await prisma.pesos_UserSources.findFirst({
+          where: {
+            userId,
+            sourceId: existingSource.id,
+          },
+        });
 
-                // Create or upsert the user-source relation
-                await tx.pesos_UserSources.upsert({
-                  where: { userId_sourceId: { userId, sourceId: source.id } },
-                  update: {},
-                  create: {
-                    userId,
-                    sourceId: source.id,
-                  },
-                });
+        if (userSource) {
+          return NextResponse.json(
+            {
+              error: "Source already exists in your feed",
+              sourceId: existingSource.id,
+            },
+            { status: 409 }
+          );
+        }
 
-                return source;
-              },
-              {
-                maxWait: 5000, // Maximum time to wait for transaction
-                timeout: 10000, // Maximum time for the transaction to complete
-              }
-            );
-          } catch (error) {
-            console.error(`Error processing feed ${url}:`, error);
-            return null;
-          }
-        })
-      );
+        // Add existing source to user's feed
+        await prisma.pesos_UserSources.create({
+          data: {
+            userId,
+            sourceId: existingSource.id,
+          },
+        });
 
-      results.push(...batchResults.filter(Boolean));
-
-      // Add a small delay between batches
-      if (i + BATCH_SIZE < feeds.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        return NextResponse.json({
+          message: "Source added to your feed",
+          sourceId: existingSource.id,
+        });
       }
-    }
 
-    return NextResponse.json({
-      success: true,
-      sources: results,
-      processedCount: results.length,
-      totalFeeds: feeds.length,
-    });
+      // Create new source
+      const newSource = await prisma.pesos_Sources.create({
+        data: {
+          url,
+          active: "Y",
+        },
+      });
+
+      // Add to user's sources
+      await prisma.pesos_UserSources.create({
+        data: {
+          userId,
+          sourceId: newSource.id,
+        },
+      });
+
+      return NextResponse.json({
+        message: "New source created and added to your feed",
+        sourceId: newSource.id,
+      });
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
+        if (error.code === "P2002") {
+          return NextResponse.json(
+            {
+              error: "Source already exists",
+            },
+            { status: 409 }
+          );
+        }
+      }
+      throw error;
+    }
   } catch (error) {
-    console.error("Error adding feeds to database", error);
-
-    // Handle specific Prisma errors
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      if (error.code === "P2002") {
-        return NextResponse.json(
-          { success: false, error: "Duplicate feed URLs found" },
-          { status: 400 }
-        );
-      }
-    }
-
+    console.error("Error adding source:", error);
     return NextResponse.json(
       {
-        success: false,
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: "Failed to add source",
       },
       { status: 500 }
     );

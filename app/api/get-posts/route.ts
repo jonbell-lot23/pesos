@@ -1,10 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prismadb";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
+  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ posts: [] });
+  }
+
   try {
+    const prisma = (await import("@/lib/prismadb")).default;
+
     // Destructure clerkId and username from the request body
     const { clerkId, username } = await req.json();
 

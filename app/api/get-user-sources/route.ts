@@ -1,22 +1,49 @@
 import { NextResponse } from "next/server";
-import { getUserSources } from "@/app/actions/sources";
-import prisma from "@/lib/prismadb";
-import { auth } from "@clerk/nextjs";
 
 export const dynamic = "force-dynamic";
 
-export async function POST(request: Request) {
-  const body = await request.json();
-  const clerkId = body.clerkId;
+export async function GET() {
+  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ sources: [] });
+  }
+
   try {
-    const sources = await getUserSources(clerkId);
-    return NextResponse.json({ success: true, sources });
-  } catch (error) {
-    console.error("API Error in get-user-sources:", error);
-    let errorMessage = "An unknown error occurred";
-    if (error instanceof Error) {
-      errorMessage = error.message;
+    const prisma = (await import("@/lib/prismadb")).default;
+    const { auth } = await import("@clerk/nextjs");
+
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.json({ success: false, error: errorMessage });
+
+    // Get user sources and then fetch the actual sources
+    const userSources = await prisma.pesos_UserSources.findMany({
+      where: { userId },
+    });
+
+    const sourceIds = userSources.map((us) => us.sourceId);
+
+    const sources = await prisma.pesos_Sources.findMany({
+      where: {
+        id: { in: sourceIds },
+      },
+      select: {
+        id: true,
+        url: true,
+        active: true,
+      },
+    });
+
+    return NextResponse.json({ sources });
+  } catch (error) {
+    console.error("Error fetching user sources:", error);
+    return NextResponse.json({ sources: [] });
   }
 }

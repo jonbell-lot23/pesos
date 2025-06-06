@@ -6,6 +6,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { clerkClient } from "@clerk/nextjs/server";
 import { auth } from "@clerk/nextjs";
+import { NextRequest } from "next/server";
 
 export const dynamic = "force-dynamic";
 
@@ -17,82 +18,73 @@ const createUserSchema = z.object({
     .regex(/^(clrk_|user_)[0-9a-zA-Z]+$/, "Invalid clerkId format"),
 });
 
-export async function POST(req: Request) {
-  const { username, clerkId } = await req.json();
-  console.log("[createUser] Received request with:", { username, clerkId });
+export async function POST(req: NextRequest) {
+  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({
+      created: false,
+      message: "Not available during build",
+    });
+  }
 
   try {
-    // Check if a local user record already exists
-    console.log(
-      "[createUser] Checking for existing user with clerkId:",
-      clerkId
-    );
+    const { auth } = await import("@clerk/nextjs");
+    const prisma = (await import("@/lib/prismadb")).default;
+
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { username } = body;
+
+    if (!username) {
+      return NextResponse.json(
+        { error: "Username is required" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists
     const existingUser = await prisma.pesos_User.findUnique({
-      where: { id: clerkId },
+      where: { id: userId },
     });
-    console.log("[createUser] Existing user check result:", existingUser);
 
     if (existingUser) {
-      console.log("[createUser] Found existing user, returning");
-      return NextResponse.json({ success: true, localUser: existingUser });
+      return NextResponse.json({
+        created: false,
+        message: "User already exists",
+        user: existingUser,
+      });
     }
 
-    // Fetch Clerk user information
-    const clerkUser = await clerkClient.users.getUser(clerkId);
-    console.log(
-      "[createUser] Fetched Clerk user publicMetadata:",
-      clerkUser.publicMetadata
-    );
-
-    // Use the chosen username from publicMetadata if available, otherwise the provided username
-    const finalUsername = (
-      clerkUser.publicMetadata?.chosenUsername || username
-    ).toLowerCase();
-    console.log("[createUser] Final username chosen:", finalUsername, {
-      clerkUserPublicMetadata: clerkUser.publicMetadata,
-    });
-
-    // Create a new local user record using clerkId as id
-    console.log("[createUser] Creating new user with:", {
-      finalUsername,
-      clerkId,
-    });
+    // Create new user
     const newUser = await prisma.pesos_User.create({
       data: {
-        id: clerkId,
-        username: finalUsername,
+        id: userId,
+        username: username,
       },
     });
-    console.log("[createUser] Successfully created new user:", newUser);
 
-    // If chosenUsername is not already set in Clerk, update it
-    if (!clerkUser.publicMetadata?.chosenUsername) {
-      const updateResponse = await clerkClient.users.updateUser(clerkId, {
-        publicMetadata: { chosenUsername: finalUsername },
-      });
-      console.log(
-        "[createUser] Updated Clerk publicMetadata with chosenUsername:",
-        finalUsername,
-        updateResponse
-      );
-    }
-
-    return NextResponse.json({ success: true, localUser: newUser });
-  } catch (error: any) {
-    console.error("[createUser] Error creating local user:", error);
-    if (error.code === "P2002") {
-      console.error(
-        "[createUser] Duplicate entry detected for clerkId (likely due to multiple creation attempts)."
-      );
-    }
-    console.error("[createUser] Error details:", {
-      name: error.name,
-      message: error.message,
-      code: error.code,
-      meta: error.meta,
+    return NextResponse.json({
+      created: true,
+      message: "User created successfully",
+      user: newUser,
     });
+  } catch (error) {
+    console.error("Error creating user:", error);
     return NextResponse.json(
-      { success: false, error: error.message },
+      {
+        created: false,
+        message: "Failed to create user",
+      },
       { status: 500 }
     );
   }

@@ -19,6 +19,17 @@ setInterval(() => {
 }, 60 * 60 * 1000);
 
 export async function GET() {
+  // More targeted build detection - focus on scenarios where we definitely don't have runtime environment
+  if (
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.BUILDING === "true" ||
+    (process.env.NODE_ENV === "production" &&
+      !process.env.VERCEL_URL &&
+      !process.env.DATABASE_URL)
+  ) {
+    return NextResponse.json({ status: "ok", message: "Build time check" });
+  }
+
   const healthStatus = {
     prisma: false,
     pool: false,
