@@ -324,16 +324,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
           </p>
         </div>
       </main>
-      <footer className="bg-white border-t">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 text-center">
-          <p className="text-sm text-gray-600">
-            Need help?{' '}
-            <a href="mailto:support@pesos.site" className="underline">
-              support@pesos.site
-            </a>
-          </p>
-        </div>
-      </footer>
+      {/* Removed support email footer */}
       {shouldShowUsernameModal && <UsernameModal />}
       {showFeedEditor && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
