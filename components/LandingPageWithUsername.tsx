@@ -60,9 +60,11 @@ export default function LandingPageWithUsername() {
   async function checkAvailability(name: string) {
     try {
       setAvailability("checking");
-      const res = await fetch(
-        `/api/check-username?username=${encodeURIComponent(name)}`
-      );
+      const res = await fetch(`/api/check-username`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: name }),
+      });
       const data = await res.json();
       if (data.available) {
         setAvailability("available");
@@ -166,102 +168,90 @@ export default function LandingPageWithUsername() {
   // Show loading state while Clerk is initializing
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      <div className="min-h-screen flex items-center justify-center bg-[#0d0d0d]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
       </div>
     );
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* Hero Section */}
-      <div className="w-full h-[50vh]">
-        <div
-          className="w-full h-full bg-cover bg-center"
-          style={{ backgroundImage: "url('/couch.jpg')" }}
-        ></div>
-      </div>
+    <>
+      {/* Add Google Fonts */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:wght@400;500;600;700&display=swap"
+        rel="stylesheet"
+      />
 
-      {/* Content Section */}
-      <div className="px-0 md:max-w-7xl md:mx-auto md:px-4 md:sm:px-6 md:lg:px-8 md:py-4">
-        {/* Description and Sign In Sections */}
-        <div className="grid md:grid-cols-2 gap-8 bg-white md:p-8 md:shadow-lg">
-          <div className="pt-4 md:pt-0 text-left">
-            <h2 className="text-2xl font-normal text-black mb-2">About</h2>
-            <p className="text-gray-700 leading-relaxed md:mr-12">
-              <a
-                href="https://indieweb.org/PESOS"
-                className="underline hover:text-blue-600"
+      <div className="min-h-screen bg-white text-black font-sans">
+        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-8">
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center justify-items-center">
+            {/* Left column */}
+            <div className="max-w-lg">
+              <h1
+                className="text-2xl sm:text-3xl lg:text-4xl font-normal text-black mb-6 leading-tight"
+                style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                PESOS
-              </a>{" "}
-              stands for Publish Elsewhere, Syndicate (on your) Own Site. It's a
-              way to take all the stuff you're posting all over the internet and
-              pull it back into one simple, searchable, ownable, exportable
-              place.
-            </p>
-          </div>
+                You should back up your projects once a week, and that's all
+                PESOS does.
+              </h1>
+            </div>
 
-          {/* Username Section */}
-          <div className="space-y-4 bg-white">
-            <h2 className="text-2xl font-normal text-left mb-2">Get started</h2>
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <input
-                  id="username"
-                  type="text"
-                  placeholder="Choose a username"
-                  value={username}
-                  onChange={handleInputChange}
-                  className={`w-full border p-2 rounded-lg text-lg ${
-                    availability === "unavailable"
-                      ? "border-red-500 focus:ring-red-500"
-                      : availability === "available"
-                      ? "border-green-500 focus:ring-green-500"
-                      : "border-gray-300 focus:ring-blue-500"
-                  }`}
-                />
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                  {availability === "checking" && (
-                    <span className="text-gray-500">Checking...</span>
-                  )}
-                  {availability === "available" && (
-                    <span className="text-green-600">Available ✓</span>
-                  )}
-                  {availability === "unavailable" && (
-                    <span className="text-red-600">Unavailable</span>
-                  )}
-                </div>
-              </div>
-
-              {!isLoaded || !user ? (
-                <SignInButton mode="modal">
-                  <button className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                    {"->"}
+            {/* Right visualization with Username Section */}
+            <div className="relative">
+              <div className="p-1 bg-white rounded-xl mx-auto">
+                <div className="flex gap-3 items-start">
+                  <div className="relative flex-1">
+                    <input
+                      id="username"
+                      type="text"
+                      placeholder="Choose a username"
+                      value={username}
+                      onChange={handleInputChange}
+                      className={`w-full bg-gray-100 border rounded-lg px-4 pt-1 pb-3 text-black placeholder-gray-500 text-lg focus:outline-none focus:ring-2 transition-all ${
+                        availability === "unavailable"
+                          ? "border-red-500/50 focus:ring-red-500/30"
+                          : availability === "available"
+                          ? "border-green-500/50 focus:ring-green-500/30"
+                          : "border-gray-300 focus:ring-blue-500/30"
+                      }`}
+                    />
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      {availability === "checking" && (
+                        <span className="text-gray-500 text-sm">
+                          Checking...
+                        </span>
+                      )}
+                      {availability === "available" && (
+                        <span className="text-green-600 text-sm">
+                          Available ✓
+                        </span>
+                      )}
+                      {availability === "unavailable" && (
+                        <span className="text-red-600 text-sm">
+                          Unavailable
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleSubmitUsername(username)}
+                    disabled={loading || availability !== "available"}
+                    className="px-6 py-3 bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap font-medium"
+                  >
+                    {loading ? "Creating..." : "Get Started"}
                   </button>
-                </SignInButton>
-              ) : (
-                <button
-                  onClick={() => handleSubmitUsername(username)}
-                  disabled={loading}
-                  className="px-6 py-2 bg-black text-white rounded-lg hover:bg-gray-900 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
-                >
-                  {loading ? "Creating..." : "Get started"}
-                </button>
-              )}
+                </div>
+                {validationError && (
+                  <div className="text-red-600 text-sm mb-2">
+                    {validationError}
+                  </div>
+                )}
+                {error && <div className="text-red-600 text-sm">{error}</div>}
+              </div>
             </div>
-
-            <div className="text-sm text-gray-500">
-              Bonus: I don't see your email, so I couldn't spam you if I tried!
-            </div>
-
-            {validationError && (
-              <div className="text-red-600 text-sm">{validationError}</div>
-            )}
-            {error && <div className="text-red-600 text-sm">{error}</div>}
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }

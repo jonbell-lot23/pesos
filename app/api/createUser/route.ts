@@ -31,55 +31,56 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { auth } = await import("@clerk/nextjs");
-    const { clerkClient } = await import("@clerk/nextjs/server");
     const prisma = (await import("@/lib/prismadb")).default;
 
-    const { userId } = auth();
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { username } = await request.json();
-
-    if (!username) {
-      return NextResponse.json(
-        { error: "Username is required" },
-        { status: 400 }
-      );
-    }
+    const body = await request.json();
+    const { username, clerkId } = createUserSchema.parse(body);
 
     // Check if user already exists
     const existingUser = await prisma.pesos_User.findUnique({
-      where: { id: userId },
+      where: { id: clerkId },
     });
 
     if (existingUser) {
       return NextResponse.json({
-        created: false,
+        success: true,
         message: "User already exists",
-        user: existingUser,
+        localUser: existingUser,
       });
+    }
+
+    // Check if username is already taken
+    const existingUsername = await prisma.pesos_User.findUnique({
+      where: { username: username.toLowerCase() },
+    });
+
+    if (existingUsername) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Username is already taken",
+        },
+        { status: 400 }
+      );
     }
 
     // Create new user
     const newUser = await prisma.pesos_User.create({
       data: {
-        id: userId,
+        id: clerkId,
         username: username.toLowerCase(),
       },
     });
 
     return NextResponse.json({
-      created: true,
+      success: true,
       message: "User created successfully",
-      user: newUser,
+      localUser: newUser,
     });
   } catch (error) {
     console.error("Error creating user:", error);
     return NextResponse.json(
-      { error: "Failed to create user" },
+      { success: false, error: "Failed to create user" },
       { status: 500 }
     );
   }
