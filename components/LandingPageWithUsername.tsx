@@ -204,7 +204,7 @@ export default function LandingPageWithUsername() {
                     <input
                       id="username"
                       type="text"
-                      placeholder="Choose a username"
+                      placeholder="Choose username"
                       value={username}
                       onChange={handleInputChange}
                       className={`w-full bg-gray-100 border rounded-lg px-4 pt-1 pb-3 text-black placeholder-gray-500 text-lg focus:outline-none focus:ring-2 transition-all ${
