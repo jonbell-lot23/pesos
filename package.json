@@ -7,10 +7,11 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "bunx prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest"
+    "test": "vitest",
+    "postinstall": "bunx prisma generate"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.23.2",
