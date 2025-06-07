@@ -191,7 +191,7 @@ export default function LandingPageWithUsername() {
                 className="text-2xl sm:text-3xl lg:text-4xl font-normal text-black mb-6 leading-tight"
                 style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                You should back up your projects once a week, and that's all
+                You should back up your projects once a week, and that’s all
                 PESOS does.
               </h1>
             </div>
