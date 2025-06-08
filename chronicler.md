@@ -115,3 +115,10 @@ Created a `loading.tsx` file under `/dashboard/simple` so navigating to the page
 
 **Started onboarding redesign.**
 Implemented a new two-column layout for `feed-selection` with setup steps on the left and the feed form on a dark background. Added an "Improved setup wizard" task to `todo.md`.
+
+---
+
+## 2025-06-08
+
+**Outlined strategy for new user wizard and editing flow.**
+Created `docs/new-user-wizard.md` with a plan for a full-page multi-step setup wizard and inline editing pages. Updated `todo.md` with new tasks under "Onboarding & Editing" to track implementation work.
