@@ -59,6 +59,10 @@ export const createMockPrisma = () => {
       create: vi.fn(),
       findMany: vi.fn(),
     },
+    SystemLog: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+    },
   };
 };
 

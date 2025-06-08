@@ -6,6 +6,26 @@ This is the official log of what has happened in PESOS. Every update should be d
 
 ## 2025-01-15
 
+**Successfully merged 8 comprehensive PRs in a single operation.**  
+Completed a major merge operation combining multiple feature branches:
+
+- **PR #11**: Enhanced logging dashboard with comprehensive admin interface
+- **PR #14**: Added PesosLogo component with clock-style design
+- **PR #15**: Implemented login-aware navigation with MenuNav component
+- **PR #16**: Added loading spinner for better dashboard UX
+- **PR #17**: Improved onboarding with two-column layout design
+- **PR #18**: Created onboarding wizard strategy and documentation
+- **PR #19**: Enhanced pricing page with professional two-column layout
+- **PR #20**: Published AI blog post with comprehensive weekly summaries
+
+All conflicts were systematically resolved, prioritizing the more advanced features from the HEAD branch while incorporating valuable UI improvements from the PR branches. The merge operation maintained the integrity of the comprehensive logging system and admin dashboard while adding significant UI/UX enhancements across the application.
+
+This represents a major consolidation of development work that brings together admin infrastructure, user interface improvements, and content creation into a cohesive update.
+
+---
+
+## 2025-01-15
+
 **Renamed system tables with pesos_ prefix and implemented comprehensive login logging.**  
 Successfully renamed `SystemStatus` and `SystemUpdateLog` tables to `pesos_SystemStatus` and `pesos_SystemUpdateLog` to maintain consistency with the project's naming convention. Updated the Prisma schema, regenerated the client, and synchronized the database using `npx prisma db push --force-reset`.
 
@@ -80,3 +100,66 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+---
+
+## 2025-06-08
+
+**Implemented basic logging system and admin dashboard.**
+Added `SystemLog` model, logging utilities, and new routes to record logins, new users, and backups. Created `/admin/dashboard` to view logs.
+
+---
+
+## 2025-06-08
+
+**Added new PesosLogo and updated header.** 
+Replaced text logo with a simple clock-style icon featuring a P.
+
+---
+
+## 2025-06-08
+
+**Updated navigation for logged in users.**
+Added a `MenuNav` component and modified the header so About, Pricing, and Blog links collapse behind a Menu button when signed in. Logged out visitors still see the full nav.
+
+---
+
+## 2025-06-08
+
+**Added loading spinner for simple dashboard.**
+Created a `loading.tsx` file under `/dashboard/simple` so navigating to the page shows a spinner immediately instead of a blank screen. Updated `todo.md` with a new item for this improvement.
+
+---
+
+## 2025-06-08
+
+**Started onboarding redesign.**
+Implemented a new two-column layout for `feed-selection` with setup steps on the left and the feed form on a dark background. Added an "Improved setup wizard" task to `todo.md`.
+
+---
+
+## 2025-06-08
+
+**Outlined strategy for new user wizard and editing flow.**
+Created `docs/new-user-wizard.md` with a plan for a full-page multi-step setup wizard and inline editing pages. Updated `todo.md` with new tasks under "Onboarding & Editing" to track implementation work.
+
+---
+
+## 2025-06-08
+
+**Improved pricing page layout.**
+Created a two-column pricing page with Inter font styling. The free tier shows weekly updates while a placeholder column promises future features.
+
+---
+
+## 2025-06-08
+
+**Published "AI Blog Post" summarizing the week's progress.**
+Wrote a playful blog entry introducing myself as the resident AI. Highlighted the new agents.md file, the quick "fix codex" todo item, and our long-term vision of a calm archiving service.
+
+---
+
+## 2025-06-08
+
+**Expanded AI Blog Post with full weekly summary.**
+Added details about table renaming, admin dashboard, login logging, and item deduplication so the blog better reflects recent progress.

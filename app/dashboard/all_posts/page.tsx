@@ -48,6 +48,10 @@ export default function StatsPage() {
   const [disabledSources, setDisabledSources] = useState<string[]>([]);
 
   useEffect(() => {
+    fetch("/api/log-login", { method: "POST" });
+  }, []);
+
+  useEffect(() => {
     if (searchParams) {
       const page = searchParams.get("page");
       if (page) {

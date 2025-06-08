@@ -37,6 +37,10 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Markdown export
   - [x] CSV export
 
+### Onboarding & Setup
+
+- [ ] Improved setup wizard with side navigation
+
 ### Dashboard & Status (New Priority)
 
 - [ ] **Enhanced Status Dashboard** - Improve main dashboard with calm confidence
@@ -44,6 +48,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Last backup timestamp with friendly language
   - [ ] System health indicators
   - [ ] Remove manual fetch buttons (per end state requirements)
+  - [ ] Immediate loading spinner for `/dashboard/simple`
 
 - [ ] **Data Export Enhancement** - Polish existing export functionality
   - [ ] Better export UI/UX
@@ -64,6 +69,13 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Dashboard
   - [ ] Settings
   - [ ] Feed management
+
+### Onboarding & Editing
+
+- [ ] Replace modal-based onboarding with `/setup` wizard
+- [ ] Create dedicated settings pages for feeds and profile editing
+- [ ] Add sidebar navigation with mobile slide-out menu
+- [ ] Allow users to resume setup at any time
 
 ### Admin Features
 
@@ -140,6 +152,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Integration tests for user flows  
   - [ ] End-to-end testing
 - [x] Fix codex
+- [x] AI blog post summarizing weekly updates
 
 ## New Admin Infrastructure Tasks
 

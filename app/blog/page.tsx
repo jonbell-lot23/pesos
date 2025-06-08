@@ -6,6 +6,7 @@ export const metadata = {
 
 const posts = [
   { slug: "hello-world", title: "Hello World" },
+  { slug: "ai-blog-post", title: "AI Blog Post" },
 ];
 
 export default function BlogIndex() {
