@@ -87,3 +87,10 @@ Spent time ensuring Codex and Cursor's agents had everything necessary to be awe
 
 **Implemented basic logging system and admin dashboard.**
 Added `SystemLog` model, logging utilities, and new routes to record logins, new users, and backups. Created `/admin/dashboard` to view logs.
+
+---
+
+## 2025-06-08
+
+**Added new PesosLogo and updated header.** 
+Replaced text logo with a simple clock-style icon featuring a P.

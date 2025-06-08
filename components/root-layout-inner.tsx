@@ -17,6 +17,7 @@ import DBErrorScreen from "./db-error-screen";
 import { Settings, Download, Loader2 } from "lucide-react";
 import NavBar from "./NavBar";
 import FeedEditor from "@/components/FeedEditor";
+import PesosLogo from "./PesosLogo";
 
 interface FeedEntry {
   id: string;
@@ -241,17 +242,15 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
             <div className="flex justify-between items-center">
               <div>
                 <SignedIn>
-                  <Link href="/dashboard">
-                    <h1 className="text-2xl font-bold text-gray-900 hover:text-gray-700">
-                      PESOS
-                    </h1>
+                  <Link href="/dashboard" className="flex items-center">
+                    <PesosLogo className="w-8 h-8" />
+                    <span className="sr-only">PESOS</span>
                   </Link>
                 </SignedIn>
                 <SignedOut>
-                  <Link href="/">
-                    <h1 className="text-2xl font-bold text-gray-900 hover:text-gray-700 no-underline">
-                      PESOS
-                    </h1>
+                  <Link href="/" className="flex items-center">
+                    <PesosLogo className="w-8 h-8" />
+                    <span className="sr-only">PESOS</span>
                   </Link>
                 </SignedOut>
               </div>
