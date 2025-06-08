@@ -80,3 +80,6 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+## 2025-06-08
+
+**Added new PesosLogo and updated header.** Replaced text logo with a simple clock-style icon featuring a P.
