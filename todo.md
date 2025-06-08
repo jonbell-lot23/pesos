@@ -98,3 +98,4 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Unit tests for feed processing
   - [ ] Integration tests for user flows
   - [ ] End-to-end testing
+- [x] Fix codex
