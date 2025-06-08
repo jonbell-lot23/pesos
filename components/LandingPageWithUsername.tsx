@@ -184,20 +184,20 @@ export default function LandingPageWithUsername() {
 
       <div className="min-h-screen bg-white text-black font-sans">
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20 lg:py-8">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center justify-items-center">
-            {/* Left column */}
-            <div className="max-w-lg">
+          <div className="flex flex-col items-center justify-center text-center">
+            {/* Main heading */}
+            <div className="max-w-2xl mb-12">
               <h1
                 className="text-2xl sm:text-3xl lg:text-4xl font-normal text-black mb-6 leading-tight"
                 style={{ fontFamily: "'Instrument Serif', serif" }}
               >
-                You should back up your projects once a week, and that’s all
+                You should back up your projects once a week, and that's all
                 PESOS does.
               </h1>
             </div>
 
-            {/* Right visualization with Username Section */}
-            <div className="relative">
+            {/* Username Section */}
+            <div className="w-full max-w-md">
               <div className="p-1 bg-white rounded-xl mx-auto">
                 <div className="flex gap-3 items-start">
                   <div className="relative flex-1">
