@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { logEvent } from "@/lib/log";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +38,8 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
+
+  const startTime = Date.now();
 
   try {
     const { auth } = await import("@clerk/nextjs");
@@ -194,10 +196,18 @@ export async function POST(request: Request) {
         global.backupStatus.status = "completed";
       }
 
-      await logEvent(
-        "system_update",
-        `Backup completed with ${totalNewItems} new items",
-        userId
+      await ActivityLogger.logSystemUpdate(
+        "system_update_completed",
+        {
+          totalFeeds: sources.length,
+          processedFeeds: sources.length,
+          failedFeeds: 0,
+          newItems: totalNewItems,
+          executionTimeMs: Date.now() - startTime,
+          triggeredBy: "manual",
+          summary: `Backup completed with ${totalNewItems} new items`,
+        },
+        true
       );
 
       return NextResponse.json({
@@ -213,10 +223,15 @@ export async function POST(request: Request) {
           global.backupStatus.lastError = error.message;
         }
       }
-      await logEvent(
-        "system_update",
-        `Backup failed: ${error instanceof Error ? error.message : "unknown"}`,
-        userId
+      await ActivityLogger.logSystemUpdate(
+        "system_update_failed",
+        {
+          triggeredBy: "manual",
+          executionTimeMs: Date.now() - startTime,
+          errors: { error: error instanceof Error ? error.message : "unknown" },
+        },
+        false,
+        error instanceof Error ? error.message : "unknown"
       );
       throw error;
     }
