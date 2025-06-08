@@ -44,6 +44,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Last backup timestamp with friendly language
   - [ ] System health indicators
   - [ ] Remove manual fetch buttons (per end state requirements)
+  - [ ] Immediate loading spinner for `/dashboard/simple`
 
 - [ ] **Data Export Enhancement** - Polish existing export functionality
   - [ ] Better export UI/UX

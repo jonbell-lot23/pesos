@@ -101,3 +101,10 @@ Replaced text logo with a simple clock-style icon featuring a P.
 
 **Updated navigation for logged in users.**
 Added a `MenuNav` component and modified the header so About, Pricing, and Blog links collapse behind a Menu button when signed in. Logged out visitors still see the full nav.
+
+---
+
+## 2025-06-08
+
+**Added loading spinner for simple dashboard.**
+Created a `loading.tsx` file under `/dashboard/simple` so navigating to the page shows a spinner immediately instead of a blank screen. Updated `todo.md` with a new item for this improvement.
