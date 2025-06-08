@@ -13,6 +13,14 @@ interface FeedItem {
   source?: string;
 }
 
+interface PesosItem {
+  id: number;
+  title: string;
+  url: string;
+  userId: string;
+  [key: string]: any;
+}
+
 export function calculateMetrics(items: FeedItem[]) {
   const totalPosts = items.length;
 
@@ -89,4 +97,17 @@ export function validateUsername(username: string): UsernameValidationResult {
   }
 
   return { isValid: true };
+}
+
+export function deduplicateItems(items: PesosItem[]): PesosItem[] {
+  const seen = new Map<string, PesosItem>();
+
+  for (const item of items) {
+    const key = `${item.title}|${item.url}|${item.userId}`;
+    if (!seen.has(key)) {
+      seen.set(key, item);
+    }
+  }
+
+  return Array.from(seen.values());
 }

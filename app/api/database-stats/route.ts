@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { deduplicateItems } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -31,10 +32,24 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const [totalUsers, totalSources, totalItems] = await Promise.all([
+    // Get all items for the user to deduplicate
+    const allItems = await prisma.pesos_items.findMany({
+      where: { userId },
+      select: {
+        id: true,
+        title: true,
+        url: true,
+        userId: true,
+      },
+    });
+
+    // Deduplicate items
+    const deduplicatedItems = deduplicateItems(allItems);
+    const totalItems = deduplicatedItems.length;
+
+    const [totalUsers, totalSources] = await Promise.all([
       prisma.pesos_User.count(),
       prisma.pesos_Sources.count(),
-      prisma.pesos_items.count(),
     ]);
 
     return NextResponse.json({

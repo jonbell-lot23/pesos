@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { deduplicateItems } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +71,7 @@ export async function POST(req: NextRequest) {
         slug: true,
         postdate: true,
         sourceId: true,
+        userId: true,
         // Optionally include source info
         pesos_Sources: {
           select: {
@@ -84,10 +86,17 @@ export async function POST(req: NextRequest) {
 
     console.log("[get-posts] Number of posts found:", posts.length);
 
+    // Deduplicate posts before returning
+    const deduplicatedPosts = deduplicateItems(posts);
+    console.log(
+      "[get-posts] Number of posts after deduplication:",
+      deduplicatedPosts.length
+    );
+
     return NextResponse.json(
       {
         allowed: true,
-        posts: posts.map((post) => ({
+        posts: deduplicatedPosts.map((post) => ({
           ...post,
           sourceUrl: post.pesos_Sources?.url,
         })),

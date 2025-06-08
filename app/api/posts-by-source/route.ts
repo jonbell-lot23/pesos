@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { deduplicateItems } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -37,13 +38,29 @@ export async function GET(request: Request) {
       where: {
         sourceId: parseInt(sourceId),
       },
+      select: {
+        id: true,
+        title: true,
+        url: true,
+        userId: true,
+        postdate: true,
+        description: true,
+        slug: true,
+      },
       orderBy: {
         postdate: "desc",
       },
       take: 20,
     });
 
-    return NextResponse.json({ posts });
+    // Deduplicate posts before returning
+    const deduplicatedPosts = deduplicateItems(posts);
+    console.log(
+      "[posts-by-source] Posts after deduplication:",
+      deduplicatedPosts.length
+    );
+
+    return NextResponse.json({ posts: deduplicatedPosts });
   } catch (error) {
     console.error("Error fetching posts by source:", error);
     return NextResponse.json({ posts: [] });
