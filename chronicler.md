@@ -80,3 +80,10 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+---
+
+## 2025-06-08
+
+**Improved pricing page layout.**
+Created a two-column pricing page with Inter font styling. The free tier shows weekly updates while a placeholder column promises future features.
