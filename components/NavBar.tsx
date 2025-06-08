@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 export default function NavBar() {
   const [open, setOpen] = useState(false);
   const navItems = [
-    { href: "/", label: "Home" },
     { href: "/about", label: "About" },
     { href: "/pricing", label: "Pricing" },
     { href: "/blog", label: "Blog" },

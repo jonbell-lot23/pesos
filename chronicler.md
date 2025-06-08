@@ -94,3 +94,10 @@ Added `SystemLog` model, logging utilities, and new routes to record logins, new
 
 **Added new PesosLogo and updated header.** 
 Replaced text logo with a simple clock-style icon featuring a P.
+
+---
+
+## 2025-06-08
+
+**Updated navigation for logged in users.**
+Added a `MenuNav` component and modified the header so About, Pricing, and Blog links collapse behind a Menu button when signed in. Logged out visitors still see the full nav.
