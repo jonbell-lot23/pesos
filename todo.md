@@ -65,6 +65,13 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Settings
   - [ ] Feed management
 
+### Onboarding & Editing
+
+- [ ] Replace modal-based onboarding with `/setup` wizard
+- [ ] Create dedicated settings pages for feeds and profile editing
+- [ ] Add sidebar navigation with mobile slide-out menu
+- [ ] Allow users to resume setup at any time
+
 ### Admin Features
 
 - [x] **Admin Monitoring Dashboard** - Build foundational admin interface

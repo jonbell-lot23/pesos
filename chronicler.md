@@ -80,3 +80,8 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+## 2025-06-08
+
+**Outlined strategy for new user wizard and editing flow.**
+Created `docs/new-user-wizard.md` with a plan for a full-page multi-step setup wizard and inline editing pages. Updated `todo.md` with new tasks under "Onboarding & Editing" to track implementation work.
