@@ -80,3 +80,10 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+---
+
+## 2025-06-08
+
+**Started onboarding redesign.**
+Implemented a new two-column layout for `feed-selection` with setup steps on the left and the feed form on a dark background. Added an "Improved setup wizard" task to `todo.md`.
