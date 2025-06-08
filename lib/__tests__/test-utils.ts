@@ -1,5 +1,5 @@
-import { vi } from 'vitest';
-import { NextRequest } from 'next/server';
+import { vi } from "vitest";
+import { NextRequest } from "next/server";
 
 // Mock Prisma client utilities
 export const createMockPrisma = () => {
@@ -59,9 +59,15 @@ export const createMockPrisma = () => {
       create: vi.fn(),
       findMany: vi.fn(),
     },
-    SystemLog: {
-      create: vi.fn(),
+    User: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    ActivityLog: {
+      findMany: vi.fn(),
+      create: vi.fn(),
     },
   };
 };
@@ -85,10 +91,10 @@ export const createMockDbPool = () => {
 export const createMockRequest = (method: string, body?: any, url?: string) => {
   const request = {
     method,
-    url: url || 'http://localhost:3000/api/test',
+    url: url || "http://localhost:3000/api/test",
     json: vi.fn().mockResolvedValue(body || {}),
     headers: new Headers(),
-    nextUrl: new URL(url || 'http://localhost:3000/api/test'),
+    nextUrl: new URL(url || "http://localhost:3000/api/test"),
   } as unknown as NextRequest;
 
   return request;
@@ -97,25 +103,27 @@ export const createMockRequest = (method: string, body?: any, url?: string) => {
 // Mock environment for build detection
 export const mockBuildEnvironment = () => {
   const originalEnv = { ...process.env };
-  
+
   return {
     setBuildMode: () => {
-      process.env.NEXT_PHASE = 'phase-production-build';
-      process.env.BUILDING = 'true';
+      process.env.NEXT_PHASE = "phase-production-build";
+      process.env.BUILDING = "true";
     },
     setProductionMode: () => {
-      process.env.NODE_ENV = 'production';
-      process.env.VERCEL_URL = 'test.vercel.app';
-      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
+      process.env.NODE_ENV = "production";
+      process.env.VERCEL_URL = "test.vercel.app";
+      process.env.DATABASE_URL =
+        "postgresql://test:test@localhost:5432/test_db";
     },
     setTestMode: () => {
-      process.env.NODE_ENV = 'test';
-      process.env.BUILDING = 'false';
-      process.env.NEXT_PHASE = '';
-      process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db';
+      process.env.NODE_ENV = "test";
+      process.env.BUILDING = "false";
+      process.env.NEXT_PHASE = "";
+      process.env.DATABASE_URL =
+        "postgresql://test:test@localhost:5432/test_db";
     },
     restore: () => {
-      Object.keys(process.env).forEach(key => {
+      Object.keys(process.env).forEach((key) => {
         if (originalEnv[key] === undefined) {
           delete process.env[key];
         } else {
@@ -142,19 +150,19 @@ export const timeUtils = {
 
 // Error simulation utilities
 export const errorUtils = {
-  simulateDatabaseError: (message: string = 'Database connection failed') => {
+  simulateDatabaseError: (message: string = "Database connection failed") => {
     const error = new Error(message);
-    error.name = 'DatabaseError';
+    error.name = "DatabaseError";
     return error;
   },
-  simulateNetworkError: (message: string = 'Network request failed') => {
+  simulateNetworkError: (message: string = "Network request failed") => {
     const error = new Error(message);
-    error.name = 'NetworkError';
+    error.name = "NetworkError";
     return error;
   },
-  simulateTimeout: (message: string = 'Operation timed out') => {
+  simulateTimeout: (message: string = "Operation timed out") => {
     const error = new Error(message);
-    error.name = 'TimeoutError';
+    error.name = "TimeoutError";
     return error;
   },
 };
