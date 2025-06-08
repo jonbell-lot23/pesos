@@ -129,10 +129,10 @@ export class ActivityLogger {
       duration: metadata.executionTimeMs
     });
 
-    // Also log to SystemUpdateLog if it's a completed update
+    // Also log to pesos_SystemUpdateLog if it's a completed update
     if (eventType === "system_update_completed") {
       try {
-        await prisma.systemUpdateLog.create({
+        await prisma.pesos_SystemUpdateLog.create({
           data: {
             totalFeeds: metadata.totalFeeds || 0,
             processedFeeds: metadata.processedFeeds || 0,

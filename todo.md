@@ -19,6 +19,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Feed connections
   - [x] Archived items
   - [x] Processing queue
+  - [x] **System tables renamed with pesos_ prefix** - SystemStatus and SystemUpdateLog now properly named
 - [x] Background job system
   - [x] Feed checking service (3-hour intervals)
   - [x] Queue management
@@ -75,7 +76,12 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Comprehensive spreadsheet-like view
   - [x] System update tracking
   - [x] User activity monitoring
-- [x] Logging system
+- [x] **Comprehensive Logging System** - **COMPLETED**
+  - [x] **Login event logging** - Now properly tracks user authentication
+  - [x] **Database table consistency** - All system tables use pesos_ prefix
+  - [x] **Enhanced middleware logging** - Logs page views and login events
+  - [x] **Internal logging API** - Middleware can log activities via `/api/internal/log-activity`
+  - [x] **Comprehensive test coverage** - Unit tests, integration tests, and error handling
   - [x] Backup logs
   - [x] Queue logs
   - [x] Error tracking
@@ -125,19 +131,25 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Database indexing
   - [ ] Caching strategy
   - [ ] Load testing
-- [ ] Testing
+- [x] **Testing Infrastructure** - **COMPLETED**
+  - [x] **Comprehensive activity logger tests**
+  - [x] **API endpoint tests for internal logging**
+  - [x] **Integration tests for login flow**
+  - [x] **Error handling test coverage**
   - [ ] Unit tests for feed processing
-  - [ ] Integration tests for user flows
+  - [ ] Integration tests for user flows  
   - [ ] End-to-end testing
 - [x] Fix codex
 
 ## New Admin Infrastructure Tasks
 
-- [ ] **Integrate logging into more endpoints**
+- [x] **Integrate logging into more endpoints** - **COMPLETED**
+  - [x] **Add logging to authentication endpoints** - getLocalUser now logs login events
+  - [x] **Add comprehensive middleware logging** - Page views and login detection
+  - [x] **Add login event detection** - Middleware detects and logs user logins
   - [ ] Add logging to source management endpoints
   - [ ] Add logging to export functionality
   - [ ] Add logging to backup creation
-  - [ ] Add page view tracking middleware
 
 - [ ] **Admin Dashboard Enhancements**
   - [ ] Add real-time refresh capability

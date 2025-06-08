@@ -1,8 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
-async function getLocalUser(clerkId?: string) {
+async function getLocalUser(clerkId?: string, request?: NextRequest) {
   // More targeted build detection
   if (
     process.env.NEXT_PHASE === "phase-production-build" ||
@@ -34,6 +35,23 @@ async function getLocalUser(clerkId?: string) {
       where: { id: userId },
     });
 
+    // Log successful user authentication/verification if user exists
+    if (user && request) {
+      const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+      await ActivityLogger.log({
+        eventType: "user_login",
+        userId: user.id,
+        metadata: {
+          username: user.username,
+          verificationMethod: "getLocalUser",
+          timestamp: new Date().toISOString()
+        },
+        ipAddress,
+        userAgent,
+        source: "api"
+      });
+    }
+
     return { localUser: user };
   } catch (error) {
     console.error("Error fetching local user:", error);
@@ -41,20 +59,18 @@ async function getLocalUser(clerkId?: string) {
   }
 }
 
-export async function GET() {
-  const result = await getLocalUser();
+export async function GET(request: NextRequest) {
+  const result = await getLocalUser(undefined, request);
   return NextResponse.json(result);
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { clerkId } = body;
-
-    const result = await getLocalUser(clerkId);
+    const { clerkId } = await request.json();
+    const result = await getLocalUser(clerkId, request);
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Error parsing POST request:", error);
+    console.error("Error processing request:", error);
     return NextResponse.json({ localUser: null });
   }
 }
