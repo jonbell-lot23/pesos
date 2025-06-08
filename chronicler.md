@@ -80,3 +80,8 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+## 2025-06-08
+
+**Updated navigation for logged in users.**
+Added a `MenuNav` component and modified the header so About, Pricing, and Blog links collapse behind a Menu button when signed in. Logged out visitors still see the full nav.

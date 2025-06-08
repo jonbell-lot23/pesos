@@ -16,6 +16,7 @@ import UsernameModal from "./username-modal";
 import DBErrorScreen from "./db-error-screen";
 import { Settings, Download, Loader2 } from "lucide-react";
 import NavBar from "./NavBar";
+import MenuNav from "./MenuNav";
 import FeedEditor from "@/components/FeedEditor";
 
 interface FeedEntry {
@@ -256,7 +257,12 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                 </SignedOut>
               </div>
               <div className="flex items-center space-x-4">
-                <NavBar />
+                <SignedOut>
+                  <NavBar />
+                </SignedOut>
+                <SignedIn>
+                  <MenuNav />
+                </SignedIn>
                 <SignedIn>
                   {pathname !== "/dashboard/all_posts" && (
                     <>
