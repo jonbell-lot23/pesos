@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
+import { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
 
@@ -19,15 +20,16 @@ export async function GET(request: Request) {
     since.setDate(since.getDate() - days);
 
     // Build where clause
-    const where: any = {
+    const where: Prisma.ActivityLogWhereInput = {
       timestamp: {
-        gte: since
-      }
+        gte: since,
+      },
     };
 
     if (eventType) where.eventType = eventType;
     if (userId) where.userId = userId;
-    if (success !== null && success !== undefined) where.success = success === "true";
+    if (success !== null && success !== undefined)
+      where.success = success === "true";
     if (source) where.source = source;
 
     // Fetch activity logs
@@ -35,12 +37,12 @@ export async function GET(request: Request) {
       prisma.activityLog.findMany({
         where,
         orderBy: {
-          timestamp: "desc"
+          timestamp: "desc",
         },
         take: limit,
-        skip: offset
+        skip: offset,
       }),
-      prisma.activityLog.count({ where })
+      prisma.activityLog.count({ where }),
     ]);
 
     // Get summary statistics
@@ -51,57 +53,57 @@ export async function GET(request: Request) {
       errorCount,
       eventTypeCounts,
       userCounts,
-      sourceCounts
+      sourceCounts,
     ] = await Promise.all([
       // Total unique users
       prisma.activityLog.count({
         where: {
           eventType: "user_created",
-          timestamp: { gte: since }
-        }
+          timestamp: { gte: since },
+        },
       }),
-      
+
       // Total logins in period
       prisma.activityLog.count({
         where: {
           eventType: "user_login",
-          timestamp: { gte: since }
-        }
+          timestamp: { gte: since },
+        },
       }),
 
       // Recent system updates
-      prisma.systemUpdateLog.findMany({
+      prisma.pesos_SystemUpdateLog.findMany({
         where: {
-          timestamp: { gte: since }
+          timestamp: { gte: since },
         },
         orderBy: {
-          timestamp: "desc"
+          timestamp: "desc",
         },
-        take: 10
+        take: 10,
       }),
 
       // Error count
       prisma.activityLog.count({
         where: {
           success: false,
-          timestamp: { gte: since }
-        }
+          timestamp: { gte: since },
+        },
       }),
 
       // Event type breakdown
       prisma.activityLog.groupBy({
         by: ["eventType"],
         where: {
-          timestamp: { gte: since }
+          timestamp: { gte: since },
         },
         _count: {
-          id: true
+          id: true,
         },
         orderBy: {
           _count: {
-            id: "desc"
-          }
-        }
+            id: "desc",
+          },
+        },
       }),
 
       // User activity breakdown (top 10 most active users)
@@ -109,34 +111,34 @@ export async function GET(request: Request) {
         by: ["userId"],
         where: {
           userId: { not: null },
-          timestamp: { gte: since }
+          timestamp: { gte: since },
         },
         _count: {
-          id: true
+          id: true,
         },
         orderBy: {
           _count: {
-            id: "desc"
-          }
+            id: "desc",
+          },
         },
-        take: 10
+        take: 10,
       }),
 
       // Source breakdown
       prisma.activityLog.groupBy({
         by: ["source"],
         where: {
-          timestamp: { gte: since }
+          timestamp: { gte: since },
         },
         _count: {
-          id: true
+          id: true,
         },
         orderBy: {
           _count: {
-            id: "desc"
-          }
-        }
-      })
+            id: "desc",
+          },
+        },
+      }),
     ]);
 
     return NextResponse.json({
@@ -147,25 +149,30 @@ export async function GET(request: Request) {
         totalLogins,
         errorCount,
         systemUpdates: recentSystemUpdates.length,
-        period: `Last ${days} days`
+        period: `Last ${days} days`,
       },
       breakdowns: {
-        eventTypes: eventTypeCounts.map(et => ({
-          eventType: et.eventType,
-          count: et._count.id
-        })),
-        users: userCounts.map(uc => ({
-          userId: uc.userId,
-          count: uc._count.id
-        })),
-        sources: sourceCounts.map(sc => ({
-          source: sc.source,
-          count: sc._count.id
-        }))
+        eventTypes: eventTypeCounts.map(
+          (et: { eventType: string; _count: { id: number } }) => ({
+            eventType: et.eventType,
+            count: et._count.id,
+          })
+        ),
+        users: userCounts.map(
+          (uc: { userId: string | null; _count: { id: number } }) => ({
+            userId: uc.userId || "unknown",
+            count: uc._count.id,
+          })
+        ),
+        sources: sourceCounts.map(
+          (sc: { source: string | null; _count: { id: number } }) => ({
+            source: sc.source || "unknown",
+            count: sc._count.id,
+          })
+        ),
       },
-      recentSystemUpdates
+      recentSystemUpdates,
     });
-
   } catch (error) {
     console.error("Error fetching activity logs:", error);
     return NextResponse.json(
