@@ -79,51 +79,63 @@ export default function FeedSelection() {
   };
 
   return (
-    <div className="container mx-auto p-4 w-full max-w-2xl">
-      <h1 className="text-3xl font-bold mb-6">Add Your RSS Feeds</h1>
-      {feeds.map((feed, index) => (
-        <div key={index} className="flex flex-col space-y-2 mb-4">
-          <div className="flex items-center space-x-2">
-            <Input
-              type="url"
-              placeholder="Enter RSS feed URL"
-              value={feed.url}
-              onChange={(e) => updateFeed(index, e.target.value)}
-              className={`flex-grow ${
-                feed.status === "error"
-                  ? "border-red-500"
-                  : feed.status === "success"
-                  ? "border-green-500"
-                  : ""
-              }`}
-            />
-            <Button variant="secondary" onClick={() => removeFeed(index)}>
-              Remove
-            </Button>
-          </div>
-          {feed.status === "loading" && (
-            <div className="text-sm text-gray-500">Checking feed...</div>
-          )}
-          {feed.error && (
-            <div className="text-sm text-red-500">{feed.error}</div>
-          )}
-          {feed.status === "success" && (
-            <div className="text-sm text-green-500">
-              Feed validated successfully
+    <div className="flex min-h-screen">
+      <aside className="w-64 bg-gray-50 border-r p-6">
+        <h2 className="text-lg font-bold mb-4">Setup Steps</h2>
+        <ol className="space-y-2">
+          <li className="font-semibold">1. Add Feeds</li>
+          <li>2. Configure Backups</li>
+          <li>3. Finish</li>
+        </ol>
+      </aside>
+      <main className="flex-1 flex items-center justify-center bg-black text-white p-8">
+        <div className="bg-white text-black p-8 rounded shadow w-full max-w-xl">
+          <h1 className="text-3xl font-bold mb-6">Add Your RSS Feeds</h1>
+          {feeds.map((feed, index) => (
+            <div key={index} className="flex flex-col space-y-2 mb-4">
+              <div className="flex items-center space-x-2">
+                <Input
+                  type="url"
+                  placeholder="Enter RSS feed URL"
+                  value={feed.url}
+                  onChange={(e) => updateFeed(index, e.target.value)}
+                  className={`flex-grow ${
+                    feed.status === "error"
+                      ? "border-red-500"
+                      : feed.status === "success"
+                      ? "border-green-500"
+                      : ""
+                  }`}
+                />
+                <Button variant="secondary" onClick={() => removeFeed(index)}>
+                  Remove
+                </Button>
+              </div>
+              {feed.status === "loading" && (
+                <div className="text-sm text-gray-500">Checking feed...</div>
+              )}
+              {feed.error && (
+                <div className="text-sm text-red-500">{feed.error}</div>
+              )}
+              {feed.status === "success" && (
+                <div className="text-sm text-green-500">
+                  Feed validated successfully
+                </div>
+              )}
             </div>
-          )}
+          ))}
+          <Button onClick={addFeed} className="mt-4 mb-8">
+            Add Another Feed
+          </Button>
+          <Button
+            onClick={handleContinue}
+            className="w-full"
+            disabled={isLoading || !feeds.some((f) => f.status === "success")}
+          >
+            {isLoading ? "Saving..." : "Continue"}
+          </Button>
         </div>
-      ))}
-      <Button onClick={addFeed} className="mt-4 mb-8">
-        Add Another Feed
-      </Button>
-      <Button
-        onClick={handleContinue}
-        className="w-full"
-        disabled={isLoading || !feeds.some((f) => f.status === "success")}
-      >
-        {isLoading ? "Saving..." : "Continue"}
-      </Button>
+      </main>
     </div>
   );
 }

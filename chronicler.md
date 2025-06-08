@@ -108,3 +108,10 @@ Added a `MenuNav` component and modified the header so About, Pricing, and Blog 
 
 **Added loading spinner for simple dashboard.**
 Created a `loading.tsx` file under `/dashboard/simple` so navigating to the page shows a spinner immediately instead of a blank screen. Updated `todo.md` with a new item for this improvement.
+
+---
+
+## 2025-06-08
+
+**Started onboarding redesign.**
+Implemented a new two-column layout for `feed-selection` with setup steps on the left and the feed form on a dark background. Added an "Improved setup wizard" task to `todo.md`.

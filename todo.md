@@ -37,6 +37,10 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Markdown export
   - [x] CSV export
 
+### Onboarding & Setup
+
+- [ ] Improved setup wizard with side navigation
+
 ### Dashboard & Status (New Priority)
 
 - [ ] **Enhanced Status Dashboard** - Improve main dashboard with calm confidence
