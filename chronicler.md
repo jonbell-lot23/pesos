@@ -80,3 +80,10 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+---
+
+## 2025-06-08
+
+**Added loading spinner for simple dashboard.**
+Created a `loading.tsx` file under `/dashboard/simple` so navigating to the page shows a spinner immediately instead of a blank screen. Updated `todo.md` with a new item for this improvement.
