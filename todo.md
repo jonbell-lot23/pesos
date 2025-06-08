@@ -36,14 +36,29 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Markdown export
   - [x] CSV export
 
+### Dashboard & Status (New Priority)
+
+- [ ] **Enhanced Status Dashboard** - Improve main dashboard with calm confidence
+  - [ ] Queue status display ("5 items queued, processing in 2 hours")
+  - [ ] Last backup timestamp with friendly language
+  - [ ] System health indicators
+  - [ ] Remove manual fetch buttons (per end state requirements)
+
+- [ ] **Data Export Enhancement** - Polish existing export functionality
+  - [ ] Better export UI/UX
+  - [ ] Export status tracking
+  - [ ] Clear documentation of data formats
+  - [ ] Preview before download
+
 ## Medium Priority
 
 ### Mobile Experience
 
-- [ ] Design and implement mobile interface
-  - [ ] Background image system
-  - [ ] Status text display
-  - [ ] Minimal UI components
+- [ ] **Mobile Dashboard Experience** - Create minimal mobile interface
+  - [ ] Simple background image system
+  - [ ] Clean status text ("All good! 309 items stored. Last one 10 days ago")
+  - [ ] Mobile-optimized dashboard view
+  - [ ] "Postcard from your archive robot" feel
 - [ ] Create mobile-optimized views
   - [ ] Dashboard
   - [ ] Settings
@@ -51,14 +66,23 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
 
 ### Admin Features
 
-- [ ] Basic admin dashboard
+- [ ] **Admin Monitoring Dashboard** - Build foundational admin interface
   - [ ] System status monitoring
-  - [ ] User management
-  - [ ] Log viewing
+  - [ ] Basic user stats
+  - [ ] Processing queue visibility
+  - [ ] Error log viewing (verbose/diagnosable)
 - [ ] Logging system
   - [ ] Backup logs
   - [ ] Queue logs
   - [ ] Error tracking
+
+### Notifications & Communication
+
+- [ ] **Notification System Foundation** - Implement email/notification infrastructure
+  - [ ] Optional email field in user profiles
+  - [ ] Basic notification preferences
+  - [ ] Email templates for backup success/failure
+  - [ ] In-app notification system
 
 ## Future Features
 
