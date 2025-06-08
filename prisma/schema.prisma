@@ -97,3 +97,11 @@ model SystemStatus {
   processedFeeds  Int       @default(0)
   executionTimeMs Int       @default(0)
 }
+
+model SystemLog {
+  id        Int      @id @default(autoincrement())
+  eventType String
+  message   String
+  userId    String?
+  createdAt DateTime @default(now())
+}

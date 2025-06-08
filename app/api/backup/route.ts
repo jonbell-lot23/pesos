@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { logEvent } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -193,6 +194,12 @@ export async function POST(request: Request) {
         global.backupStatus.status = "completed";
       }
 
+      await logEvent(
+        "system_update",
+        `Backup completed with ${totalNewItems} new items",
+        userId
+      );
+
       return NextResponse.json({
         status: "completed",
         storyCount: totalNewItems,
@@ -206,6 +213,11 @@ export async function POST(request: Request) {
           global.backupStatus.lastError = error.message;
         }
       }
+      await logEvent(
+        "system_update",
+        `Backup failed: ${error instanceof Error ? error.message : "unknown"}`,
+        userId
+      );
       throw error;
     }
   } catch (error) {

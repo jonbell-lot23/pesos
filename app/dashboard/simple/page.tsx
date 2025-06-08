@@ -74,6 +74,10 @@ export default function SimpleDashboard() {
   });
 
   useEffect(() => {
+    fetch("/api/log-login", { method: "POST" });
+  }, []);
+
+  useEffect(() => {
     if (sourcesData?.hasDisabledSources) {
       setHasDisabledSources(true);
       if (sourcesData.disabledSources) {

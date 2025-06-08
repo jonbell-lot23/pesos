@@ -71,7 +71,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Basic user stats
   - [ ] Processing queue visibility
   - [ ] Error log viewing (verbose/diagnosable)
-- [ ] Logging system
+- [x] Logging system
   - [ ] Backup logs
   - [ ] Queue logs
   - [ ] Error tracking
