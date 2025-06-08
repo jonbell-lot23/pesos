@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import pg from "pg";
 import RssParser from "rss-parser";
 import prisma from "@/lib/prismadb";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 const parser = new RssParser();
 
@@ -68,6 +69,9 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const shouldClearFailedFeeds =
     searchParams.get("clearFailedFeeds") === "true";
+  
+  // Determine how this was triggered
+  const triggeredBy = searchParams.get("triggered_by") || "manual";
 
   // Clear failed feeds if requested
   if (shouldClearFailedFeeds && global.updateStatus) {
@@ -105,6 +109,15 @@ export async function GET(request: Request) {
     global.updateStatus.lastError = null;
     global.updateStatus.logs = [];
   }
+
+  // Log that system update is starting
+  await ActivityLogger.logSystemUpdate(
+    "system_update_started",
+    {
+      triggeredBy
+    },
+    true
+  );
 
   // Create database client
   const client = new pg.Client({
@@ -388,6 +401,21 @@ export async function GET(request: Request) {
 
     addLog(message);
 
+    // Log successful system update completion
+    await ActivityLogger.logSystemUpdate(
+      "system_update_completed",
+      {
+        totalFeeds: sources.length,
+        processedFeeds: stats.totalFeedsProcessed,
+        failedFeeds: stats.totalErrors,
+        newItems: stats.totalNewItems,
+        executionTimeMs: stats.executionTimeMs,
+        triggeredBy,
+        summary: message
+      },
+      true
+    );
+
     return NextResponse.json({
       success: true,
       message,
@@ -398,6 +426,18 @@ export async function GET(request: Request) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     addLog(`Fatal error: ${errorMessage}`);
+
+    // Log failed system update
+    await ActivityLogger.logSystemUpdate(
+      "system_update_failed",
+      {
+        triggeredBy,
+        executionTimeMs: Date.now() - startTime,
+        errors: { error: errorMessage }
+      },
+      false,
+      errorMessage
+    );
 
     // Update global status on error
     if (global.updateStatus) {

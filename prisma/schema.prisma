@@ -97,3 +97,53 @@ model SystemStatus {
   processedFeeds  Int       @default(0)
   executionTimeMs Int       @default(0)
 }
+
+// Activity logging tables for comprehensive system tracking
+model ActivityLog {
+  id        Int          @id @default(autoincrement())
+  timestamp DateTime     @default(now())
+  eventType String       // "user_created", "user_login", "system_update", "feed_sync", etc.
+  userId    String?      // Optional - for user-specific events
+  metadata  Json?        // Flexible JSON field for event-specific data
+  ipAddress String?
+  userAgent String?
+  duration  Int?         // Duration in milliseconds for events that have duration
+  success   Boolean      @default(true)
+  errorMessage String?   // For failed events
+  source    String?      // "web", "api", "cron", etc.
+  
+  @@index([timestamp])
+  @@index([eventType])
+  @@index([userId])
+  @@index([success])
+}
+
+model SystemUpdateLog {
+  id               Int      @id @default(autoincrement())
+  timestamp        DateTime @default(now())
+  totalFeeds       Int      @default(0)
+  processedFeeds   Int      @default(0)
+  failedFeeds      Int      @default(0)
+  newItems         Int      @default(0)
+  executionTimeMs  Int      @default(0)
+  triggeredBy      String?  // "cron", "manual", "api"
+  errors           Json?    // Store any errors that occurred
+  summary          String?  // Human-readable summary
+  
+  @@index([timestamp])
+}
+
+model UserSessionLog {
+  id          Int      @id @default(autoincrement())
+  timestamp   DateTime @default(now())
+  userId      String
+  action      String   // "login", "logout", "session_refresh"
+  ipAddress   String?
+  userAgent   String?
+  sessionId   String?
+  duration    Int?     // For logout events, duration of session
+  
+  @@index([timestamp])
+  @@index([userId])
+  @@index([action])
+}

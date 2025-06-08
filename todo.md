@@ -66,15 +66,22 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
 
 ### Admin Features
 
-- [ ] **Admin Monitoring Dashboard** - Build foundational admin interface
-  - [ ] System status monitoring
-  - [ ] Basic user stats
-  - [ ] Processing queue visibility
-  - [ ] Error log viewing (verbose/diagnosable)
-- [ ] Logging system
-  - [ ] Backup logs
-  - [ ] Queue logs
-  - [ ] Error tracking
+- [x] **Admin Monitoring Dashboard** - Build foundational admin interface
+  - [x] System status monitoring
+  - [x] Basic user stats
+  - [x] Processing queue visibility
+  - [x] Error log viewing (verbose/diagnosable)
+  - [x] Activity logging system
+  - [x] Comprehensive spreadsheet-like view
+  - [x] System update tracking
+  - [x] User activity monitoring
+- [x] Logging system
+  - [x] Backup logs
+  - [x] Queue logs
+  - [x] Error tracking
+  - [x] User creation/login tracking
+  - [x] Page view tracking
+  - [x] API call tracking
 
 ### Notifications & Communication
 
@@ -123,3 +130,17 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Integration tests for user flows
   - [ ] End-to-end testing
 - [x] Fix codex
+
+## New Admin Infrastructure Tasks
+
+- [ ] **Integrate logging into more endpoints**
+  - [ ] Add logging to source management endpoints
+  - [ ] Add logging to export functionality
+  - [ ] Add logging to backup creation
+  - [ ] Add page view tracking middleware
+
+- [ ] **Admin Dashboard Enhancements**
+  - [ ] Add real-time refresh capability
+  - [ ] Add data export from admin dashboard
+  - [ ] Add user lookup and management features
+  - [ ] Add system health monitoring alerts
