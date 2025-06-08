@@ -1,13 +1,16 @@
-import prisma from "@/lib/prismadb";
+import { ActivityLogger, ActivityEventType } from "@/lib/activity-logger";
 
-export async function logEvent(eventType: string, message: string, userId?: string) {
+export async function logEvent(
+  eventType: ActivityEventType,
+  message: string,
+  userId?: string
+) {
   try {
-    await prisma.systemLog.create({
-      data: {
-        eventType,
-        message,
-        userId: userId || null,
-      },
+    await ActivityLogger.log({
+      eventType,
+      metadata: { message },
+      userId,
+      source: "system",
     });
   } catch (error) {
     console.error("[logEvent] Failed to write log", error);
