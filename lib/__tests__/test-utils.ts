@@ -33,9 +33,27 @@ export const createMockPrisma = () => {
       create: vi.fn(),
       delete: vi.fn(),
     },
-    SystemStatus: {
+    pesos_SystemStatus: {
       findUnique: vi.fn(),
       upsert: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+    },
+    pesos_SystemUpdateLog: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+    },
+    activityLog: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      count: vi.fn(),
+    },
+    userSessionLog: {
+      findMany: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
     },
     Backup: {
       create: vi.fn(),

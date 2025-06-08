@@ -6,6 +6,28 @@ This is the official log of what has happened in PESOS. Every update should be d
 
 ## 2025-01-15
 
+**Renamed system tables with pesos_ prefix and implemented comprehensive login logging.**  
+Successfully renamed `SystemStatus` and `SystemUpdateLog` tables to `pesos_SystemStatus` and `pesos_SystemUpdateLog` to maintain consistency with the project's naming convention. Updated the Prisma schema, regenerated the client, and synchronized the database using `npx prisma db push --force-reset`.
+
+Enhanced the logging infrastructure to properly track user login events:
+- Created enhanced middleware that logs user login events when accessing protected routes
+- Added internal API endpoint `/api/internal/log-activity` for middleware and system logging
+- Updated `getLocalUser` API to log successful user authentication events
+- Maintained existing comprehensive logging in `createUser` API for user creation and conflict scenarios
+
+**Implemented comprehensive test coverage for login logging functionality.**  
+Created extensive test suites covering:
+- `ActivityLogger` unit tests for all logging methods including renamed table functionality
+- Internal log activity API endpoint tests with error handling and validation
+- Integration tests for complete login logging flow from user creation to verification
+- Error handling scenarios to ensure system stability even when logging fails
+
+The system now provides full visibility into user authentication activities while maintaining the "calm confidence" approach - logging works silently in the background without affecting user experience. This addresses the original issue where login events weren't being logged and supports the admin dashboard's comprehensive activity monitoring capabilities.
+
+---
+
+## 2025-01-15
+
 **Built comprehensive admin dashboard and activity logging system.**  
 Created a full-featured admin dashboard at `/admin/dashboard` with extensive system monitoring capabilities. Implemented comprehensive activity logging infrastructure that tracks:
 

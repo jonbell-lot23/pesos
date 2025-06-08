@@ -87,7 +87,7 @@ model Backup {
   storyCount Int      @default(0)
 }
 
-model SystemStatus {
+model pesos_SystemStatus {
   id              Int       @id @default(autoincrement())
   key             String    @unique
   lastRun         DateTime?
@@ -118,7 +118,7 @@ model ActivityLog {
   @@index([success])
 }
 
-model SystemUpdateLog {
+model pesos_SystemUpdateLog {
   id               Int      @id @default(autoincrement())
   timestamp        DateTime @default(now())
   totalFeeds       Int      @default(0)
