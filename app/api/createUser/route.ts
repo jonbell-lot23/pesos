@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { NextRequest } from "next/server";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,9 @@ export async function POST(request: Request) {
 
   try {
     const prisma = (await import("@/lib/prismadb")).default;
+    
+    // Get client info for logging
+    const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
 
     const body = await request.json();
     const { username, clerkId } = createUserSchema.parse(body);
@@ -42,6 +46,19 @@ export async function POST(request: Request) {
     });
 
     if (existingUser) {
+      // Log that an existing user tried to create an account again
+      await ActivityLogger.log({
+        eventType: "user_login",
+        userId: clerkId,
+        metadata: {
+          username: existingUser.username,
+          action: "attempted_duplicate_creation"
+        },
+        ipAddress,
+        userAgent,
+        source: "api"
+      });
+
       return NextResponse.json({
         success: true,
         message: "User already exists",
@@ -55,6 +72,21 @@ export async function POST(request: Request) {
     });
 
     if (existingUsername) {
+      // Log failed user creation attempt due to username conflict
+      await ActivityLogger.log({
+        eventType: "user_created",
+        userId: clerkId,
+        metadata: {
+          username: username.toLowerCase(),
+          reason: "username_taken"
+        },
+        ipAddress,
+        userAgent,
+        success: false,
+        errorMessage: "Username is already taken",
+        source: "api"
+      });
+
       return NextResponse.json(
         {
           success: false,
@@ -72,6 +104,17 @@ export async function POST(request: Request) {
       },
     });
 
+    // Log successful user creation
+    await ActivityLogger.logUserCreated(
+      clerkId,
+      {
+        username: username.toLowerCase(),
+        createdAt: newUser.createdAt
+      },
+      ipAddress,
+      userAgent
+    );
+
     return NextResponse.json({
       success: true,
       message: "User created successfully",
@@ -79,6 +122,18 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error("Error creating user:", error);
+    
+    // Log failed user creation
+    await ActivityLogger.log({
+      eventType: "user_created",
+      metadata: {
+        error: error instanceof Error ? error.message : "Unknown error"
+      },
+      success: false,
+      errorMessage: error instanceof Error ? error.message : "Failed to create user",
+      source: "api"
+    });
+
     return NextResponse.json(
       { success: false, error: "Failed to create user" },
       { status: 500 }
