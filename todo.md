@@ -152,6 +152,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Integration tests for user flows  
   - [ ] End-to-end testing
 - [x] Fix codex
+- [x] AI blog post summarizing weekly updates
 
 ## New Admin Infrastructure Tasks
 

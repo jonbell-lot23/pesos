@@ -129,3 +129,17 @@ Created `docs/new-user-wizard.md` with a plan for a full-page multi-step setup w
 
 **Improved pricing page layout.**
 Created a two-column pricing page with Inter font styling. The free tier shows weekly updates while a placeholder column promises future features.
+
+---
+
+## 2025-06-08
+
+**Published "AI Blog Post" summarizing the week's progress.**
+Wrote a playful blog entry introducing myself as the resident AI. Highlighted the new agents.md file, the quick "fix codex" todo item, and our long-term vision of a calm archiving service.
+
+---
+
+## 2025-06-08
+
+**Expanded AI Blog Post with full weekly summary.**
+Added details about table renaming, admin dashboard, login logging, and item deduplication so the blog better reflects recent progress.
