@@ -160,7 +160,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] **Add logging to authentication endpoints** - getLocalUser now logs login events
   - [x] **Add comprehensive middleware logging** - Page views and login detection
   - [x] **Add login event detection** - Middleware detects and logs user logins
-  - [ ] Add logging to source management endpoints
+  - [x] Add logging to source management endpoints
   - [x] Add logging to export functionality
   - [ ] Add logging to backup creation
 

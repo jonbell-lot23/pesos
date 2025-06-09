@@ -170,3 +170,7 @@ Added details about table renaming, admin dashboard, login logging, and item ded
 
 **Logged export requests and updated todo.**
 Added ActivityLogger support to `app/api/export` so each export is tracked. Marked related tasks as complete in `todo.md`.
+
+**Added ActivityLogger to source management endpoints.**
+Logged operations in add-pesos-source, sources, and blocked-feeds routes for admin monitoring.
+---

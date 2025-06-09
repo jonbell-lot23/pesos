@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +95,16 @@ export async function POST(request: Request) {
           userId,
           sourceId: source.id,
         },
+      });
+
+      const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+      await ActivityLogger.log({
+        eventType: "source_added",
+        userId,
+        metadata: { sourceId: source.id, url },
+        ipAddress,
+        userAgent,
+        source: "api",
       });
     }
 
