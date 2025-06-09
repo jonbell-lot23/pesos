@@ -174,3 +174,9 @@ Added ActivityLogger support to `app/api/export` so each export is tracked. Mark
 **Added ActivityLogger to source management endpoints.**
 Logged operations in add-pesos-source, sources, and blocked-feeds routes for admin monitoring.
 ---
+
+---
+
+## 2025-06-09
+
+**Simplified admin dashboard.** Replaced the bulky dashboard page with a lightweight version that fetches the latest activity logs from /api/admin/logs. This makes it easy to verify logging is working.
