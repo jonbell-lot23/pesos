@@ -162,7 +162,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] **Add login event detection** - Middleware detects and logs user logins
   - [x] Add logging to source management endpoints
   - [x] Add logging to export functionality
-  - [ ] Add logging to backup creation
+  - [x] Add logging to backup creation
 
 - [ ] **Admin Dashboard Enhancements**
   - [ ] Add real-time refresh capability
