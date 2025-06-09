@@ -4,6 +4,21 @@ This is the official log of what has happened in PESOS. Every update should be d
 
 ---
 
+## 2025-01-31
+
+**Fixed production error in admin dashboard causing server-side exception.**  
+Resolved `TypeError: (0 , s.default) is not a function` error that was preventing `/admin/dashboard` from loading in production on Vercel. The issue was that the admin dashboard was using `useSWR` for client-side data fetching, but the `swr` package was not installed as a dependency.
+
+Applied two-part fix:
+1. **Converted admin dashboard to server-side rendering** - Replaced SWR with direct Prisma database queries in the admin dashboard page, making it a server component that fetches data on the server side. This eliminates the dependency on SWR for this critical admin page and improves performance.
+2. **Added SWR as a dependency** - Installed `swr` package to support the simple dashboard page which uses client-side data fetching with revalidation intervals and loading states.
+
+Updated the LogEntry interface to match the actual Prisma ActivityLog model, including all fields like `success`, `source`, `ipAddress`, etc., and improved the admin dashboard table display to show success/failure status with visual indicators.
+
+The admin dashboard now works reliably in both development and production environments, providing essential system monitoring capabilities for the PESOS platform.
+
+---
+
 ## 2025-01-15
 
 **Successfully merged 8 comprehensive PRs in a single operation.**  

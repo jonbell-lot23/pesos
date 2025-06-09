@@ -1,25 +1,31 @@
-import useSWR from "swr";
+import prisma from "@/lib/prismadb";
 
 export const dynamic = "force-dynamic";
 
 interface LogEntry {
   id: number;
+  timestamp: Date;
   eventType: string;
   userId?: string | null;
   metadata?: any;
-  timestamp: string;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  duration?: number | null;
+  success: boolean;
+  errorMessage?: string | null;
+  source?: string | null;
 }
 
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+async function getLogs(): Promise<LogEntry[]> {
+  const logs = await prisma.activityLog.findMany({
+    orderBy: { timestamp: "desc" },
+    take: 100,
+  });
+  return logs;
+}
 
-export default function AdminDashboard() {
-  const { data, error } = useSWR<{ logs: LogEntry[] }>(
-    "/api/admin/logs",
-    fetcher
-  );
-
-  if (error) return <div>Error loading logs</div>;
-  if (!data) return <div>Loading...</div>;
+export default async function AdminDashboard() {
+  const logs = await getLogs();
 
   return (
     <div className="p-4">
@@ -30,17 +36,25 @@ export default function AdminDashboard() {
             <th className="px-2 py-1">Time</th>
             <th className="px-2 py-1">Event</th>
             <th className="px-2 py-1">User</th>
+            <th className="px-2 py-1">Success</th>
+            <th className="px-2 py-1">Source</th>
             <th className="px-2 py-1">Metadata</th>
           </tr>
         </thead>
         <tbody>
-          {data.logs.map((log) => (
+          {logs.map((log) => (
             <tr key={log.id} className="border-b border-gray-100">
               <td className="px-2 py-1">
                 {new Date(log.timestamp).toLocaleString()}
               </td>
               <td className="px-2 py-1">{log.eventType}</td>
               <td className="px-2 py-1">{log.userId || "-"}</td>
+              <td className="px-2 py-1">
+                <span className={log.success ? "text-green-600" : "text-red-600"}>
+                  {log.success ? "✓" : "✗"}
+                </span>
+              </td>
+              <td className="px-2 py-1">{log.source || "-"}</td>
               <td className="px-2 py-1">
                 {log.metadata ? JSON.stringify(log.metadata) : "-"}
               </td>
