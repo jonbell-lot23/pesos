@@ -48,7 +48,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Last backup timestamp with friendly language
   - [ ] System health indicators
   - [ ] Remove manual fetch buttons (per end state requirements)
-  - [ ] Immediate loading spinner for `/dashboard/simple`
+  - [x] Immediate loading spinner for `/dashboard/simple`
 
 - [ ] **Data Export Enhancement** - Polish existing export functionality
   - [ ] Better export UI/UX
@@ -161,7 +161,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] **Add comprehensive middleware logging** - Page views and login detection
   - [x] **Add login event detection** - Middleware detects and logs user logins
   - [ ] Add logging to source management endpoints
-  - [ ] Add logging to export functionality
+  - [x] Add logging to export functionality
   - [ ] Add logging to backup creation
 
 - [ ] **Admin Dashboard Enhancements**

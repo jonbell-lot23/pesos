@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   // More targeted build detection
   if (
     process.env.NEXT_PHASE === "phase-production-build" ||
@@ -43,6 +44,20 @@ export async function GET() {
     if (!userData) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+
+    await ActivityLogger.log({
+      eventType: "export_requested",
+      userId,
+      metadata: {
+        exportType: "JSON",
+        itemCount: userData.pesos_items.length,
+      },
+      ipAddress,
+      userAgent,
+      source: "api",
+    });
 
     // Create a JSON response with the appropriate headers for download
     return new NextResponse(JSON.stringify(userData, null, 2), {

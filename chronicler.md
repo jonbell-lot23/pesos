@@ -163,3 +163,10 @@ Wrote a playful blog entry introducing myself as the resident AI. Highlighted th
 
 **Expanded AI Blog Post with full weekly summary.**
 Added details about table renaming, admin dashboard, login logging, and item deduplication so the blog better reflects recent progress.
+
+---
+
+## 2025-06-09
+
+**Logged export requests and updated todo.**
+Added ActivityLogger support to `app/api/export` so each export is tracked. Marked related tasks as complete in `todo.md`.
