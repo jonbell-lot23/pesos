@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -66,6 +67,16 @@ export async function POST(request: Request) {
           },
         });
 
+        const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+        await ActivityLogger.log({
+          eventType: "source_added",
+          userId,
+          metadata: { sourceId: existingSource.id, url },
+          ipAddress,
+          userAgent,
+          source: "api",
+        });
+
         return NextResponse.json({
           message: "Source added to your feed",
           sourceId: existingSource.id,
@@ -86,6 +97,16 @@ export async function POST(request: Request) {
           userId,
           sourceId: newSource.id,
         },
+      });
+
+      const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+      await ActivityLogger.log({
+        eventType: "source_added",
+        userId,
+        metadata: { sourceId: newSource.id, url },
+        ipAddress,
+        userAgent,
+        source: "api",
       });
 
       return NextResponse.json({

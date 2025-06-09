@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ActivityLogger } from "@/lib/activity-logger";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +101,16 @@ export async function PATCH(request: Request) {
       },
     });
 
+    const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+    await ActivityLogger.log({
+      eventType: block ? "source_removed" : "source_added",
+      userId,
+      metadata: { sourceId, url: updatedSource.url, block },
+      ipAddress,
+      userAgent,
+      source: "api",
+    });
+
     return NextResponse.json({
       success: true,
       source: updatedSource,
@@ -153,6 +164,16 @@ export async function POST(request: Request) {
     const updatedSource = await prisma.pesos_Sources.update({
       where: { id: parseInt(sourceId) },
       data: { active: "N" },
+    });
+
+    const { ipAddress, userAgent } = ActivityLogger.getClientInfo(request);
+    await ActivityLogger.log({
+      eventType: "source_removed",
+      userId,
+      metadata: { sourceId: updatedSource.id, url: updatedSource.url, block: true },
+      ipAddress,
+      userAgent,
+      source: "api",
     });
 
     return NextResponse.json({ source: updatedSource });
