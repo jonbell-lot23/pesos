@@ -38,3 +38,17 @@ Appended a simple entry as requested.
 
 **Marked "fix codex" task complete.**
 Spent time ensuring Codex and Cursor's agents had everything necessary to be awesome.
+
+---
+
+## 2025-06-08
+
+**Implemented basic logging system and admin dashboard.**
+Added `SystemLog` model, logging utilities, and new routes to record logins, new users, and backups. Created `/admin/dashboard` to view logs.
+
+---
+
+## 2025-06-09
+
+**Added system logging dashboard and route.**
+Integrated `SystemLog` model with Prisma and created admin log display and login tracking. Tests still failing due to missing modules.

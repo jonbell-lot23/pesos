@@ -4,6 +4,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { NextRequest } from "next/server";
+import { logEvent } from "@/lib/log";
 
 export const dynamic = "force-dynamic";
 
@@ -71,6 +72,8 @@ export async function POST(request: Request) {
         username: username.toLowerCase(),
       },
     });
+
+    await logEvent("new_user", `User ${username} created`, clerkId);
 
     return NextResponse.json({
       success: true,
