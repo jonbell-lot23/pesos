@@ -195,3 +195,8 @@ Logged operations in add-pesos-source, sources, and blocked-feeds routes for adm
 ## 2025-06-09
 
 **Simplified admin dashboard.** Replaced the bulky dashboard page with a lightweight version that fetches the latest activity logs from /api/admin/logs. This makes it easy to verify logging is working.
+
+## 2025-06-10
+
+**Removed manual sync buttons and added end state blog post.**
+Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `chronicler.md` guide development and suggested renaming the chronicle for clarity.

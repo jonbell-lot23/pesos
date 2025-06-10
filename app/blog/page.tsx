@@ -7,6 +7,7 @@ export const metadata = {
 const posts = [
   { slug: "hello-world", title: "Hello World" },
   { slug: "ai-blog-post", title: "AI Blog Post" },
+  { slug: "end-state-file", title: "Checking the End State" },
 ];
 
 export default function BlogIndex() {
