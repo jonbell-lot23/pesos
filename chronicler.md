@@ -200,3 +200,7 @@ Logged operations in add-pesos-source, sources, and blocked-feeds routes for adm
 
 **Removed manual sync buttons and added end state blog post.**
 Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `chronicler.md` guide development and suggested renaming the chronicle for clarity.
+
+## 2025-06-10
+
+**Updated Pesos logo.** Simplified the logo to a white P on a red circle background.
