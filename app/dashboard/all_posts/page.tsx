@@ -10,7 +10,6 @@ import { DataTable } from "@/components/data-table";
 import ActivityChart from "@/components/ActivityChart";
 import FeedEditor, { FeedEntry } from "@/components/FeedEditor";
 import { Button } from "@/components/ui/button";
-import UpdateFeedsButton from "@/components/UpdateFeedsButton";
 import { Settings, Download } from "lucide-react";
 import Link from "next/link";
 import DisabledFeedsBanner from "@/components/DisabledFeedsBanner";
@@ -43,7 +42,6 @@ export default function StatsPage() {
   const [showFeedEditor, setShowFeedEditor] = useState(false);
   const [feeds, setFeeds] = useState<FeedEntry[]>([]);
   const [feedEditorError, setFeedEditorError] = useState<string | null>(null);
-  const showManualUpdate = searchParams?.get("manual") === "true";
   const [hasDisabledSources, setHasDisabledSources] = useState(false);
   const [disabledSources, setDisabledSources] = useState<string[]>([]);
 
@@ -222,7 +220,6 @@ export default function StatsPage() {
           >
             Switch to simple mode
           </Link>
-          {showManualUpdate && <UpdateFeedsButton />}
         </div>
       </div>
 

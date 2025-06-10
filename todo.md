@@ -47,7 +47,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Queue status display ("5 items queued, processing in 2 hours")
   - [ ] Last backup timestamp with friendly language
   - [ ] System health indicators
-  - [ ] Remove manual fetch buttons (per end state requirements)
+  - [x] Remove manual fetch buttons (per end state requirements)
   - [x] Immediate loading spinner for `/dashboard/simple`
 
 - [ ] **Data Export Enhancement** - Polish existing export functionality

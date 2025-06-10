@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, MouseEvent } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 
 interface FailedFeed {
@@ -168,69 +168,6 @@ export default function ServerStatsPage() {
     return lastSync.toLocaleDateString();
   };
 
-  // Start a manual update
-  const startUpdate = async (clearFailedFeeds: boolean | MouseEvent<HTMLButtonElement> = false) => {
-    try {
-      setIsUpdating(true);
-      setLogs(['Starting feed sync...']);
-      setShowLogs(true);
-
-      console.log('Sending fetch request to /api/update-all-feeds');
-      const controller = new AbortController();
-      // Set a timeout in case the request takes too long
-      const timeoutId = setTimeout(() => controller.abort(), 60000);
-      
-      // Add the clearFailedFeeds parameter if requested
-      const shouldClearFailedFeeds = typeof clearFailedFeeds === 'boolean' ? clearFailedFeeds : false;
-      const url = shouldClearFailedFeeds 
-        ? "/api/update-all-feeds?clearFailedFeeds=true" 
-        : "/api/update-all-feeds";
-        
-      const response = await fetch(url, {
-        signal: controller.signal,
-        // Add cache-busting parameter
-        headers: {
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        }
-      });
-      clearTimeout(timeoutId);
-      
-      console.log('Response received:', response.status);
-      
-      // Check if the request was aborted
-      if (controller.signal.aborted) {
-        throw new Error("Request timed out after 60 seconds");
-      }
-      
-      if (!response.ok) {
-        throw new Error(`Server responded with status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('Response data:', data);
-
-      if (!data.success) {
-        throw new Error(data.error || "Update failed");
-      }
-
-      // Save successful sync info to localStorage
-      if (data.logs && data.logs.length > 0) {
-        localStorage.setItem('lastSyncInfo', JSON.stringify({
-          logs: data.logs,
-          lastRun: new Date().toISOString() // Use current time as lastRun
-        }));
-      }
-
-      setLogs(data.logs || []);
-      fetchStats(); // Refresh stats
-      setIsUpdating(false);
-    } catch (error) {
-      console.error("Error updating feeds:", error);
-      setLogs(prev => [...prev, `Error: ${error instanceof Error ? error.message : 'Unknown error'}`]);
-      setIsUpdating(false);
-    }
-  };
 
   // Function to fetch server stats
   const fetchStats = async () => {
@@ -312,19 +249,6 @@ export default function ServerStatsPage() {
             <div className="text-sm text-gray-600 mb-2">
               Last Sync: <span className="font-semibold text-gray-800">{formatLastSync(stats?.lastSyncTime)}</span>
             </div>
-            <button
-              onClick={startUpdate}
-              disabled={isUpdating || stats?.isCurrentlySyncing}
-              className={`px-4 py-2 rounded-lg text-white transition-all duration-200 ${
-                isUpdating || stats?.isCurrentlySyncing
-                  ? "bg-gray-400 cursor-not-allowed"
-                  : "bg-blue-600 hover:bg-blue-700"
-              }`}
-            >
-              {isUpdating || stats?.isCurrentlySyncing 
-                ? "Syncing..." 
-                : "Sync All Feeds Now"}
-            </button>
           </div>
         </div>
 
@@ -499,17 +423,6 @@ export default function ServerStatsPage() {
                       <div className="text-sm text-gray-600 mb-1">
                         Feeds are temporarily failing
                       </div>
-                      <button 
-                        onClick={() => {
-                          setIsUpdating(true);
-                          setLogs(['Clearing failed feeds and starting a new sync...']);
-                          setShowLogs(true);
-                          startUpdate(true);
-                        }}
-                        className="text-xs bg-amber-100 hover:bg-amber-200 px-2 py-1 rounded text-amber-800 inline-block"
-                      >
-                        Reset Failed & Sync
-                      </button>
                     </div>
                   </div>
                 </div>
