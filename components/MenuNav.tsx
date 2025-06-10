@@ -5,6 +5,7 @@ import Link from "next/link";
 export default function MenuNav() {
   const [open, setOpen] = useState(false);
   const navItems = [
+    { href: "/setup", label: "Setup" },
     { href: "/about", label: "About" },
     { href: "/pricing", label: "Pricing" },
     { href: "/blog", label: "Blog" },

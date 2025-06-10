@@ -39,7 +39,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
 
 ### Onboarding & Setup
 
-- [ ] Improved setup wizard with side navigation
+- [x] Improved setup wizard with side navigation
 
 ### Dashboard & Status (New Priority)
 
@@ -70,9 +70,9 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Settings
   - [ ] Feed management
 
-### Onboarding & Editing
+-### Onboarding & Editing
 
-- [ ] Replace modal-based onboarding with `/setup` wizard
+- [x] Replace modal-based onboarding with `/setup` wizard
 - [ ] Create dedicated settings pages for feeds and profile editing
 - [ ] Add sidebar navigation with mobile slide-out menu
 - [ ] Allow users to resume setup at any time

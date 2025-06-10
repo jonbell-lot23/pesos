@@ -200,3 +200,8 @@ Logged operations in add-pesos-source, sources, and blocked-feeds routes for adm
 
 **Removed manual sync buttons and added end state blog post.**
 Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `chronicler.md` guide development and suggested renaming the chronicle for clarity.
+
+## 2025-06-11
+
+**Created new `/setup` wizard and updated navigation.**
+Implemented a basic multi-step setup flow with `/setup/username`, `/setup/feeds`, and `/setup/complete` pages. Added sidebar step navigation in a new layout and linked to the wizard from the menu. Marked related tasks complete in `todo.md`.
