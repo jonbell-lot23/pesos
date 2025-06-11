@@ -223,3 +223,8 @@ Implemented a basic multi-step setup flow with `/setup/username`, `/setup/feeds`
 - Expanded pricing page copy with links to demos
 - Wrote final blog post summarizing status
 - Updated todo to mark LinkTree competitor and Hosted pages complete
+
+## 2025-06-14
+
+**Fixed Prisma schema relation for LinkPage.**
+Added missing `linkPages` relation on `pesos_User` so Prisma can generate client successfully. This resolves schema validation error in build step.
