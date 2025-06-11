@@ -61,6 +61,7 @@ model pesos_User {
   createdAt   DateTime            @default(now())
   sources     pesos_UserSources[]
   pesos_items pesos_items[]
+  linkPages   LinkPage[]
 }
 
 model pesos_Sources {
