@@ -108,26 +108,27 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Basic notification preferences
   - [ ] Email templates for backup success/failure
   - [ ] In-app notification system
+  - [x] Basic email signup page for updates
 
 ## Future Features
 
 ### Paid Features
 
-- [ ] LinkTree competitor
-  - [ ] Custom landing page builder
-  - [ ] Link management
-  - [ ] Analytics
-- [ ] Hosted pages
-  - [ ] Markdown editor
-  - [ ] Page hosting system
-  - [ ] Custom domain support
+- [x] LinkTree competitor
+  - [x] Custom landing page builder
+  - [x] Link management
+  - [x] Analytics
+- [x] Hosted pages
+  - [x] Markdown editor
+  - [x] Page hosting system
+  - [x] Custom domain support
 
 ### Optional Features
 
-- [ ] PESOS Magazine
-  - [ ] Public highlights system
-  - [ ] Curation tools
-  - [ ] Permissions model
+- [x] PESOS Magazine
+  - [x] Public highlights system
+  - [x] Curation tools
+  - [x] Permissions model
 - [ ] Enhanced notifications
   - [ ] Email notifications
   - [ ] Mobile push setup

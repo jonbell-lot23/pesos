@@ -8,6 +8,8 @@ const posts = [
   { slug: "hello-world", title: "Hello World" },
   { slug: "ai-blog-post", title: "AI Blog Post" },
   { slug: "end-state-file", title: "Checking the End State" },
+  { slug: "not-ready-yet", title: "What's Next" },
+  { slug: "final-update", title: "Final Update" },
 ];
 
 export default function BlogIndex() {

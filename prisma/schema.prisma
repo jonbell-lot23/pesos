@@ -147,3 +147,30 @@ model UserSessionLog {
   @@index([userId])
   @@index([action])
 }
+
+model EmailSignup {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model LinkPage {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  slug      String   @unique
+  title     String
+  createdAt DateTime @default(now())
+  links     Link[]
+  pesos_User pesos_User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Link {
+  id        Int      @id @default(autoincrement())
+  pageId    Int
+  title     String
+  url       String
+  order     Int      @default(0)
+  LinkPage  LinkPage @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+}

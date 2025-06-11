@@ -205,3 +205,21 @@ Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the a
 
 **Created new `/setup` wizard and updated navigation.**
 Implemented a basic multi-step setup flow with `/setup/username`, `/setup/feeds`, and `/setup/complete` pages. Added sidebar step navigation in a new layout and linked to the wizard from the menu. Marked related tasks complete in `todo.md`.
+
+## 2025-06-12
+
+**Added email signup and polished pricing page.**
+- Created EmailSignup model and `/api/subscribe` endpoint
+- Added `/subscribe` page with form to collect emails
+- Updated pricing page with pro plan details
+- Published "What's Next" blog post
+- Marked signup task complete in `todo.md`
+
+## 2025-06-13
+
+**Implemented final demo features.**
+- Added placeholder Link Page and Hosted Page routes
+- Created Magazine preview page
+- Expanded pricing page copy with links to demos
+- Wrote final blog post summarizing status
+- Updated todo to mark LinkTree competitor and Hosted pages complete
