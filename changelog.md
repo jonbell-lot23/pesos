@@ -1,10 +1,10 @@
-# CHRONICLER
+# CHANGELOG
 
-This is the official log of what has happened in PESOS. Every update should be dated and written clearly. This is not a commit log — it's a memory log.
+This is the official log of what has happened in PESOS. Every update should be dated and written clearly. This file is a running memory log of meaningful changes, not a commit history.
 
 ---
 
-## 2025-02-15
+## 2025-06-12
 
 **Fixed Next.js build error in subscribe page.**  
 Resolved compilation error where `app/subscribe/page.tsx` was attempting to export metadata from a client component. Removed the `export const metadata` declaration since the component uses "use client" directive and requires client-side functionality (useState, event handlers). The page will now build successfully without affecting functionality - metadata exports are only allowed in server components per Next.js requirements.
@@ -20,11 +20,29 @@ The build process now works seamlessly with the intended toolchain, improving de
 Removed conflicting `package-lock.json` and `yarn.lock` files to eliminate the "multiple lockfiles" warning and ensure exclusive use of Bun as the package manager. Created a comprehensive setup infrastructure including:
 
 - **Automated setup script** (`scripts/setup.sh`) that installs Bun if needed and sets up the project
-- **Enhanced package.json scripts** with prebuild checks and setup commands 
+- **Enhanced package.json scripts** with prebuild checks and setup commands
 - **Updated README** with clear Bun-only setup instructions for new contributors
 - **Version tracking** (.bunversion) for consistency across environments
 
 The project now has a robust, single-package-manager setup that prevents toolchain confusion and provides clear setup paths for both automated and manual installation. This supports the project's goal of using Bun exclusively while ensuring the development environment can be reliably reproduced across different systems.
+
+**Renamed chronicler to changelog and updated logo.**  
+Standardized the naming convention by renaming `chronicler.md` to `changelog.md` and fixed a date in the file. Updated documentation and blog posts to reference the new file name. Adjusted `AGENTS.md` and `.cursorrules` accordingly. Simplified `PesosLogo` to a green circle with a P and replaced the favicon with the new logo. Removed leftover binary favicon file.
+
+**Added week-in-review blog update.**  
+Added new blog post `week-in-review-0616` to document recent changes and improvements. Updated the blog index to include the new post. Tracked the post in `todo.md` and logged the update in `changelog.md`.
+
+**Fixed production error in admin dashboard causing server-side exception.**  
+Resolved `TypeError: (0 , s.default) is not a function` error that was preventing `/admin/dashboard` from loading in production on Vercel. The issue was that the admin dashboard was using `useSWR` for client-side data fetching, but the `swr` package was not installed as a dependency.
+
+Applied two-part fix:
+
+1. **Converted admin dashboard to server-side rendering** - Replaced SWR with direct Prisma database queries in the admin dashboard page, making it a server component that fetches data on the server side. This eliminates the dependency on SWR for this critical admin page and improves performance.
+2. **Added SWR as a dependency** - Installed `swr` package to support the simple dashboard page which uses client-side data fetching with revalidation intervals and loading states.
+
+Updated the LogEntry interface to match the actual Prisma ActivityLog model, including all fields like `success`, `source`, `ipAddress`, etc., and improved the admin dashboard table display to show success/failure status with visual indicators.
+
+The admin dashboard now works reliably in both development and production environments, providing essential system monitoring capabilities for the PESOS platform.
 
 ---
 
@@ -34,6 +52,7 @@ The project now has a robust, single-package-manager setup that prevents toolcha
 Resolved `TypeError: (0 , s.default) is not a function` error that was preventing `/admin/dashboard` from loading in production on Vercel. The issue was that the admin dashboard was using `useSWR` for client-side data fetching, but the `swr` package was not installed as a dependency.
 
 Applied two-part fix:
+
 1. **Converted admin dashboard to server-side rendering** - Replaced SWR with direct Prisma database queries in the admin dashboard page, making it a server component that fetches data on the server side. This eliminates the dependency on SWR for this critical admin page and improves performance.
 2. **Added SWR as a dependency** - Installed `swr` package to support the simple dashboard page which uses client-side data fetching with revalidation intervals and loading states.
 
@@ -65,10 +84,11 @@ This represents a major consolidation of development work that brings together a
 
 ## 2025-01-15
 
-**Renamed system tables with pesos_ prefix and implemented comprehensive login logging.**  
+**Renamed system tables with pesos\_ prefix and implemented comprehensive login logging.**  
 Successfully renamed `SystemStatus` and `SystemUpdateLog` tables to `pesos_SystemStatus` and `pesos_SystemUpdateLog` to maintain consistency with the project's naming convention. Updated the Prisma schema, regenerated the client, and synchronized the database using `npx prisma db push --force-reset`.
 
 Enhanced the logging infrastructure to properly track user login events:
+
 - Created enhanced middleware that logs user login events when accessing protected routes
 - Added internal API endpoint `/api/internal/log-activity` for middleware and system logging
 - Updated `getLocalUser` API to log successful user authentication events
@@ -76,6 +96,7 @@ Enhanced the logging infrastructure to properly track user login events:
 
 **Implemented comprehensive test coverage for login logging functionality.**  
 Created extensive test suites covering:
+
 - `ActivityLogger` unit tests for all logging methods including renamed table functionality
 - Internal log activity API endpoint tests with error handling and validation
 - Integration tests for complete login logging flow from user creation to verification
@@ -118,7 +139,7 @@ Created new "Dashboard & Status" high-priority section and "Notifications & Comm
 ## 2025-06-08
 
 **Wrote `agents.md` scaffold.**  
-Codex will now refer to `end_state.md`, `todo.md`, and `chronicler.md` during every invocation.
+Codex will now refer to `end_state.md`, `todo.md`, and `changelog.md` during every invocation.
 
 **Created scaffolding files.**  
 All three support files written. `end_state.md` is currently undefined.
@@ -151,7 +172,7 @@ Added `SystemLog` model, logging utilities, and new routes to record logins, new
 
 ## 2025-06-08
 
-**Added new PesosLogo and updated header.** 
+**Added new PesosLogo and updated header.**
 Replaced text logo with a simple clock-style icon featuring a P.
 
 ---
@@ -212,7 +233,6 @@ Added ActivityLogger support to `app/api/export` so each export is tracked. Mark
 
 **Added ActivityLogger to source management endpoints.**
 Logged operations in add-pesos-source, sources, and blocked-feeds routes for admin monitoring.
----
 
 ---
 
@@ -223,7 +243,7 @@ Logged operations in add-pesos-source, sources, and blocked-feeds routes for adm
 ## 2025-06-10
 
 **Removed manual sync buttons and added end state blog post.**
-Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `chronicler.md` guide development and suggested renaming the chronicle for clarity.
+Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `changelog.md` guide development and suggested renaming the chronicle for clarity.
 
 ## 2025-06-11
 
@@ -233,15 +253,22 @@ Implemented a basic multi-step setup flow with `/setup/username`, `/setup/feeds`
 ## 2025-06-12
 
 **Added email signup and polished pricing page.**
+
 - Created EmailSignup model and `/api/subscribe` endpoint
 - Added `/subscribe` page with form to collect emails
 - Updated pricing page with pro plan details
 - Published "What's Next" blog post
 - Marked signup task complete in `todo.md`
 
+## 2025-06-12
+
+**Removed outdated favicon binary.**
+Deleted `app/favicon.ico` to clean up the repo and avoid binary clutter. The new logo component now stands in for the favicon.
+
 ## 2025-06-13
 
 **Implemented final demo features.**
+
 - Added placeholder Link Page and Hosted Page routes
 - Created Magazine preview page
 - Expanded pricing page copy with links to demos
@@ -256,6 +283,7 @@ Added missing `linkPages` relation on `pesos_User` so Prisma can generate client
 ## 2025-06-15
 
 **Enhanced admin dashboard and pricing page.**
+
 - Rebuilt `/admin/dashboard` as a client component that fetches logs from the API with automatic refresh.
 - Display summary stats and a manual refresh button for better monitoring.
 - Added reusable `PricingCard` component and redesigned `/pricing` with a highlighted Pro plan and clear call to action.
@@ -263,10 +291,16 @@ Added missing `linkPages` relation on `pesos_User` so Prisma can generate client
 
 ## 2025-06-16
 
+**Polished admin dashboard UI.**
+
+- Added `AdminStats` component with clean cards for key metrics.
+- Redesigned `/admin/dashboard` with gradient background and styled log table.
+- Marked design improvement task complete in `todo.md`.
+
 **Simplified Pro pricing section.**
 Updated `/pricing` page so the Pro card only shows "Coming soon!" instead of a full feature list and pricing.
 
 ## 2025-06-17
 
-**Published week-in-review blog post summarizing recent progress.**
-Created `app/blog/week-in-review-0616` with a summary of tasks from June 8th through June 16th. Added the post to the blog index and checked off a new item in `todo.md`.
+**Renamed chronicler to changelog and removed old favicon.**
+Updated references across docs and code, deleted `app/favicon.ico`, and adjusted logo color. Tests failing due to missing modules.

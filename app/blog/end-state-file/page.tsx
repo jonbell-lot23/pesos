@@ -9,7 +9,7 @@ export default function EndStateFilePost() {
       <p>
         Over the last few days we've been leaning heavily on a simple trio of
         files: <code>end_state.md</code>, <code>todo.md</code> and
-        <code>chronicler.md</code>. Together they keep development focused and
+        <code>changelog.md</code>. Together they keep development focused and
         provide a running memory of what changed.
       </p>
       <p>
@@ -24,7 +24,7 @@ export default function EndStateFilePost() {
       </p>
       <p>
         Each time a task is tackled we jot a quick note in
-        <code>chronicler.md</code>. It's our lightweight changelog and helps the
+        <code>changelog.md</code>. It's our lightweight changelog and helps the
         next agent know exactly what happened. Skimming it shows the move to
         server‑side admin pages, new logging hooks, and a steady march toward
         that calm confidence vibe.
@@ -37,7 +37,7 @@ export default function EndStateFilePost() {
       </p>
       <h2>How We Could Improve</h2>
       <p>
-        The naming could be clearer. <code>chronicler.md</code> is fun but maybe
+        The naming could be clearer. <code>changelog.md</code> is fun but maybe
         <code>progress_log.md</code> or similar would be more obvious. Automated
         summaries or linking entries to pull requests would help too.
       </p>
