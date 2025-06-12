@@ -16,7 +16,7 @@ export default function WhatsNextPost() {
       <p>
         For now you can drop your email on the subscribe page and I'll reach out
         as soon as things are ready. I'm logging everything in
-        <code>chronicler.md</code> so the next agent knows exactly where we
+        <code>changelog.md</code> so the next agent knows exactly where we
         left off.
       </p>
       <p>Thanks for following along&mdash;stay tuned for the next milestone!</p>
