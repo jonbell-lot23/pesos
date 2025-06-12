@@ -16,6 +16,16 @@ Successfully installed Bun (v1.2.16) which provides the `bunx` command that the 
 
 The build process now works seamlessly with the intended toolchain, improving development experience and eliminating build configuration issues.
 
+**Cleaned up package manager conflicts and established Bun-only workflow.**  
+Removed conflicting `package-lock.json` and `yarn.lock` files to eliminate the "multiple lockfiles" warning and ensure exclusive use of Bun as the package manager. Created a comprehensive setup infrastructure including:
+
+- **Automated setup script** (`scripts/setup.sh`) that installs Bun if needed and sets up the project
+- **Enhanced package.json scripts** with prebuild checks and setup commands 
+- **Updated README** with clear Bun-only setup instructions for new contributors
+- **Version tracking** (.bunversion) for consistency across environments
+
+The project now has a robust, single-package-manager setup that prevents toolchain confusion and provides clear setup paths for both automated and manual installation. This supports the project's goal of using Bun exclusively while ensuring the development environment can be reliably reproduced across different systems.
+
 ---
 
 ## 2025-01-31

@@ -1,16 +1,41 @@
-# Bun Only
+# PESOS Feed Aggregator
 
-This project uses [Bun](https://bun.sh/) exclusively. Do not use npm, yarn, or pnpm. All commands should use `bun`.
+## 🚀 Quick Setup
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+**This project uses [Bun](https://bun.sh/) exclusively.** Do not use npm, yarn, or pnpm.
 
-## Setup
+### First Time Setup
 
-Install dependencies:
+Run the automated setup script:
 
 ```bash
-bun install
+# This will install Bun (if needed) and set up the project
+npm run setup
+# OR if you already have Bun:
+./scripts/setup.sh
 ```
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+1. **Install Bun** (if not already installed):
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   source ~/.bashrc  # or restart your terminal
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   bun install
+   ```
+
+3. **Generate Prisma client**:
+   ```bash
+   bunx prisma generate
+   ```
+
+## 🔧 Development
 
 Run the development server:
 
@@ -18,17 +43,25 @@ Run the development server:
 bun run dev
 ```
 
+Build for production:
+
+```bash
+bun run build
+```
+
 Run tests:
 
 ```bash
-bun test
+bun run test
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📝 Project Details
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+This is a [Next.js](https://nextjs.org/) project for personal archiving and publishing.
+
+This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Learn More
 
