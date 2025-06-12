@@ -1,10 +1,10 @@
-# CHRONICLER
+# CHANGELOG
 
-This is the official log of what has happened in PESOS. Every update should be dated and written clearly. This is not a commit log — it's a memory log.
+This is the official log of what has happened in PESOS. Every update should be dated and written clearly. This file is a running memory log of meaningful changes, not a commit history.
 
 ---
 
-## 2025-02-15
+## 2025-06-12
 
 **Fixed Next.js build error in subscribe page.**  
 Resolved compilation error where `app/subscribe/page.tsx` was attempting to export metadata from a client component. Removed the `export const metadata` declaration since the component uses "use client" directive and requires client-side functionality (useState, event handlers). The page will now build successfully without affecting functionality - metadata exports are only allowed in server components per Next.js requirements.
@@ -118,7 +118,7 @@ Created new "Dashboard & Status" high-priority section and "Notifications & Comm
 ## 2025-06-08
 
 **Wrote `agents.md` scaffold.**  
-Codex will now refer to `end_state.md`, `todo.md`, and `chronicler.md` during every invocation.
+Codex will now refer to `end_state.md`, `todo.md`, and `changelog.md` during every invocation.
 
 **Created scaffolding files.**  
 All three support files written. `end_state.md` is currently undefined.
@@ -223,7 +223,7 @@ Logged operations in add-pesos-source, sources, and blocked-feeds routes for adm
 ## 2025-06-10
 
 **Removed manual sync buttons and added end state blog post.**
-Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `chronicler.md` guide development and suggested renaming the chronicle for clarity.
+Pruned the manual "Sync All Feeds" buttons from the dashboard to reinforce the automatic nature of backups. Added a new blog entry explaining how `end_state.md`, `todo.md`, and `changelog.md` guide development and suggested renaming the changelog for clarity.
 
 ## 2025-06-11
 
@@ -252,3 +252,8 @@ Implemented a basic multi-step setup flow with `/setup/username`, `/setup/feeds`
 
 **Fixed Prisma schema relation for LinkPage.**
 Added missing `linkPages` relation on `pesos_User` so Prisma can generate client successfully. This resolves schema validation error in build step.
+
+## 2025-06-12
+
+**Removed outdated favicon binary.**
+Deleted `app/favicon.ico` to clean up the repo and avoid binary clutter. The new logo component now stands in for the favicon.

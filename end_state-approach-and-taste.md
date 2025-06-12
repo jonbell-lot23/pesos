@@ -100,9 +100,9 @@ Site: pesos.site
 
 # APPROACH
 
-When you're working on a project, you'll be checking this file, todo.md, and chronicler.md. Remember to update this file and those files to be up-to-date with whatever I'm working on and what completed.
+When you're working on a project, you'll be checking this file, todo.md, and changelog.md. Remember to update this file and those files to be up-to-date with whatever I'm working on and what completed.
 
-Remember to update chronicler each time you run through stuff so I know what sorts of things we've done and if they worked.
+Remember to update the changelog each time you run through stuff so I know what sorts of things we've done and if they worked.
 
 I don't need you to race ahead to the end of the project. Remember that it's better to have bite-sized projects that I can review and get things iteratively better over time rather than have everything attempted at once. That's never going to work.
 
