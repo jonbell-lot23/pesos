@@ -263,5 +263,12 @@ Added missing `linkPages` relation on `pesos_User` so Prisma can generate client
 
 ## 2025-06-16
 
+
+**Polished admin dashboard UI.**
+- Added `AdminStats` component with clean cards for key metrics.
+- Redesigned `/admin/dashboard` with gradient background and styled log table.
+- Marked design improvement task complete in `todo.md`.
+
 **Simplified Pro pricing section.**
 Updated `/pricing` page so the Pro card only shows "Coming soon!" instead of a full feature list and pricing.
+
