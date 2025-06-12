@@ -166,7 +166,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Add logging to backup creation
 
 - [ ] **Admin Dashboard Enhancements**
-  - [ ] Add real-time refresh capability
+  - [x] Add real-time refresh capability
   - [ ] Add data export from admin dashboard
   - [ ] Add user lookup and management features
   - [ ] Add system health monitoring alerts
