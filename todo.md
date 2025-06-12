@@ -154,6 +154,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] End-to-end testing
 - [x] Fix codex
 - [x] AI blog post summarizing weekly updates
+- [x] Week in review blog post summarizing progress (June 16)
 
 ## New Admin Infrastructure Tasks
 

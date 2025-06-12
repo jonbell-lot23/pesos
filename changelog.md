@@ -26,6 +26,24 @@ Removed conflicting `package-lock.json` and `yarn.lock` files to eliminate the "
 
 The project now has a robust, single-package-manager setup that prevents toolchain confusion and provides clear setup paths for both automated and manual installation. This supports the project's goal of using Bun exclusively while ensuring the development environment can be reliably reproduced across different systems.
 
+**Renamed chronicler to changelog and updated logo.**  
+Standardized the naming convention by renaming `chronicler.md` to `changelog.md` and fixed a date in the file. Updated documentation and blog posts to reference the new file name. Adjusted `AGENTS.md` and `.cursorrules` accordingly. Simplified `PesosLogo` to a green circle with a P and replaced the favicon with the new logo. Removed leftover binary favicon file.
+
+**Added week-in-review blog update.**  
+Added new blog post `week-in-review-0616` to document recent changes and improvements. Updated the blog index to include the new post. Tracked the post in `todo.md` and logged the update in `changelog.md`.
+
+**Fixed production error in admin dashboard causing server-side exception.**  
+Resolved `TypeError: (0 , s.default) is not a function` error that was preventing `/admin/dashboard` from loading in production on Vercel. The issue was that the admin dashboard was using `useSWR` for client-side data fetching, but the `swr` package was not installed as a dependency.
+
+Applied two-part fix:
+
+1. **Converted admin dashboard to server-side rendering** - Replaced SWR with direct Prisma database queries in the admin dashboard page, making it a server component that fetches data on the server side. This eliminates the dependency on SWR for this critical admin page and improves performance.
+2. **Added SWR as a dependency** - Installed `swr` package to support the simple dashboard page which uses client-side data fetching with revalidation intervals and loading states.
+
+Updated the LogEntry interface to match the actual Prisma ActivityLog model, including all fields like `success`, `source`, `ipAddress`, etc., and improved the admin dashboard table display to show success/failure status with visual indicators.
+
+The admin dashboard now works reliably in both development and production environments, providing essential system monitoring capabilities for the PESOS platform.
+
 ---
 
 ## 2025-01-31
@@ -215,8 +233,6 @@ Added ActivityLogger support to `app/api/export` so each export is tracked. Mark
 
 **Added ActivityLogger to source management endpoints.**
 Logged operations in add-pesos-source, sources, and blocked-feeds routes for admin monitoring.
-
----
 
 ---
 
