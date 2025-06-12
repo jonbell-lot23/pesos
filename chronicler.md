@@ -4,6 +4,15 @@ This is the official log of what has happened in PESOS. Every update should be d
 
 ---
 
+## 2025-02-15
+
+**Fixed Next.js build error in subscribe page.**  
+Resolved compilation error where `app/subscribe/page.tsx` was attempting to export metadata from a client component. Removed the `export const metadata` declaration since the component uses "use client" directive and requires client-side functionality (useState, event handlers). The page will now build successfully without affecting functionality - metadata exports are only allowed in server components per Next.js requirements.
+
+This fix allows the production build to complete and maintains the existing email signup functionality that supports the notification system foundation outlined in the todo.md.
+
+---
+
 ## 2025-01-31
 
 **Fixed production error in admin dashboard causing server-side exception.**  
