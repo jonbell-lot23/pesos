@@ -16,7 +16,7 @@ This document defines agent behaviour for PESOS. Each agent must consult the sys
    - See if there are tasks already defined.
    - Add, complete, or reprioritise tasks if appropriate.
 
-3. **Log to `chronicler.md`**
+3. **Log to `changelog.md`**
 
    - Every meaningful action must be written as a short update.
    - Include what was done, why, and whether it moved the system closer to the end state.
@@ -31,7 +31,7 @@ This document defines agent behaviour for PESOS. Each agent must consult the sys
 
 - `end_state.md` → defines the ideal future
 - `todo.md` → lists current execution plan
-- `chronicler.md` → tracks what's already happened
+- `changelog.md` → tracks what's already happened
 
 ---
 
@@ -41,5 +41,5 @@ This document defines agent behaviour for PESOS. Each agent must consult the sys
 
 1. `end_state.md`: notes that UI should be clean, mobile-friendly, taggable
 2. `todo.md`: sees task "Create tag UI"
-3. Begins task → adds working note to `chronicler.md`
+3. Begins task → adds working note to `changelog.md`
 4. Updates `todo.md` to reflect partial or full progress

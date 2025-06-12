@@ -9,7 +9,7 @@ export default function PesosLogo({ className = "w-8 h-8" }: { className?: strin
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <circle cx="16" cy="16" r="15" fill="black" />
+      <circle cx="16" cy="16" r="15" fill="#00AA55" />
       <text
         x="16"
         y="21"
@@ -21,24 +21,6 @@ export default function PesosLogo({ className = "w-8 h-8" }: { className?: strin
       >
         P
       </text>
-      <line
-        x1="16"
-        y1="16"
-        x2="16"
-        y2="9"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      <line
-        x1="16"
-        y1="16"
-        x2="22"
-        y2="16"
-        stroke="white"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
     </svg>
   );
 }
