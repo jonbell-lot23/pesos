@@ -4,6 +4,30 @@ This is the official log of what has happened in PESOS. Every update should be d
 
 ---
 
+## 2025-02-15
+
+**Fixed Next.js build error in subscribe page.**  
+Resolved compilation error where `app/subscribe/page.tsx` was attempting to export metadata from a client component. Removed the `export const metadata` declaration since the component uses "use client" directive and requires client-side functionality (useState, event handlers). The page will now build successfully without affecting functionality - metadata exports are only allowed in server components per Next.js requirements.
+
+This fix allows the production build to complete and maintains the existing email signup functionality that supports the notification system foundation outlined in the todo.md.
+
+**Installed Bun package manager to resolve bunx dependency.**  
+Successfully installed Bun (v1.2.16) which provides the `bunx` command that the project's build script requires. The original build command `bunx prisma generate && next build` now works properly without the "bunx: not found" error. This aligns with the project's existing `bun.lockb` file and ensures consistent package management using Bun throughout the development workflow.
+
+The build process now works seamlessly with the intended toolchain, improving development experience and eliminating build configuration issues.
+
+**Cleaned up package manager conflicts and established Bun-only workflow.**  
+Removed conflicting `package-lock.json` and `yarn.lock` files to eliminate the "multiple lockfiles" warning and ensure exclusive use of Bun as the package manager. Created a comprehensive setup infrastructure including:
+
+- **Automated setup script** (`scripts/setup.sh`) that installs Bun if needed and sets up the project
+- **Enhanced package.json scripts** with prebuild checks and setup commands 
+- **Updated README** with clear Bun-only setup instructions for new contributors
+- **Version tracking** (.bunversion) for consistency across environments
+
+The project now has a robust, single-package-manager setup that prevents toolchain confusion and provides clear setup paths for both automated and manual installation. This supports the project's goal of using Bun exclusively while ensuring the development environment can be reliably reproduced across different systems.
+
+---
+
 ## 2025-01-31
 
 **Fixed production error in admin dashboard causing server-side exception.**  

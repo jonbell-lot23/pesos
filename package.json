@@ -11,7 +11,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "vitest",
-    "postinstall": "bunx prisma generate"
+    "postinstall": "bunx prisma generate",
+    "setup": "./scripts/setup.sh",
+    "prebuild": "command -v bunx >/dev/null 2>&1 || (echo '❌ Bun not found. Run: npm run setup' && exit 1)"
   },
   "dependencies": {
     "@clerk/nextjs": "^4.23.2",
