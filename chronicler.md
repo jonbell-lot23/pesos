@@ -11,6 +11,11 @@ Resolved compilation error where `app/subscribe/page.tsx` was attempting to expo
 
 This fix allows the production build to complete and maintains the existing email signup functionality that supports the notification system foundation outlined in the todo.md.
 
+**Installed Bun package manager to resolve bunx dependency.**  
+Successfully installed Bun (v1.2.16) which provides the `bunx` command that the project's build script requires. The original build command `bunx prisma generate && next build` now works properly without the "bunx: not found" error. This aligns with the project's existing `bun.lockb` file and ensures consistent package management using Bun throughout the development workflow.
+
+The build process now works seamlessly with the intended toolchain, improving development experience and eliminating build configuration issues.
+
 ---
 
 ## 2025-01-31
