@@ -22,22 +22,8 @@ export default function PricingPage() {
         />
         <PricingCard
           title="Pro – Coming Soon"
-          price="$5/mo"
           highlight
-          features={[
-            "Beautiful link pages",
-            "Daily backups, priority processing",
-            "Email notifications",
-            "Usage analytics",
-            "Priority support",
-          ]}
-          cta={
-            <Link href="/subscribe" className="w-full">
-              <button className="w-full bg-blue-600 text-white py-2 rounded-md">
-                Join Waitlist
-              </button>
-            </Link>
-          }
+          features={["Coming soon!"]}
         />
       </div>
       <p className="text-center mt-12">
