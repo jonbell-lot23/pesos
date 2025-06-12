@@ -260,3 +260,8 @@ Added missing `linkPages` relation on `pesos_User` so Prisma can generate client
 - Display summary stats and a manual refresh button for better monitoring.
 - Added reusable `PricingCard` component and redesigned `/pricing` with a highlighted Pro plan and clear call to action.
 - Marked real-time refresh task complete in `todo.md`.
+
+## 2025-06-16
+
+**Simplified Pro pricing section.**
+Updated `/pricing` page so the Pro card only shows "Coming soon!" instead of a full feature list and pricing.
