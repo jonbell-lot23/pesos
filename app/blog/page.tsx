@@ -10,6 +10,7 @@ const posts = [
   { slug: "end-state-file", title: "Checking the End State" },
   { slug: "not-ready-yet", title: "What's Next" },
   { slug: "final-update", title: "Final Update" },
+  { slug: "week-in-review-0616", title: "Week in Review - June 16" },
 ];
 
 export default function BlogIndex() {

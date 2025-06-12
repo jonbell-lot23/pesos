@@ -265,3 +265,8 @@ Added missing `linkPages` relation on `pesos_User` so Prisma can generate client
 
 **Simplified Pro pricing section.**
 Updated `/pricing` page so the Pro card only shows "Coming soon!" instead of a full feature list and pricing.
+
+## 2025-06-17
+
+**Published week-in-review blog post summarizing recent progress.**
+Created `app/blog/week-in-review-0616` with a summary of tasks from June 8th through June 16th. Added the post to the blog index and checked off a new item in `todo.md`.
