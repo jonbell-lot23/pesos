@@ -252,3 +252,11 @@ Implemented a basic multi-step setup flow with `/setup/username`, `/setup/feeds`
 
 **Fixed Prisma schema relation for LinkPage.**
 Added missing `linkPages` relation on `pesos_User` so Prisma can generate client successfully. This resolves schema validation error in build step.
+
+## 2025-06-15
+
+**Enhanced admin dashboard and pricing page.**
+- Rebuilt `/admin/dashboard` as a client component that fetches logs from the API with automatic refresh.
+- Display summary stats and a manual refresh button for better monitoring.
+- Added reusable `PricingCard` component and redesigned `/pricing` with a highlighted Pro plan and clear call to action.
+- Marked real-time refresh task complete in `todo.md`.
