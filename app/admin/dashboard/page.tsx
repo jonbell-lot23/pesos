@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import AdminStats from "@/components/AdminStats";
 
 interface LogEntry {
   id: number;
@@ -46,54 +47,51 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-bold mb-4">System Logs</h1>
-      {stats && (
-        <div className="flex space-x-4 mb-4 text-sm text-gray-700">
-          <span>New Users: {stats.newUsers}</span>
-          <span>Logins: {stats.totalLogins}</span>
-          <span>Updates: {stats.systemUpdates}</span>
-          <span className="text-red-600">Errors: {stats.errorCount}</span>
-        </div>
-      )}
-      <Button onClick={fetchLogs} className="mb-4" size="sm">
-        Refresh
-      </Button>
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 p-6">
+      <h1 className="mb-8 text-center text-3xl font-bold">Admin Dashboard</h1>
+      {stats && <AdminStats stats={stats} />}
+      <div className="mb-4 text-right">
+        <Button onClick={fetchLogs} size="sm">
+          Refresh
+        </Button>
+      </div>
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <table className="min-w-full text-sm text-left text-gray-800">
-          <thead className="border-b border-gray-200">
-            <tr>
-              <th className="px-2 py-1">Time</th>
-              <th className="px-2 py-1">Event</th>
-              <th className="px-2 py-1">User</th>
-              <th className="px-2 py-1">Success</th>
-              <th className="px-2 py-1">Source</th>
-              <th className="px-2 py-1">Metadata</th>
-            </tr>
-          </thead>
-          <tbody>
-            {logs.map((log) => (
-              <tr key={log.id} className="border-b border-gray-100">
-                <td className="px-2 py-1">
-                  {new Date(log.timestamp).toLocaleString()}
-                </td>
-                <td className="px-2 py-1">{log.eventType}</td>
-                <td className="px-2 py-1">{log.userId || "-"}</td>
-                <td className="px-2 py-1">
-                  <span className={log.success ? "text-green-600" : "text-red-600"}>
-                    {log.success ? "✓" : "✗"}
-                  </span>
-                </td>
-                <td className="px-2 py-1">{log.source || "-"}</td>
-                <td className="px-2 py-1">
-                  {log.metadata ? JSON.stringify(log.metadata) : "-"}
-                </td>
+        <div className="overflow-auto rounded-xl bg-white shadow">
+          <table className="min-w-full text-sm text-gray-800">
+            <thead className="sticky top-0 bg-gray-50 text-left text-xs uppercase tracking-wide">
+              <tr>
+                <th className="px-3 py-2">Time</th>
+                <th className="px-3 py-2">Event</th>
+                <th className="px-3 py-2">User</th>
+                <th className="px-3 py-2">Success</th>
+                <th className="px-3 py-2">Source</th>
+                <th className="px-3 py-2">Metadata</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {logs.map((log) => (
+                <tr key={log.id} className="border-t">
+                  <td className="px-3 py-2">
+                    {new Date(log.timestamp).toLocaleString()}
+                  </td>
+                  <td className="px-3 py-2">{log.eventType}</td>
+                  <td className="px-3 py-2">{log.userId || "-"}</td>
+                  <td className="px-3 py-2">
+                    <span className={log.success ? "text-green-600" : "text-red-600"}>
+                      {log.success ? "✓" : "✗"}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2">{log.source || "-"}</td>
+                  <td className="px-3 py-2 text-xs">
+                    {log.metadata ? JSON.stringify(log.metadata) : "-"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );
