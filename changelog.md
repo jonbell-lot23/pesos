@@ -309,3 +309,8 @@ Updated references across docs and code, deleted `app/favicon.ico`, and adjusted
 
 **Fixed prolific sources page.**
 Updated client page to handle API response with `sources` key and made stats fields optional to prevent crashes.
+
+**Narrowed landing page tagline width.**
+Reduced the heading container to `max-w-lg` on the home screen so the text
+"You should back up your projects once a week, and that's all PESOS does."
+does not stretch too wide.
