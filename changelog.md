@@ -304,3 +304,10 @@ Updated `/pricing` page so the Pro card only shows "Coming soon!" instead of a f
 
 **Renamed chronicler to changelog and removed old favicon.**
 Updated references across docs and code, deleted `app/favicon.ico`, and adjusted logo color. Tests failing due to missing modules.
+
+## 2025-06-20
+
+**Narrowed landing page tagline width.**
+Reduced the heading container to `max-w-lg` on the home screen so the text
+"You should back up your projects once a week, and that's all PESOS does."
+does not stretch too wide.
