@@ -172,3 +172,4 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] Add data export from admin dashboard
   - [ ] Add user lookup and management features
   - [ ] Add system health monitoring alerts
+  - [x] Fix crash on `/dashboard/prolific-sources` when API returns `sources` key

@@ -304,3 +304,8 @@ Updated `/pricing` page so the Pro card only shows "Coming soon!" instead of a f
 
 **Renamed chronicler to changelog and removed old favicon.**
 Updated references across docs and code, deleted `app/favicon.ico`, and adjusted logo color. Tests failing due to missing modules.
+
+## 2025-06-20
+
+**Fixed prolific sources page.**
+Updated client page to handle API response with `sources` key and made stats fields optional to prevent crashes.
