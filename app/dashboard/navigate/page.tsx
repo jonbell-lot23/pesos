@@ -221,7 +221,7 @@ export default function NavigatePage() {
       <div className="container mx-auto p-4">
         <nav className="flex mb-6 border-b pb-4">
           <Link
-            href="/dashboard/server-stats"
+            href="/admin"
             className="px-4 py-2 text-gray-600 hover:text-blue-600"
           >
             Stats

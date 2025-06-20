@@ -49,6 +49,8 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] System health indicators
   - [x] Remove manual fetch buttons (per end state requirements)
   - [x] Immediate loading spinner for `/dashboard/simple`
+  - [x] Simplify dashboard URLs (remove /simple, rename /all_posts to /detailed)
+  - [x] Unify server stats and admin under `/admin`
 
 - [ ] **Data Export Enhancement** - Polish existing export functionality
   - [ ] Better export UI/UX

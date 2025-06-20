@@ -136,8 +136,8 @@ export default function ProlificSourcesPage() {
             )}
           </div>
           <div className="mt-6">
-            <Link 
-              href="/dashboard/server-stats" 
+            <Link
+              href="/admin"
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white transition-colors"
             >
               Back to Server Stats
@@ -153,7 +153,7 @@ export default function ProlificSourcesPage() {
       <div className="container mx-auto">
         {/* Tab Navigation */}
         <nav className="flex mb-6 border-b pb-4">
-          <Link href="/dashboard/server-stats" className="px-4 py-2 text-gray-600 hover:text-blue-600">Stats</Link>
+          <Link href="/admin" className="px-4 py-2 text-gray-600 hover:text-blue-600">Stats</Link>
           <Link href="/dashboard/prolific-sources" className="px-4 py-2 text-blue-600 font-medium border-b-2 border-blue-600">Analysis</Link>
           <Link href="/dashboard/navigate" className="px-4 py-2 text-gray-600 hover:text-blue-600">Navigate</Link>
         </nav>

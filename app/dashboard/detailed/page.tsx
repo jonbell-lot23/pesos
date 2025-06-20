@@ -215,7 +215,7 @@ export default function StatsPage() {
         <h1 className="text-2xl font-bold">Backups</h1>
         <div className="flex gap-4 items-center">
           <Link
-            href="/dashboard/simple"
+            href="/dashboard"
             className="text-sm text-gray-600 hover:text-gray-900"
           >
             Switch to simple mode

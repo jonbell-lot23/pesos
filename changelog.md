@@ -314,3 +314,6 @@ Updated client page to handle API response with `sources` key and made stats fie
 Reduced the heading container to `max-w-lg` on the home screen so the text
 "You should back up your projects once a week, and that's all PESOS does."
 does not stretch too wide.
+
+**Simplified dashboard URLs and unified admin page.**
+Updated routes so `/dashboard` replaces `/dashboard/simple`, and `/dashboard/detailed` replaces `/dashboard/all_posts`. Added `/admin` page with password prompt showing server stats and admin logs together.
