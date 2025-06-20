@@ -142,7 +142,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
       }
 
       // Only redirect after scraping is complete
-      window.location.href = "/dashboard/simple";
+      window.location.href = "/dashboard";
     } catch (error) {
       console.error("Error saving/scraping feeds:", error);
       setFeedEditorError(
@@ -263,7 +263,7 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
                   <MenuNav />
                 </SignedIn>
                 <SignedIn>
-                  {pathname !== "/dashboard/all_posts" && (
+                  {pathname !== "/dashboard/detailed" && (
                     <>
                       <button
                         onClick={() => handleEditFeeds()}

@@ -256,10 +256,10 @@ export default function SimpleDashboard() {
               <div className="absolute bottom-8 left-0 right-0 md:relative md:bottom-auto md:mt-8 px-4 md:px-0">
                 <p className="text-xl md:text-2xl leading-snug text-white font-medium">
                   <Link
-                    href="/dashboard/all_posts"
+                    href="/dashboard/detailed"
                     className="font-extrabold text-white no-underline hover:underline hover:text-white visited:text-white active:text-white"
                   >
-                    Switch to advanced mode {"->"}
+                    Switch to detailed mode {"->"}
                   </Link>
                 </p>
               </div>
