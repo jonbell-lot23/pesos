@@ -7,12 +7,12 @@ interface ProlificSource {
   id: number;
   url: string;
   active: string;
-  itemCount: number;
-  userCount: number;
-  oldestPost: string | null;
-  newestPost: string | null;
-  avgHoursBetweenPosts: string | null;
-  postsPerDay: string | null;
+  itemCount?: number;
+  userCount?: number;
+  oldestPost?: string | null;
+  newestPost?: string | null;
+  avgHoursBetweenPosts?: string | null;
+  postsPerDay?: string | null;
 }
 
 export default function ProlificSourcesPage() {
@@ -44,7 +44,8 @@ export default function ProlificSourcesPage() {
         }
         
         const data = await response.json();
-        setSources(data.prolificSources);
+        const result = data.prolificSources || data.sources || [];
+        setSources(Array.isArray(result) ? result : []);
         // Always set isAdmin to true since we've removed the admin check
         setIsAdmin(true);
         setLoading(false);
