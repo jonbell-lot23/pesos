@@ -143,6 +143,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [ ] API documentation
   - [ ] User guides
   - [ ] Developer documentation
+  - [x] Data export format guide
 - [ ] Performance optimization
   - [ ] Database indexing
   - [ ] Caching strategy

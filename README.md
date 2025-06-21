@@ -81,3 +81,7 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/deploym
 ## Stay Informed
 
 New features are rolling out all the time. Visit `/subscribe` on the running site to leave your email and get updates.
+
+## Documentation
+
+Browse `/docs` in the app for project notes and data format details.
