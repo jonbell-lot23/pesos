@@ -322,3 +322,6 @@ Updated routes so `/dashboard` replaces `/dashboard/simple`, and `/dashboard/det
 
 **Added view preference storage.**
 Introduced `viewPreference` column on `pesos_User` with a migration and updated `/api/set-view-preference` to save the user's dashboard view choice in the database and cookie.
+
+**Added documentation section.**
+Created `/docs` route with a new "Data Export Formats" page explaining JSON, Markdown and CSV backups. Updated README and todo lists accordingly.
