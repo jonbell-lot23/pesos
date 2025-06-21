@@ -163,6 +163,19 @@ export function RootLayoutInner({ children, inter }: RootLayoutInnerProps) {
         return;
       }
 
+      const hasClerkUsername =
+        (user.publicMetadata &&
+          typeof user.publicMetadata.chosenUsername === "string" &&
+          user.publicMetadata.chosenUsername.trim() !== "") ||
+        (user.username && !user.username.startsWith("user_"));
+
+      if (hasClerkUsername) {
+        setShowUsernameModal(false);
+        setLocalUser({ id: user.id, username: user.username });
+        setIsCheckingUser(false);
+        return;
+      }
+
       try {
         const response = await fetch("/api/getLocalUser", {
           method: "POST",
