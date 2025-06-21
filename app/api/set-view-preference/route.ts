@@ -36,8 +36,15 @@ export async function POST(request: Request) {
       );
     }
 
-    // For now, just return success since viewPreference field doesn't exist in schema
-    // TODO: Add viewPreference field to pesos_User model
+    const { setViewPreference } = await import("@/lib/cookies");
+
+    await prisma.pesos_User.update({
+      where: { id: userId },
+      data: { viewPreference: preference },
+    });
+
+    setViewPreference(preference as "simple" | "detailed");
+
     console.log(`User ${userId} set view preference to ${preference}`);
 
     return NextResponse.json({

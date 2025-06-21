@@ -59,6 +59,7 @@ model pesos_User {
   id          String              @id
   username    String              @unique
   createdAt   DateTime            @default(now())
+  viewPreference String           @default("simple")
   sources     pesos_UserSources[]
   pesos_items pesos_items[]
   linkPages   LinkPage[]

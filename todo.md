@@ -51,6 +51,7 @@ A running list of tasks related to PESOS. May be edited by humans or agents.
   - [x] Immediate loading spinner for `/dashboard/simple`
   - [x] Simplify dashboard URLs (remove /simple, rename /all_posts to /detailed)
   - [x] Unify server stats and admin under `/admin`
+  - [x] Store dashboard view preference in database
 
 - [ ] **Data Export Enhancement** - Polish existing export functionality
   - [ ] Better export UI/UX

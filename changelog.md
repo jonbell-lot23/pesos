@@ -317,3 +317,8 @@ does not stretch too wide.
 
 **Simplified dashboard URLs and unified admin page.**
 Updated routes so `/dashboard` replaces `/dashboard/simple`, and `/dashboard/detailed` replaces `/dashboard/all_posts`. Added `/admin` page with password prompt showing server stats and admin logs together.
+
+## 2025-06-21
+
+**Added view preference storage.**
+Introduced `viewPreference` column on `pesos_User` with a migration and updated `/api/set-view-preference` to save the user's dashboard view choice in the database and cookie.
