@@ -23,51 +23,27 @@ export default function UsernameModal() {
   // Local state to track manualChosenName from localStorage
   const [manualChosenName, setManualChosenName] = useState<string | null>(null);
 
-  // Add a debug state variable for localStorage chosenUsername after other useState declarations
-  const [debugLocal, setDebugLocal] = useState<string>("");
 
-  // After all useState declarations, add a console log for component rendering
-  console.log("[UsernameModal] Component rendering. Current state:", {
-    username,
-    manualChosenName,
-  });
 
-  // Move useEffect before any conditional returns
+  // Remove stale localStorage entries if user already has a username
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("chosenUsername");
-      if (stored && stored.trim() !== "") {
-        setManualChosenName(stored);
-        setUsername(stored);
-      } else {
-        setManualChosenName("");
-        setUsername("");
-      }
+    if (typeof window === "undefined") return;
+    const stored = localStorage.getItem("chosenUsername") || "";
+
+    if (currentUser?.publicMetadata?.chosenUsername) {
+      if (stored) localStorage.removeItem("chosenUsername");
+      setManualChosenName(null);
+      setUsername("");
+    } else if (stored.trim() !== "") {
+      setManualChosenName(stored);
+      setUsername(stored);
+    } else {
+      setManualChosenName("");
+      setUsername("");
     }
+
     setLoadingLocal(false);
-  }, []);
-
-  // Add a useEffect to log on window load
-  useEffect(() => {
-    window.addEventListener("load", () => {
-      console.log(
-        "[UsernameModal] Window load event triggered. Current chosenUsername in localStorage:",
-        localStorage.getItem("chosenUsername")
-      );
-    });
-  }, []);
-
-  // Update debugLocal on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("chosenUsername") || "";
-      setDebugLocal(stored);
-      console.log(
-        "[UsernameModal] Debug useEffect: localStorage chosenUsername:",
-        stored
-      );
-    }
-  }, []);
+  }, [currentUser]);
 
   // Move useEffect before any conditional returns
   useEffect(() => {
@@ -106,24 +82,17 @@ export default function UsernameModal() {
 
   // Add the key down handler before the handleInputChange declaration
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    console.log("[KEYPRESS]:", e.key);
+    // no-op placeholder for potential shortcuts
   };
 
   // Always render the modal to allow manual name update
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[KEYSTROKE]:", e.target.value);
     // Only allow alphanumeric and underscore
     const newValue = e.target.value.replace(/[^a-zA-Z0-9_]/g, "");
-    console.log("[UsernameModal] Input changed to:", newValue);
 
     setUsername(newValue);
     // Update localStorage immediately during typing
     localStorage.setItem("chosenUsername", newValue);
-    console.log("[UsernameModal] Updated localStorage with:", newValue);
-    console.log(
-      "[UsernameModal] Verification - current localStorage value:",
-      localStorage.getItem("chosenUsername")
-    );
 
     setError("");
     setValidationError(""); // Clear any previous validation errors
@@ -131,7 +100,6 @@ export default function UsernameModal() {
     // Only proceed with availability check if we have at least 3 characters
     if (newValue.length >= 3) {
       setAvailability("checking");
-      console.log("[UsernameModal] Checking availability for:", newValue);
     } else {
       setAvailability("neutral");
     }
@@ -206,11 +174,7 @@ export default function UsernameModal() {
     setLoading(false);
   };
 
-  // Ensure in the render return we log the current localStorage value
-  console.log(
-    "[UsernameModal] Rendering modal. Current localStorage chosenUsername:",
-    localStorage.getItem("chosenUsername")
-  );
+
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
@@ -266,17 +230,7 @@ export default function UsernameModal() {
             {loading ? "Creating..." : "Create User"}
           </button>
         </form>
-        {/* Debug output for localStorage chosenUsername */}
-        <div
-          style={{
-            marginTop: "12px",
-            padding: "4px",
-            border: "1px dashed red",
-          }}
-        >
-          <strong>DEBUG:</strong> current localStorage chosenUsername:{" "}
-          {debugLocal}
-        </div>
+        {/* Debug output removed */}
       </div>
     </div>
   );
